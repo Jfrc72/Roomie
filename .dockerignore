@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+.roomie-data
+.test-output
+AGENTS.md
+CLAUDE.md
+.DS_Store

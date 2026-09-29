@@ -1,0 +1,29 @@
+# Dependencias
+/node_modules
+
+# Archivos generados
+/.next/
+/out/
+/build
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Archivos locales y registros
+.DS_Store
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+/.vercel
+
+# Configuración privada y datos locales
+.env*
+!.env.example
+.roomie-data/
+.test-output/
+
+# Instrucciones locales generadas por herramientas de desarrollo
+/AGENTS.md
+/CLAUDE.md

@@ -1,0 +1,41 @@
+{
+  "name": "roomie",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "dev:app": "next dev",
+    "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "db:seed": "tsx --env-file=.env scripts/seed.ts",
+    "worker": "tsx --env-file=.env scripts/worker.ts",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "tsx --env-file=.env --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "async-exit-hook": "^2.0.1",
+    "lucide-react": "^1.48.0",
+    "next": "16.3.6",
+    "nodemailer": "^10.0.12",
+    "pg": "^8.23.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "web-push": "^3.6.7",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
+    "embedded-postgres": "^17.10.0-beta.17",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  }
+}
