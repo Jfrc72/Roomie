@@ -36,6 +36,13 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | GET | `/tasks/:id` | Tarea e historial de estados |
 | PATCH | `/tasks/:id` | Cualquier subconjunto de los campos anteriores y `status`; creador o administrador. Sin responsable, cualquier integrante puede enviar solo `{status}` para avanzarla a `in_progress` o `completed` |
 | DELETE | `/tasks/:id` | Creador o administrador; elimina también su historial |
+| GET | `/resources?homeId=...` | Recursos activos del hogar |
+| POST | `/resources?homeId=...` | `{name, description}`; solo administrador |
+| PATCH | `/resources/:id` | `{name, description}`; solo administrador |
+| DELETE | `/resources/:id` | Retira el recurso (baja lógica); solo administrador y sin reservas próximas (409) |
+| GET | `/reservations?homeId=...` | Reservas activas que aún no terminan, con `can_cancel` |
+| POST | `/reservations?homeId=...` | `{resource_id, starts_at, ends_at}`; para quien la crea. 409 si se cruza con otra |
+| DELETE | `/reservations/:id` | Cancela (baja lógica); quien reservó o administrador |
 
 401: sin sesión; 403: sin permiso/origen incorrecto; 404: registro ausente; 409: conflicto; 400: validación; 429: demasiados intentos de login.
 

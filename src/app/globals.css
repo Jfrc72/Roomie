@@ -1215,13 +1215,13 @@ dd {
   }
 }
 
-/* Tareas: filtros en fila (reutilizan .form) y tablero de tres columnas */
-.task-filters {
+/* Filtros en fila (reutilizan .form) y tablero de tareas de tres columnas */
+.filters {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-end;
 }
-.task-filters label {
+.filters label {
   min-width: 180px;
 }
 .task-board {

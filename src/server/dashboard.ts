@@ -1,16 +1,21 @@
 import type { DashboardSummary } from "@/types";
 import { getTasksSummary } from "./tasks-summary";
-// Los adaptadores vacíos (finanzas, compras y reservas) se reemplazarán con consultas filtradas por homeId.
+import { getNextReservation } from "./reservations-summary";
+// Los adaptadores vacíos (finanzas y compras) se reemplazarán con consultas filtradas por homeId.
 // El llamador debe verificar requireHome antes de llegar aquí.
 export async function getDashboardSummary(
   homeId: string,
   userId: string,
 ): Promise<DashboardSummary> {
+  const [tasks, nextReservation] = await Promise.all([
+    getTasksSummary(homeId, userId),
+    getNextReservation(homeId),
+  ]);
   return {
     balance: null,
     shoppingItems: null,
-    nextReservation: null,
+    nextReservation,
     expenses: [],
-    ...(await getTasksSummary(homeId, userId)),
+    ...tasks,
   };
 }
