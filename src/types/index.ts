@@ -34,6 +34,33 @@ export interface Activity {
   actor: string;
   created_at: string;
 }
+export type TaskStatus = "pending" | "in_progress" | "completed";
+export type TaskPriority = "low" | "medium" | "high";
+export interface Task {
+  id: string;
+  home_id: string;
+  title: string;
+  description: string;
+  assigned_membership_id: string | null;
+  assignee_user_id: string | null;
+  assignee: string | null;
+  assignee_active: boolean;
+  due_at: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  created_by: string;
+  creator: string;
+  created_at: string;
+  completed_at: string | null;
+  can_edit: boolean;
+}
+export interface TaskHistoryEntry {
+  id: string;
+  actor: string | null;
+  previous_status: TaskStatus | null;
+  new_status: TaskStatus;
+  created_at: string;
+}
 export interface DashboardSummary {
   // null significa módulo aún no conectado; 0 significa dato real igual a cero.
   balance: number | null;
