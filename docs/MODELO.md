@@ -50,7 +50,7 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 - Solo los administradores agregan, editan o retiran recursos. El nombre es único entre los recursos activos del hogar. Un recurso con reservas próximas no se puede retirar; primero hay que cancelarlas.
 - Cualquier integrante reserva para sí mismo un recurso activo. La reserva debe empezar en el futuro, terminar después de empezar (también `CHECK` en la tabla) y durar como máximo 7 días.
 - Cruces: la restricción `EXCLUDE USING gist` (extensión `btree_gist`) impide en PostgreSQL dos reservas activas del mismo recurso con rangos `[inicio, fin)` superpuestos, también si llegan a la vez. Las consecutivas (10:00-11:00 y 11:00-12:00) son válidas. La API traduce el error `23P01` a 409.
-- Crear una reserva bloquea con `FOR SHARE` el recurso y la membresía, para que no los retiren mientras se confirma.
+- Crear una reserva bloquea el recurso con `FOR UPDATE` (las reservas de un mismo recurso se procesan de una en una; sin esto, dos inserciones simultáneas que se cruzan pueden acabar en deadlock en la restricción `EXCLUDE`) y la membresía con `FOR SHARE`, para que no los retiren mientras se confirma.
 - Cancelan quien reservó o un administrador, mientras la reserva no haya terminado. Cancelar es una baja lógica y libera el horario.
 - Recordatorio con clave `reservation:<id>` para quien reservó, según su anticipación; se cancela al cancelar la reserva. Si un administrador cancela la reserva de otra persona, esta recibe un aviso.
 - Inicio muestra la próxima reserva activa del hogar (`nextReservation`); `null` cuando no hay ninguna.
