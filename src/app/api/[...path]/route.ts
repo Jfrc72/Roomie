@@ -3,6 +3,7 @@ import { authApi } from "@/server/auth-api";
 import { homesApi, acceptInvitation } from "@/server/homes-api";
 import { notificationsApi } from "@/server/notifications-api";
 import { tasksApi } from "@/server/tasks-api";
+import { reservationsApi, resourcesApi } from "@/server/reservations-api";
 import { ApiError, checkOrigin, requireUser } from "@/server/security";
 import { query } from "@/server/db";
 export const runtime = "nodejs";
@@ -24,6 +25,10 @@ async function handle(
     else if (path[0] === "notifications")
       result = await notificationsApi(request, path);
     else if (path[0] === "tasks") result = await tasksApi(request, path);
+    else if (path[0] === "resources")
+      result = await resourcesApi(request, path);
+    else if (path[0] === "reservations")
+      result = await reservationsApi(request, path);
     else if (path[0] === "invitations" && request.method === "POST")
       result = await acceptInvitation(request);
     else if (path[0] === "session" && request.method === "GET") {

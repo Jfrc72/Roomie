@@ -61,6 +61,22 @@ export interface TaskHistoryEntry {
   new_status: TaskStatus;
   created_at: string;
 }
+export interface Resource {
+  id: string;
+  name: string;
+  description: string;
+}
+export interface Reservation {
+  id: string;
+  resource_id: string;
+  resource: string;
+  user_id: string;
+  member: string;
+  member_active: boolean;
+  starts_at: string;
+  ends_at: string;
+  can_cancel: boolean;
+}
 export interface DashboardSummary {
   // null significa módulo aún no conectado; 0 significa dato real igual a cero.
   balance: number | null;
