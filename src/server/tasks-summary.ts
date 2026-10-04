@@ -1,13 +1,6 @@
 import { query } from "./db";
+import { homeDateFormat } from "./format";
 import type { DashboardSummary } from "@/types";
-// Inicio muestra `due` tal cual; se formatea en la zona horaria del proyecto.
-const dateFormat = new Intl.DateTimeFormat("es-CO", {
-  day: "numeric",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "America/Bogota",
-});
 // Tareas abiertas asignadas a la persona. El llamador debe verificar requireHome.
 export async function getTasksSummary(
   homeId: string,
@@ -29,7 +22,7 @@ export async function getTasksSummary(
       title: t.title,
       due: !t.due_at
         ? "Sin fecha límite"
-        : `${t.due_at < new Date() ? "Venció" : "Vence"} ${dateFormat.format(t.due_at)}`,
+        : `${t.due_at < new Date() ? "Venció" : "Vence"} ${homeDateFormat.format(t.due_at)}`,
       href: `/tareas/${t.id}`,
     })),
   };

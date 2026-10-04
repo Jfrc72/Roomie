@@ -5,16 +5,15 @@ import { Plus, X } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
 import { api } from "@/lib/api";
 import { useData } from "@/lib/use-data";
+import { formatDate, toDateInput } from "@/lib/dates";
 import {
   canAdvance,
-  formatDate,
   isOverdue,
   priorities,
   priorityLabels,
   statuses,
   statusLabels,
   taskPayload,
-  toDateInput,
 } from "@/lib/tasks";
 import { Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Home, Member, Task, TaskStatus } from "@/types";
@@ -245,7 +244,7 @@ function TaskBoard({ homeId }: { homeId: string }) {
           </section>
         ) : (
           <>
-            <div className="form task-filters">
+            <div className="form filters">
               <label>
                 Responsable
                 <select

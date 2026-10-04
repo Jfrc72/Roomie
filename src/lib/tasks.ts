@@ -1,4 +1,5 @@
 import type { Task, TaskPriority, TaskStatus } from "@/types";
+import { fromDateInput } from "./dates";
 // Valores estables en inglés; estas etiquetas son las que ve el usuario.
 export const statuses: TaskStatus[] = ["pending", "in_progress", "completed"];
 export const statusLabels: Record<TaskStatus, string> = {
@@ -29,29 +30,12 @@ export function isOverdue(task: Pick<Task, "due_at" | "status">) {
     new Date(task.due_at) < new Date()
   );
 }
-export function formatDate(value: string) {
-  return new Date(value).toLocaleString("es-CO", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-// datetime-local trabaja con la hora local sin zona; la API recibe ISO con zona.
-export function toDateInput(value: string | null | undefined) {
-  if (!value) return "";
-  const date = new Date(value);
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
-}
 export function taskPayload(form: FormData) {
-  const due = String(form.get("due_at") || "");
   return {
     title: form.get("title"),
     description: form.get("description"),
     assigned_membership_id: form.get("assigned_membership_id") || null,
     priority: form.get("priority"),
-    due_at: due ? new Date(due).toISOString() : null,
+    due_at: fromDateInput(form.get("due_at")),
   };
 }

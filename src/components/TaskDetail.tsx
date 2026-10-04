@@ -5,8 +5,8 @@ import { ArrowLeft, History, ShieldCheck, Trash2 } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
 import { api } from "@/lib/api";
 import { useData } from "@/lib/use-data";
+import { formatDate } from "@/lib/dates";
 import {
-  formatDate,
   isOverdue,
   priorityLabels,
   statuses,
