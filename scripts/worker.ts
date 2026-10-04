@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import webpush from "web-push";
 import { pool, transaction } from "../src/server/db";
 import { notify } from "../src/server/notifications";
+import { closeExpiredPolls } from "../src/server/polls";
 const pushReady = Boolean(
   process.env.VAPID_PRIVATE_KEY &&
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
@@ -114,6 +115,8 @@ export async function tick() {
       }
     }
   });
+  // Al final: un error aquí no debe detener recordatorios ni envíos.
+  await closeExpiredPolls();
 }
 let stopping = false;
 const shutdown = new AbortController();

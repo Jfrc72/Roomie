@@ -61,6 +61,65 @@ export interface TaskHistoryEntry {
   new_status: TaskStatus;
   created_at: string;
 }
+export interface Resource {
+  id: string;
+  name: string;
+  description: string;
+}
+export interface Reservation {
+  id: string;
+  resource_id: string;
+  resource: string;
+  user_id: string;
+  member: string;
+  member_active: boolean;
+  starts_at: string;
+  ends_at: string;
+  can_cancel: boolean;
+}
+export interface PollOption {
+  id: string;
+  label: string;
+  // null mientras la votación está abierta; voters es null también si es anónima.
+  votes: number | null;
+  voters: string[] | null;
+}
+export interface Poll {
+  id: string;
+  title: string;
+  description: string;
+  anonymous: boolean;
+  closes_at: string | null;
+  status: "open" | "closed";
+  creator: string;
+  created_at: string;
+  closed_at: string | null;
+  options: PollOption[];
+  my_option_id: string | null;
+  voters: number;
+  eligible: number;
+  can_close: boolean;
+}
+export interface RuleVersion {
+  id: string;
+  version: number;
+  content: string;
+  notes: string;
+  author: string;
+  created_at: string;
+}
+export interface RuleAcceptance {
+  membership_id: string;
+  user_id: string;
+  name: string;
+  accepted_at: string | null;
+}
+export interface Rules {
+  current: RuleVersion | null;
+  accepted_by_me: boolean;
+  acceptances: RuleAcceptance[];
+  history: RuleVersion[];
+}
 export interface DashboardSummary {
   // null significa módulo aún no conectado; 0 significa dato real igual a cero.
   balance: number | null;

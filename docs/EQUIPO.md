@@ -14,6 +14,9 @@
 - Servicio de recordatorios y adaptadores de email/push configurables.
 - Base de datos local, migraciones, seed y configuración Docker.
 - Tareas: tablero por estados operable con botones, filtros, detalle en `/tareas/ID`, historial, avisos, recordatorios y resumen en Inicio.
+- Reservas: recursos gestionados por administradores, reservas sin cruces garantizadas por PostgreSQL, cancelación, filtros, avisos, recordatorios y próxima reserva en Inicio.
+- Votaciones: públicas o anónimas, mayoría simple, cambio de voto, resultados al cerrar, cierre manual o automático (worker) y avisos.
+- Acuerdos: versiones del reglamento publicadas por administradores, aceptación por integrante, historial y asistente de acuerdos con IA simulada (bono IA: entrada, spinner/skeleton y respuesta mock).
 
 No hay una API separada que iniciar manualmente: `src/app/api` expone el backend de Next. Las reglas están en `src/server`; los módulos del frontend están en `src/components` y `src/app/(app)`.
 
@@ -63,10 +66,11 @@ No copiar los totales de las capturas: calcularlos desde los datos. Todos los fi
 
 ## Conectar Inicio
 
-`src/server/dashboard.ts` es el punto de integración. Devuelve `null` y listas vacías para los módulos que no existen todavía. La actividad y las tareas sí vienen de PostgreSQL.
+`src/server/dashboard.ts` es el punto de integración. Devuelve `null` y listas vacías para los módulos que no existen todavía. La actividad, las tareas y las reservas sí vienen de PostgreSQL.
 
 - Miguel entrega `balance`, `shoppingItems` y `expenses`.
-- Tomás entrega `pendingTasks`, `nextReservation` y `tasks`. `pendingTasks` y `tasks` ya están conectados desde `src/server/tasks-summary.ts`.
+- Tomás entrega `pendingTasks`, `nextReservation` y `tasks`. Ya están conectados desde `src/server/tasks-summary.ts` y `src/server/reservations-summary.ts`.
+- Los textos con fecha que Inicio muestra tal cual se formatean con `homeDateFormat` (`src/server/format.ts`), en la zona horaria del proyecto.
 - Consultas siempre filtradas por `homeId`; tareas y balance personal además por `userId`.
 - `balance` y `expenses.amount` son pesos COP; si se almacenan centavos, convertir en este adaptador.
 - `null` significa todavía no conectado; cero significa resultado real igual a cero.
@@ -100,7 +104,7 @@ Los envíos externos requieren configuración. No crear funciones de correo inde
 
 - Las rutas de los módulos están reservadas con pantallas de preparación. Reemplazar su contenido.
 - No modificar `db/001_base.sql` una vez compartida: añadir una migración nueva.
-- Numeración propuesta: Miguel empieza en `010_finanzas.sql`; Tomás en `020_tareas.sql`. Acordar nuevos números cuando hagan cambios adicionales.
+- Numeración propuesta: Miguel empieza en `010_finanzas.sql`; Tomás en `020_tareas.sql` (reservas usa `021_reservas.sql`, votaciones `022_votaciones.sql` y reglamento `023_reglamento.sql`). Acordar nuevos números cuando hagan cambios adicionales.
 - Mantener cambios de `package.json`/lockfile, layout, estilos globales y router API pequeños y coordinados.
 - Los tres ejecutan lint, tipos, build y pruebas; cada uno revisa un módulo ajeno.
 - Docker y despliegue se verifican juntos en un equipo con Docker antes de presentar esa parte.

@@ -36,6 +36,20 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | GET | `/tasks/:id` | Tarea e historial de estados |
 | PATCH | `/tasks/:id` | Cualquier subconjunto de los campos anteriores y `status`; creador o administrador. Sin responsable, cualquier integrante puede enviar solo `{status}` para avanzarla a `in_progress` o `completed` |
 | DELETE | `/tasks/:id` | Creador o administrador; elimina también su historial |
+| GET | `/resources?homeId=...` | Recursos activos del hogar |
+| POST | `/resources?homeId=...` | `{name, description}`; solo administrador |
+| PATCH | `/resources/:id` | `{name, description}`; solo administrador |
+| DELETE | `/resources/:id` | Retira el recurso (baja lógica); solo administrador y sin reservas próximas (409) |
+| GET | `/reservations?homeId=...` | Reservas activas que aún no terminan, con `can_cancel` |
+| POST | `/reservations?homeId=...` | `{resource_id, starts_at, ends_at}`; para quien la crea. 409 si se cruza con otra |
+| DELETE | `/reservations/:id` | Cancela (baja lógica); quien reservó o administrador |
+| GET | `/polls?homeId=...` | Votaciones con opciones, `my_option_id`, participación y `can_close`. Antes cierra las vencidas. Recuentos solo si está cerrada; nombres por opción solo si está cerrada y no es anónima |
+| POST | `/polls?homeId=...` | `{title, description, anonymous, closes_at, options: string[]}`; 2 a 10 opciones distintas |
+| POST | `/polls/:id/votes` | `{option_id}`; crea o cambia el voto propio mientras esté abierta (409 si cerró) |
+| POST | `/polls/:id/close` | `{}`; creador o administrador |
+| GET | `/rules?homeId=...` | Versión vigente, `accepted_by_me`, aceptaciones de los integrantes activos e historial |
+| POST | `/rules?homeId=...` | `{content, notes}`; publica la versión siguiente; solo administrador |
+| POST | `/rules/:id/accept` | `{}`; acepta la versión vigente (409 si hay una más reciente) |
 
 401: sin sesión; 403: sin permiso/origen incorrecto; 404: registro ausente; 409: conflicto; 400: validación; 429: demasiados intentos de login.
 
