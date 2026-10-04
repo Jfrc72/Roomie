@@ -19,6 +19,8 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 | push_subscriptions | Dispositivos autorizados por cada usuario |
 | login_attempts | Límite temporal de intentos por correo |
 | migrations | Migraciones SQL aplicadas |
+| tasks | Tarea del hogar: responsable (`assigned_membership_id`), fecha límite, prioridad `low`/`medium`/`high`, estado, autor y fecha de finalización (`db/020_tareas.sql`) |
+| task_history | Cambios de estado de cada tarea con su autor; `previous_status` es null al crearla |
 
 ## Reglas existentes
 
@@ -29,6 +31,17 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 - Una invitación se acepta una vez, con el correo indicado, antes de siete días. Otra invitación al mismo correo/hogar revoca el enlace anterior.
 - Las cookies duran siete días; las sesiones se comprueban contra la base de datos.
 - Los enlaces de notificaciones deben ser rutas internas.
+
+## Reglas de tareas
+
+- Cualquier integrante crea tareas; siempre empiezan en `pending` y registran su creación en el historial.
+- Solo quien creó la tarea o un administrador la editan, cambian su estado o la eliminan; el responsable no puede modificarla. Al eliminarla, el historial se borra en cascada y la actividad del hogar conserva el registro.
+- Si no tiene responsable, cualquier integrante puede empezarla o completarla (solo avanzar `pending` → `in_progress` → `completed`), sin editar otros campos, reabrirla ni eliminarla. No se le asigna automáticamente; el historial registra quién hizo cada cambio.
+- El responsable nuevo debe ser un integrante activo; la fila se bloquea con `FOR SHARE` para que no lo retiren durante la asignación. Un responsable retirado se conserva mientras no se cambie.
+- Una fecha límite nueva no puede estar en el pasado.
+- Recordatorio con clave `task:<id>` para el responsable si la tarea tiene fecha y no está completada. Se cancela al completarla o eliminarla y se recrea al cambiar de responsable.
+- Avisos: al responsable cuando se le asigna (si no fue él mismo) y al autor cuando otra persona la completa.
+- El listado incluye las completadas de los últimos 30 días; las anteriores siguen disponibles en `/tareas/<id>`.
 
 ## Contratos propuestos para los módulos pendientes
 
@@ -42,8 +55,6 @@ No son tablas ya implementadas. Cada responsable creará su migración y tipos, 
 | Lista de compras | id, home_id, name, created_by, created_at |
 | Producto de lista | id, list_id, title, quantity, buyer_membership_id, purchased_at, expense_id opcional |
 | Ticket | id, home_id, title, description, status, manager_membership_id, expense_id opcional |
-| Tarea | id, home_id, title, description, assigned_membership_id, due_at, priority, status |
-| Historial de tarea | task_id, actor_id, previous_status, new_status, created_at |
 | Recurso | id, home_id, name, description |
 | Reserva | id, home_id, resource_id, membership_id, starts_at, ends_at, status |
 | Votación | id, home_id, title, rule, anonymous, closes_at, status |

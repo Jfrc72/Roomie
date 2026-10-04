@@ -1214,3 +1214,24 @@ dd {
     visibility: visible;
   }
 }
+
+/* Tareas: filtros en fila (reutilizan .form) y tablero de tres columnas */
+.task-filters {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.task-filters label {
+  min-width: 180px;
+}
+.task-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .task-board {
+    grid-template-columns: 1fr;
+  }
+}

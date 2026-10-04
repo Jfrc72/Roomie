@@ -31,6 +31,11 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | GET | `/notifications/preferences` | Preferencias y disponibilidad de canales |
 | PATCH | `/notifications/preferences` | `{email_enabled, push_enabled, reminder_hours}` |
 | POST | `/notifications/subscriptions` | Suscripción producida por PushManager |
+| GET | `/tasks?homeId=...` | Tareas abiertas y completadas en los últimos 30 días, con `can_edit` |
+| POST | `/tasks?homeId=...` | `{title, description, assigned_membership_id, due_at, priority}`; empieza en `pending` |
+| GET | `/tasks/:id` | Tarea e historial de estados |
+| PATCH | `/tasks/:id` | Cualquier subconjunto de los campos anteriores y `status`; creador o administrador. Sin responsable, cualquier integrante puede enviar solo `{status}` para avanzarla a `in_progress` o `completed` |
+| DELETE | `/tasks/:id` | Creador o administrador; elimina también su historial |
 
 401: sin sesión; 403: sin permiso/origen incorrecto; 404: registro ausente; 409: conflicto; 400: validación; 429: demasiados intentos de login.
 

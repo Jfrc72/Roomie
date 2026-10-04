@@ -30,8 +30,12 @@ export default function Page() {
             "En la base de datos. Cerrar sesión o recargar la página no elimina tu apartamento ni tus datos.",
           ],
           [
+            "¿Cómo se reparten las tareas?",
+            "En Tareas cualquier integrante crea una tarea, elige responsable, prioridad y fecha límite. Solo quien la creó o un administrador pueden editarla, moverla entre Pendiente, En progreso y Completada o eliminarla. Si no tiene responsable, cualquier integrante puede empezarla o completarla, pero no editarla.",
+          ],
+          [
             "¿Por qué algunas secciones están en preparación?",
-            "Esta versión contiene la administración del hogar. Los módulos de gastos, tareas y convivencia se incorporarán en las siguientes entregas del equipo.",
+            "Esta versión contiene la administración del hogar y las tareas. Los módulos de gastos y convivencia se incorporarán en las siguientes entregas del equipo.",
           ],
           [
             "¿Cómo funcionan los recordatorios?",
