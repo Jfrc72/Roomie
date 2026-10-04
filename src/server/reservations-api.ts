@@ -150,9 +150,11 @@ export async function reservationsApi(request: Request, path: string[]) {
           `Una reserva puede durar como máximo ${maxDays} días.`,
         );
       return transaction(async (db) => {
-        // FOR SHARE impide que retiren el recurso o a la persona mientras se confirma la reserva.
+        // FOR UPDATE procesa de una en una las reservas del mismo recurso: sin él, dos inserciones
+        // simultáneas que se cruzan se esperan entre sí en la restricción EXCLUDE y PostgreSQL
+        // aborta una por deadlock (500). También impide retirar el recurso mientras se confirma.
         const resource = await db.query(
-          "SELECT name FROM resources WHERE id=$1 AND home_id=$2 AND active FOR SHARE",
+          "SELECT name FROM resources WHERE id=$1 AND home_id=$2 AND active FOR UPDATE",
           [data.resource_id, homeId],
         );
         if (!resource.rows[0])
