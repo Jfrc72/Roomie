@@ -1,6 +1,6 @@
 # Roomie
 
-Aplicación para organizar apartamentos compartidos. Esta entrega contiene la base del proyecto: usuarios, apartamentos, integrantes, permisos, Inicio y notificaciones. También incluye el módulo de tareas: tablero por estados, responsables, prioridades, fechas límite, historial y recordatorios.
+Aplicación para organizar apartamentos compartidos. Esta entrega contiene la base del proyecto: usuarios, apartamentos, integrantes, permisos, Inicio y notificaciones. También incluye los módulos de tareas (tablero por estados, responsables, prioridades, fechas límite, historial y recordatorios) y reservas (recursos compartidos, reservas sin cruces, cancelación y recordatorios).
 
 Hecha con Next.js, React, TypeScript y PostgreSQL. La API está en el mismo proyecto; los datos se guardan en la base de datos, no en el navegador.
 
@@ -40,7 +40,7 @@ npm run build
 npm test
 ```
 
-Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes, notificaciones y tareas (permisos, estados, historial, recordatorios y resumen de Inicio). Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo.
+Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, tareas (permisos, estados, historial, recordatorios y resumen de Inicio) y reservas (recursos, cruces simultáneos, cancelación y avisos). Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo.
 
 ## Continuar en equipo
 
@@ -49,4 +49,4 @@ Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes,
 - [Modelo de datos y reglas](docs/MODELO.md)
 - [Docker, correo y push](docs/DESPLIEGUE.md)
 
-Gastos, compras, mantenimiento, reservas, votaciones y acuerdos tienen rutas de entrada, pero sus funcionalidades corresponden a las siguientes partes del equipo. Inicio tiene puntos de integración para sus datos; los valores todavía no disponibles aparecen como `—`.
+Gastos, compras, mantenimiento, votaciones y acuerdos tienen rutas de entrada, pero sus funcionalidades corresponden a las siguientes partes del equipo. Inicio tiene puntos de integración para sus datos; los valores todavía no disponibles aparecen como `—`.
