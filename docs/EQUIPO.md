@@ -13,6 +13,7 @@
 - Actividad real del hogar y bandeja de notificaciones, leído/no leído y preferencias.
 - Servicio de recordatorios y adaptadores de email/push configurables.
 - Base de datos local, migraciones, seed y configuración Docker.
+- Tareas: tablero por estados operable con botones, filtros, detalle en `/tareas/ID`, historial, avisos, recordatorios y resumen en Inicio.
 
 No hay una API separada que iniciar manualmente: `src/app/api` expone el backend de Next. Las reglas están en `src/server`; los módulos del frontend están en `src/components` y `src/app/(app)`.
 
@@ -62,10 +63,10 @@ No copiar los totales de las capturas: calcularlos desde los datos. Todos los fi
 
 ## Conectar Inicio
 
-`src/server/dashboard.ts` es el punto de integración. Hoy devuelve `null` y listas vacías porque los módulos no existen todavía. La actividad sí viene de PostgreSQL.
+`src/server/dashboard.ts` es el punto de integración. Devuelve `null` y listas vacías para los módulos que no existen todavía. La actividad y las tareas sí vienen de PostgreSQL.
 
 - Miguel entrega `balance`, `shoppingItems` y `expenses`.
-- Tomás entrega `pendingTasks`, `nextReservation` y `tasks`.
+- Tomás entrega `pendingTasks`, `nextReservation` y `tasks`. `pendingTasks` y `tasks` ya están conectados desde `src/server/tasks-summary.ts`.
 - Consultas siempre filtradas por `homeId`; tareas y balance personal además por `userId`.
 - `balance` y `expenses.amount` son pesos COP; si se almacenan centavos, convertir en este adaptador.
 - `null` significa todavía no conectado; cero significa resultado real igual a cero.
