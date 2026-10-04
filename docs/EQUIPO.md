@@ -16,6 +16,7 @@
 - Tareas: tablero por estados operable con botones, filtros, detalle en `/tareas/ID`, historial, avisos, recordatorios y resumen en Inicio.
 - Reservas: recursos gestionados por administradores, reservas sin cruces garantizadas por PostgreSQL, cancelación, filtros, avisos, recordatorios y próxima reserva en Inicio.
 - Votaciones: públicas o anónimas, mayoría simple, cambio de voto, resultados al cerrar, cierre manual o automático (worker) y avisos.
+- Acuerdos: versiones del reglamento publicadas por administradores, aceptación por integrante, historial y asistente de acuerdos con IA simulada (bono IA: entrada, spinner/skeleton y respuesta mock).
 
 No hay una API separada que iniciar manualmente: `src/app/api` expone el backend de Next. Las reglas están en `src/server`; los módulos del frontend están en `src/components` y `src/app/(app)`.
 
@@ -103,7 +104,7 @@ Los envíos externos requieren configuración. No crear funciones de correo inde
 
 - Las rutas de los módulos están reservadas con pantallas de preparación. Reemplazar su contenido.
 - No modificar `db/001_base.sql` una vez compartida: añadir una migración nueva.
-- Numeración propuesta: Miguel empieza en `010_finanzas.sql`; Tomás en `020_tareas.sql` (reservas usa `021_reservas.sql` y votaciones `022_votaciones.sql`). Acordar nuevos números cuando hagan cambios adicionales.
+- Numeración propuesta: Miguel empieza en `010_finanzas.sql`; Tomás en `020_tareas.sql` (reservas usa `021_reservas.sql`, votaciones `022_votaciones.sql` y reglamento `023_reglamento.sql`). Acordar nuevos números cuando hagan cambios adicionales.
 - Mantener cambios de `package.json`/lockfile, layout, estilos globales y router API pequeños y coordinados.
 - Los tres ejecutan lint, tipos, build y pruebas; cada uno revisa un módulo ajeno.
 - Docker y despliegue se verifican juntos en un equipo con Docker antes de presentar esa parte.
