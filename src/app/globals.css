@@ -59,7 +59,7 @@ button,
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 43px;
+  min-height: 44px;
   padding: 10px 17px;
   border: 1px solid transparent;
   border-radius: 9px;
@@ -97,7 +97,7 @@ summary:focus-visible {
 }
 .text-button {
   padding: 5px 0;
-  min-height: 32px;
+  min-height: 44px;
   background: transparent;
   color: var(--purple-dark);
   font-size: 12px;
@@ -113,8 +113,8 @@ summary:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  min-height: 42px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 8px;
   color: var(--muted);
   background: transparent;
@@ -791,6 +791,9 @@ footer {
   position: fixed;
   bottom: 25px;
   left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transform: translateX(-50%);
   z-index: 100;
   max-width: calc(100vw - 32px);
@@ -804,6 +807,9 @@ footer {
   padding: 13px 22px;
   box-shadow: 0 6px 24px #20123820;
   font-size: 13px;
+}
+.toast button {
+  pointer-events: auto;
 }
 .standalone {
   max-width: 650px;

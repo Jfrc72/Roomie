@@ -28,6 +28,11 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 | votes | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación |
 | rule_versions | Versiones numeradas del reglamento de cada hogar, con texto, resumen de cambios y autor (`db/023_reglamento.sql`) |
 | rule_acceptances | Aceptación de una versión por integrante y fecha |
+| expenses | Gasto del hogar, pagador, autor, monto, categoría y fecha (`db/024_shared_modules.sql`) |
+| expense_shares | Cuota exacta por integrante, estado y fecha de pago |
+| direct_payments | Transferencias registradas entre dos integrantes |
+| shopping_items | Producto, cantidad, precio estimado, comprador asignado y quien lo compró (`db/024_shared_modules.sql`, `db/025_shopping_assignment.sql`) |
+| maintenance_reports | Reporte, categoría, costo estimado, prioridad, estado y responsable |
 
 ## Reglas existentes
 
@@ -38,6 +43,14 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 - Una invitación se acepta una vez, con el correo indicado, antes de siete días. Otra invitación al mismo correo/hogar revoca el enlace anterior.
 - Las cookies duran siete días; las sesiones se comprueban contra la base de datos.
 - Los enlaces de notificaciones deben ser rutas internas.
+
+## Reglas de gastos, compras y mantenimiento
+
+- Cualquier integrante con acceso al hogar puede registrar un gasto y seleccionar el pagador y participantes activos. El pagador participa siempre en la división; las cuotas se distribuyen a centavos y suman exactamente el total.
+- Solo quien creó el gasto o un administrador puede editarlo o eliminarlo. Los pagos se registran desde la cuenta propia y no pueden superar el balance neto entre ambas personas. Las cuotas se muestran pagadas cuando el balance con su pagador queda saldado.
+- Una eliminación de gasto, producto o reporte es lógica y se puede deshacer desde el aviso temporal; el historial y las referencias se conservan.
+- Cualquier integrante agrega productos y los puede marcar como comprados; se registra quién lo compró. El responsable opcional debe ser integrante activo. Quien agregó el producto o un administrador lo edita/elimina.
+- Quien reporta, la persona asignada o un administrador puede modificar un reporte; solo quien reportó o un administrador puede eliminarlo. Una asignación nueva siempre apunta a un integrante activo.
 
 ## Reglas de tareas
 

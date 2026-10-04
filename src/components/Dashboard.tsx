@@ -64,7 +64,7 @@ function HomeDashboard({ homeId }: { homeId: string }) {
       hint:
         s.balance === null
           ? "Aún no hay información financiera"
-          : "Balance del hogar",
+          : "Tu balance con integrantes",
       icon: Wallet,
       color: "rose",
       href: "/gastos",
@@ -100,6 +100,14 @@ function HomeDashboard({ homeId }: { homeId: string }) {
       icon: CalendarDays,
       color: "blue",
       href: "/reservas",
+    },
+    {
+      title: "Mantenimiento urgente",
+      value: s.urgentMaintenance,
+      hint: "Reportes de prioridad alta o urgente",
+      icon: Sparkles,
+      color: "rose",
+      href: "/mantenimiento",
     },
   ];
   return (

@@ -107,10 +107,14 @@ export function ConfirmButton({
   label,
   description,
   onConfirm,
+  success = "Cambio realizado.",
+  undo,
 }: {
   label: string;
   description: string;
   onConfirm: () => Promise<void>;
+  success?: string;
+  undo?: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -122,7 +126,7 @@ export function ConfirmButton({
     try {
       await onConfirm();
       setOpen(false);
-      toast("Cambio realizado.");
+      toast(success, undo ? { label: "Deshacer", onClick: undo } : undefined);
     } catch (e) {
       setError((e as Error).message);
     } finally {

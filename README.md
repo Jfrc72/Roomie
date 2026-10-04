@@ -1,6 +1,6 @@
 # Roomie
 
-Aplicación para organizar apartamentos compartidos. Esta entrega contiene la base del proyecto: usuarios, apartamentos, integrantes, permisos, Inicio y notificaciones. También incluye los módulos de tareas (tablero por estados, responsables, prioridades, fechas límite, historial y recordatorios), reservas (recursos compartidos, reservas sin cruces, cancelación y recordatorios), votaciones (públicas o anónimas, mayoría simple y cierre automático) y acuerdos (versiones del reglamento, aceptaciones y un asistente con IA simulada).
+Aplicación para organizar apartamentos compartidos. Esta entrega contiene la base del proyecto: usuarios, apartamentos, integrantes, permisos, Inicio y notificaciones. También incluye gastos y pagos compartidos, listas colaborativas de compras, reportes de mantenimiento, tareas (tablero por estados, responsables, prioridades, fechas límite, historial y recordatorios), reservas (recursos compartidos, reservas sin cruces, cancelación y recordatorios), votaciones (públicas o anónimas, mayoría simple y cierre automático) y acuerdos (versiones del reglamento, aceptaciones y un asistente con IA simulada).
 
 Hecha con Next.js, React, TypeScript y PostgreSQL. La API está en el mismo proyecto; los datos se guardan en la base de datos, no en el navegador.
 
@@ -40,7 +40,7 @@ npm run build
 npm test
 ```
 
-Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, tareas (permisos, estados, historial, recordatorios y resumen de Inicio), reservas (recursos, cruces simultáneos, cancelación y avisos), votaciones (permisos, anonimato, cambio de voto, recuento y cierre automático) y acuerdos (versiones, aceptaciones, publicaciones simultáneas y respuestas del asistente). Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo.
+Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, tareas (permisos, estados, historial, recordatorios y resumen de Inicio), reservas (recursos, cruces simultáneos, cancelación y avisos), gastos/pagos, compras y mantenimiento, votaciones (permisos, anonimato, cambio de voto, recuento y cierre automático) y acuerdos (versiones, aceptaciones, publicaciones simultáneas y respuestas del asistente). Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo.
 
 ## Continuar en equipo
 
@@ -49,4 +49,4 @@ Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes,
 - [Modelo de datos y reglas](docs/MODELO.md)
 - [Docker, correo y push](docs/DESPLIEGUE.md)
 
-Gastos, compras y mantenimiento tienen rutas de entrada, pero sus funcionalidades corresponden a las siguientes partes del equipo. Inicio tiene puntos de integración para sus datos; los valores todavía no disponibles aparecen como `—`.
+Los gastos se dividen en cuotas exactas hasta centavos; los pagos entre integrantes ajustan balances bilaterales. Compras y mantenimiento admiten edición, filtros y eliminación reversible desde el aviso temporal de confirmación. Inicio muestra los saldos, compras pendientes y reportes urgentes.
