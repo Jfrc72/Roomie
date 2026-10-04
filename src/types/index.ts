@@ -100,6 +100,26 @@ export interface Poll {
   eligible: number;
   can_close: boolean;
 }
+export interface RuleVersion {
+  id: string;
+  version: number;
+  content: string;
+  notes: string;
+  author: string;
+  created_at: string;
+}
+export interface RuleAcceptance {
+  membership_id: string;
+  user_id: string;
+  name: string;
+  accepted_at: string | null;
+}
+export interface Rules {
+  current: RuleVersion | null;
+  accepted_by_me: boolean;
+  acceptances: RuleAcceptance[];
+  history: RuleVersion[];
+}
 export interface DashboardSummary {
   // null significa módulo aún no conectado; 0 significa dato real igual a cero.
   balance: number | null;

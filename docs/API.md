@@ -47,6 +47,9 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | POST | `/polls?homeId=...` | `{title, description, anonymous, closes_at, options: string[]}`; 2 a 10 opciones distintas |
 | POST | `/polls/:id/votes` | `{option_id}`; crea o cambia el voto propio mientras esté abierta (409 si cerró) |
 | POST | `/polls/:id/close` | `{}`; creador o administrador |
+| GET | `/rules?homeId=...` | Versión vigente, `accepted_by_me`, aceptaciones de los integrantes activos e historial |
+| POST | `/rules?homeId=...` | `{content, notes}`; publica la versión siguiente; solo administrador |
+| POST | `/rules/:id/accept` | `{}`; acepta la versión vigente (409 si hay una más reciente) |
 
 401: sin sesión; 403: sin permiso/origen incorrecto; 404: registro ausente; 409: conflicto; 400: validación; 429: demasiados intentos de login.
 

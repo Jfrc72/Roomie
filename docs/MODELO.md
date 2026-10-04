@@ -26,6 +26,8 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 | polls | Pregunta, detalles, regla (`simple`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
 | poll_options | Opciones de cada votación en orden (`position`), sin etiquetas repetidas |
 | votes | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación |
+| rule_versions | Versiones numeradas del reglamento de cada hogar, con texto, resumen de cambios y autor (`db/023_reglamento.sql`) |
+| rule_acceptances | Aceptación de una versión por integrante y fecha |
 
 ## Reglas existentes
 
@@ -69,6 +71,14 @@ Acordadas antes de implementar el cálculo:
 - Mientras está abierta, la API no envía recuentos, solo cuántos votaron. Al cerrar envía totales por opción y, si no es anónima, quién eligió cada una.
 - Anónimas: la tabla guarda `membership_id` para impedir votos duplicados y permitir el cambio, pero la API nunca envía la asociación persona-opción. Cada persona solo ve su propio voto.
 
+## Reglas de acuerdos (reglamento)
+
+- Solo los administradores publican versiones. Cada publicación crea la versión siguiente (`version` única por hogar); bloquear la fila del hogar evita repetir el número si dos administradores publican a la vez. No se publica un texto idéntico al vigente (409).
+- La versión vigente es la más reciente; las anteriores quedan como historial de solo lectura.
+- Cada integrante acepta la versión vigente una vez (clave `rule_version_id, membership_id`); aceptar una versión antigua devuelve 409. Quien publica la acepta al publicarla. Al publicar se avisa a los demás integrantes.
+- Todos ven quién aceptó la versión vigente y quién falta. La aceptación es un registro por versión e integrante, no una firma electrónica certificada.
+- Asistente de acuerdos: única funcionalidad con IA del proyecto, simulada (mock) en `src/lib/assistant.ts`. Recibe una petición, muestra spinner y skeleton durante una espera aleatoria y propone cláusulas desde plantillas según los temas detectados, o revisa qué temas faltan en el borrador. Para conectar un modelo real se reemplaza `askAssistant`.
+
 ## Contratos propuestos para los módulos pendientes
 
 No son tablas ya implementadas. Cada responsable creará su migración y tipos, conservando estas relaciones:
@@ -81,14 +91,10 @@ No son tablas ya implementadas. Cada responsable creará su migración y tipos, 
 | Lista de compras | id, home_id, name, created_by, created_at |
 | Producto de lista | id, list_id, title, quantity, buyer_membership_id, purchased_at, expense_id opcional |
 | Ticket | id, home_id, title, description, status, manager_membership_id, expense_id opcional |
-| Versión de reglamento | id, home_id, version, content, created_by, created_at |
-| Aceptación | rule_version_id, membership_id, accepted_at |
 
 Importes: enteros en la unidad menor de la moneda (`amount_minor`), no números de coma flotante. Para COP, 100 representa un peso. La suma de participaciones debe coincidir exactamente con el total; repartir cualquier residuo de manera determinista. El adaptador del dashboard convierte a pesos para mostrar.
 
 Reasignar responsables solo a miembros activos de ese hogar. Los antiguos pueden seguir apareciendo en el historial. Conservar el vínculo original al convertir compra/reparación en gasto para impedir duplicados.
-
-La aceptación del reglamento es un registro por versión y usuario, no una implementación de firma electrónica certificada.
 
 ## Estados
 
