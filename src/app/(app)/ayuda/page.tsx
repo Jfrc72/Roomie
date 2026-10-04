@@ -38,8 +38,12 @@ export default function Page() {
             "Los administradores agregan los espacios u objetos que se turnan, como la lavadora o la sala. Cualquier integrante puede reservarlos hasta por 7 días, siempre que el horario no se cruce con otra reserva. Quien reservó o un administrador pueden cancelarla y el horario queda libre.",
           ],
           [
+            "¿Cómo funcionan las votaciones?",
+            "Cualquier integrante abre una votación con 2 a 10 opciones. Se decide por mayoría simple: gana la opción con más votos y un empate no tiene ganadora. Puedes cambiar tu voto mientras siga abierta; los resultados aparecen al cerrarla. En las anónimas nadie ve qué eligió cada persona. La cierran quien la creó, un administrador o la fecha de cierre automático; quien no votó cuenta como abstención.",
+          ],
+          [
             "¿Por qué algunas secciones están en preparación?",
-            "Esta versión contiene la administración del hogar, las tareas y las reservas. Los módulos de gastos y convivencia se incorporarán en las siguientes entregas del equipo.",
+            "Esta versión contiene la administración del hogar, las tareas, las reservas y las votaciones. Los módulos de gastos y acuerdos se incorporarán en las siguientes entregas del equipo.",
           ],
           [
             "¿Cómo funcionan los recordatorios?",

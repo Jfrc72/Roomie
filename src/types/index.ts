@@ -77,6 +77,29 @@ export interface Reservation {
   ends_at: string;
   can_cancel: boolean;
 }
+export interface PollOption {
+  id: string;
+  label: string;
+  // null mientras la votación está abierta; voters es null también si es anónima.
+  votes: number | null;
+  voters: string[] | null;
+}
+export interface Poll {
+  id: string;
+  title: string;
+  description: string;
+  anonymous: boolean;
+  closes_at: string | null;
+  status: "open" | "closed";
+  creator: string;
+  created_at: string;
+  closed_at: string | null;
+  options: PollOption[];
+  my_option_id: string | null;
+  voters: number;
+  eligible: number;
+  can_close: boolean;
+}
 export interface DashboardSummary {
   // null significa módulo aún no conectado; 0 significa dato real igual a cero.
   balance: number | null;

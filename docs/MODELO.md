@@ -23,6 +23,9 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 | task_history | Cambios de estado de cada tarea con su autor; `previous_status` es null al crearla |
 | resources | Espacio u objeto reservable del hogar; `active=false` lo retira sin borrar sus reservas (`db/021_reservas.sql`) |
 | reservations | Recurso, integrante (`membership_id`), inicio, fin y estado `active`/`cancelled` con fecha de cancelación |
+| polls | Pregunta, detalles, regla (`simple`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
+| poll_options | Opciones de cada votación en orden (`position`), sin etiquetas repetidas |
+| votes | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación |
 
 ## Reglas existentes
 
@@ -55,6 +58,17 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 - Recordatorio con clave `reservation:<id>` para quien reservó, según su anticipación; se cancela al cancelar la reserva. Si un administrador cancela la reserva de otra persona, esta recibe un aviso.
 - Inicio muestra la próxima reserva activa del hogar (`nextReservation`); `null` cuando no hay ninguna.
 
+## Reglas de votaciones
+
+Acordadas antes de implementar el cálculo:
+
+- Regla: mayoría simple. Gana la opción con más votos. Un empate en el primer lugar no tiene ganadora; si nadie votó, tampoco.
+- Habilitados: cualquier integrante activo vota mientras la votación está abierta y puede cambiar su voto. Al cerrar solo cuentan los votos de quienes siguen activos; los de integrantes retirados se eliminan. Quien no votó cuenta como abstención (`eligible_count` menos votos).
+- Cualquier integrante abre votaciones. Las cierran quien la creó o un administrador, o el cierre automático en `closes_at`. El worker revisa cada 15 segundos y la API cierra las vencidas antes de listarlas. Al cerrar se avisa a los integrantes y se registra la actividad (sin actor si fue automático).
+- Votar comparte la fila de la votación (`FOR SHARE`) y cerrar la bloquea (`FOR UPDATE`), así ningún voto entra después del recuento.
+- Mientras está abierta, la API no envía recuentos, solo cuántos votaron. Al cerrar envía totales por opción y, si no es anónima, quién eligió cada una.
+- Anónimas: la tabla guarda `membership_id` para impedir votos duplicados y permitir el cambio, pero la API nunca envía la asociación persona-opción. Cada persona solo ve su propio voto.
+
 ## Contratos propuestos para los módulos pendientes
 
 No son tablas ya implementadas. Cada responsable creará su migración y tipos, conservando estas relaciones:
@@ -67,9 +81,6 @@ No son tablas ya implementadas. Cada responsable creará su migración y tipos, 
 | Lista de compras | id, home_id, name, created_by, created_at |
 | Producto de lista | id, list_id, title, quantity, buyer_membership_id, purchased_at, expense_id opcional |
 | Ticket | id, home_id, title, description, status, manager_membership_id, expense_id opcional |
-| Votación | id, home_id, title, rule, anonymous, closes_at, status |
-| Opción | id, poll_id, label |
-| Voto | poll_id, option_id, membership_id; unicidad por votación/integrante |
 | Versión de reglamento | id, home_id, version, content, created_by, created_at |
 | Aceptación | rule_version_id, membership_id, accepted_at |
 
@@ -77,7 +88,7 @@ Importes: enteros en la unidad menor de la moneda (`amount_minor`), no números 
 
 Reasignar responsables solo a miembros activos de ese hogar. Los antiguos pueden seguir apareciendo en el historial. Conservar el vínculo original al convertir compra/reparación en gasto para impedir duplicados.
 
-Votaciones anónimas: el backend necesita impedir votos duplicados, pero no debe exponer al cliente la asociación entre persona y opción. La aceptación del reglamento es un registro por versión y usuario, no una implementación de firma electrónica certificada.
+La aceptación del reglamento es un registro por versión y usuario, no una implementación de firma electrónica certificada.
 
 ## Estados
 
@@ -86,4 +97,4 @@ Votaciones anónimas: el backend necesita impedir votos duplicados, pero no debe
 - Reservas: `active`, `cancelled`.
 - Votaciones: `open`, `closed`.
 
-Guardar valores estables en inglés y mostrar etiquetas en español. Al cerrar votaciones, acordar cómo se manejan empates, abstenciones y el conjunto de miembros habilitados antes de implementar el cálculo.
+Guardar valores estables en inglés y mostrar etiquetas en español. El manejo de empates, abstenciones y miembros habilitados en las votaciones está en "Reglas de votaciones".

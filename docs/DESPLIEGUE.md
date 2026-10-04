@@ -57,6 +57,6 @@ Los adaptadores de email y push están implementados, pero no se han probado con
 
 ## Recordatorios
 
-El worker consulta cada 15 segundos los registros cuyo vencimiento menos la anticipación configurada ya llegó. Cada aviso tiene una clave única. Los módulos deben programar o cancelar sus recordatorios dentro de sus transacciones; no se crean automáticamente a partir de tablas aún inexistentes.
+El worker consulta cada 15 segundos los registros cuyo vencimiento menos la anticipación configurada ya llegó. Cada aviso tiene una clave única. Los módulos deben programar o cancelar sus recordatorios dentro de sus transacciones; no se crean automáticamente a partir de tablas aún inexistentes. En cada ciclo también cierra las votaciones cuya fecha de cierre ya pasó y avisa del resultado.
 
 No se promete entrega exactamente una vez de email/push: una interrupción justo después de que el proveedor reciba el mensaje puede provocar un reintento. La bandeja interna sí evita duplicados por `source_key`.
