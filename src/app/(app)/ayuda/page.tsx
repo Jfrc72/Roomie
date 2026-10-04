@@ -34,8 +34,12 @@ export default function Page() {
             "En Tareas cualquier integrante crea una tarea, elige responsable, prioridad y fecha límite. Solo quien la creó o un administrador pueden editarla, moverla entre Pendiente, En progreso y Completada o eliminarla. Si no tiene responsable, cualquier integrante puede empezarla o completarla, pero no editarla.",
           ],
           [
+            "¿Cómo funcionan las reservas?",
+            "Los administradores agregan los espacios u objetos que se turnan, como la lavadora o la sala. Cualquier integrante puede reservarlos hasta por 7 días, siempre que el horario no se cruce con otra reserva. Quien reservó o un administrador pueden cancelarla y el horario queda libre.",
+          ],
+          [
             "¿Por qué algunas secciones están en preparación?",
-            "Esta versión contiene la administración del hogar y las tareas. Los módulos de gastos y convivencia se incorporarán en las siguientes entregas del equipo.",
+            "Esta versión contiene la administración del hogar, las tareas y las reservas. Los módulos de gastos y convivencia se incorporarán en las siguientes entregas del equipo.",
           ],
           [
             "¿Cómo funcionan los recordatorios?",
