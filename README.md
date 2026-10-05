@@ -4,6 +4,8 @@ Aplicación para organizar apartamentos compartidos. Esta entrega contiene la ba
 
 Hecha con Next.js, React, TypeScript y PostgreSQL. La API está en el mismo proyecto; los datos se guardan en la base de datos, no en el navegador.
 
+Diseño: [prototipo navegable en Figma](https://laud-stem-81553627.figma.site/).
+
 ## Ejecutar
 
 Requiere Node.js 22 LTS y npm. También funciona con Node 20.20.2.
