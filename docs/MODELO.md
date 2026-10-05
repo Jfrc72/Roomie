@@ -28,6 +28,7 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 | votes | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación |
 | rule_versions | Versiones numeradas del reglamento de cada hogar, con texto, resumen de cambios y autor (`db/023_reglamento.sql`) |
 | rule_acceptances | Aceptación de una versión por integrante y fecha |
+| rule_reports | Incumplimientos reportados: acuerdo (texto copiado), descripción, quién reporta, a quién se señala y resolución (`db/027_incumplimientos.sql`) |
 | expenses | Gasto del hogar, pagador, autor, monto, categoría y fecha (`db/024_shared_modules.sql`) |
 | expense_shares | Cuota exacta por integrante, estado y fecha de pago |
 | direct_payments | Transferencias registradas entre dos integrantes |
@@ -94,6 +95,10 @@ Acordadas antes de implementar el cálculo:
 - La versión vigente es la más reciente; las anteriores quedan como historial de solo lectura.
 - Cada integrante acepta la versión vigente una vez (clave `rule_version_id, membership_id`); aceptar una versión antigua devuelve 409. Quien publica la acepta al publicarla. Al publicar se avisa a los demás integrantes.
 - Todos ven quién aceptó la versión vigente y quién falta. La aceptación es un registro por versión e integrante, no una firma electrónica certificada.
+- Incumplimientos (conecta el reglamento con las notificaciones):
+  - Cualquier integrante reporta qué acuerdo de la versión vigente no se cumplió. El servidor comprueba que el texto pertenezca a esa versión y guarda una copia.
+  - Opcionalmente se señala a otro integrante activo (no a uno mismo). El reporte no es anónimo.
+  - Se avisa a los administradores y a la persona señalada. Solo un administrador lo marca como resuelto, y entonces se avisa a quien reportó.
 - Asistente de acuerdos: única funcionalidad con IA del proyecto, simulada (mock) en `src/lib/assistant.ts`. Recibe una petición, muestra spinner y skeleton durante una espera aleatoria y propone cláusulas desde plantillas según los temas detectados, o revisa qué temas faltan en el borrador. Para conectar un modelo real se reemplaza `askAssistant`.
 
 ## Contratos propuestos para los módulos pendientes

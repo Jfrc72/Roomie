@@ -50,6 +50,8 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | GET | `/rules?homeId=...` | Versión vigente, `accepted_by_me`, aceptaciones de los integrantes activos e historial |
 | POST | `/rules?homeId=...` | `{content, notes}`; publica la versión siguiente; solo administrador |
 | POST | `/rules/:id/accept` | `{}`; acepta la versión vigente (409 si hay una más reciente) |
+| POST | `/rules/reports?homeId=...` | `{clause, description, reported_membership_id}`; reporta un incumplimiento de un acuerdo del reglamento vigente y avisa a los administradores y a la persona señalada |
+| POST | `/rules/reports/:id/resolve` | `{}`; marca el reporte como resuelto y avisa a quien lo hizo; solo administrador |
 | GET | `/expenses?homeId=...` | Gastos, cuotas, resumen mensual, balances bilaterales y pagos recientes |
 | POST | `/expenses?homeId=...` | `{title, category, paid_by_id, total_amount, expense_date, participant_ids}`; divide exactamente hasta centavos |
 | PATCH | `/expenses/:id` | Actualiza el gasto y regenera su división |

@@ -116,11 +116,21 @@ export interface RuleAcceptance {
   name: string;
   accepted_at: string | null;
 }
+export interface RuleReport {
+  id: string;
+  clause: string;
+  description: string;
+  reporter: string;
+  reported: string | null;
+  created_at: string;
+  resolved_at: string | null;
+}
 export interface Rules {
   current: RuleVersion | null;
   accepted_by_me: boolean;
   acceptances: RuleAcceptance[];
   history: RuleVersion[];
+  reports: RuleReport[];
 }
 export interface DashboardSummary {
   balance: number;

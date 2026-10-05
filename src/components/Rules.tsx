@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import {
   BookOpen,
   CircleCheck,
+  Flag,
   PenLine,
   ShieldCheck,
   Sparkles,
@@ -150,6 +151,15 @@ function RulesBoard({ homeId }: { homeId: string }) {
                   </div>
                 </section>
               </div>
+            )}
+            {data.current && (
+              <RuleReports
+                homeId={homeId}
+                rules={data}
+                current={data.current}
+                admin={admin}
+                onChanged={rules.reload}
+              />
             )}
             {!!data.history.length && (
               <section className="panel help">
@@ -397,5 +407,143 @@ function RuleAssistant({
         </button>
       </form>
     </section>
+  );
+}
+// Reportar que no se cumplió un acuerdo del reglamento vigente y seguir su resolución.
+function RuleReports({
+  homeId,
+  rules,
+  current,
+  admin,
+  onChanged,
+}: {
+  homeId: string;
+  rules: RulesData;
+  current: RuleVersion;
+  admin: boolean;
+  onChanged: () => void;
+}) {
+  const { session, toast } = useRoomie();
+  const [formKey, setFormKey] = useState(0);
+  const [busy, setBusy] = useState("");
+  // Cada párrafo del reglamento es un acuerdo que se puede elegir.
+  const clauses = current.content
+    .split(/\n\s*\n/)
+    .map((block) => block.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const pending = rules.reports.filter((r) => !r.resolved_at).length;
+  async function resolve(id: string) {
+    setBusy(id);
+    try {
+      await api(`/rules/reports/${id}/resolve`, "POST", {});
+      toast("Reporte resuelto.");
+      onChanged();
+    } catch (e) {
+      toast((e as Error).message);
+    } finally {
+      setBusy("");
+    }
+  }
+  return (
+    <div className="settings-grid">
+      <section className="panel">
+        <div className="section-title">
+          <h2>
+            <Flag size={20} /> Reportar incumplimiento
+          </h2>
+        </div>
+        <p>
+          Avisa a los administradores y, si la indicas, a la persona que no
+          cumplió el acuerdo. El reporte muestra tu nombre.
+        </p>
+        {/* La key nueva limpia el formulario después de enviar. */}
+        <Form
+          key={formKey}
+          label="Enviar reporte"
+          success="Reporte enviado."
+          onSave={async (form) => {
+            await api(`/rules/reports?homeId=${homeId}`, "POST", {
+              clause: form.get("clause"),
+              description: form.get("description"),
+              reported_membership_id: form.get("reported") || null,
+            });
+            setFormKey((v) => v + 1);
+            onChanged();
+          }}
+        >
+          <label>
+            Acuerdo incumplido
+            <select name="clause" required>
+              {clauses.map((clause) => (
+                <option key={clause} value={clause.slice(0, 300)}>
+                  {clause.length > 90 ? `${clause.slice(0, 89)}…` : clause}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Quién no lo cumplió (opcional)
+            <select name="reported" defaultValue="">
+              <option value="">Sin señalar a nadie</option>
+              {rules.acceptances
+                .filter((m) => m.user_id !== session.user.id)
+                .map((m) => (
+                  <option key={m.membership_id} value={m.membership_id}>
+                    {m.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Qué pasó
+            <textarea
+              name="description"
+              placeholder="Ej. La loza quedó sucia toda la noche"
+              maxLength={500}
+              rows={3}
+            />
+          </label>
+        </Form>
+      </section>
+      <section className="panel">
+        <div className="section-title">
+          <h2>Reportes</h2>
+          <span className="badge">
+            {pending} {pending === 1 ? "pendiente" : "pendientes"}
+          </span>
+        </div>
+        {rules.reports.length ? (
+          rules.reports.map((r) => (
+            <div className="invitation-row" key={r.id}>
+              <div>
+                <strong>{r.clause}</strong>
+                {r.description && <small>{r.description}</small>}
+                <small>
+                  Reportó {r.reporter}
+                  {r.reported && ` · Señalado: ${r.reported}`} ·{" "}
+                  {formatDate(r.created_at)}
+                </small>
+                <small>
+                  {r.resolved_at
+                    ? `Resuelto el ${formatDate(r.resolved_at)}`
+                    : "Pendiente"}
+                </small>
+              </div>
+              {admin && !r.resolved_at && (
+                <button
+                  className="text-button"
+                  disabled={busy === r.id}
+                  onClick={() => resolve(r.id)}
+                >
+                  Marcar resuelto
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
+          <p>No hay incumplimientos reportados.</p>
+        )}
+      </section>
+    </div>
   );
 }
