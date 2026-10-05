@@ -1,6 +1,8 @@
+# Instrucciones en el README ("Usar con Docker"). Requiere POSTGRES_PASSWORD en .env.
 services:
   db:
     image: postgres:17
+    restart: unless-stopped
     environment:
       POSTGRES_USER: roomie
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
@@ -12,6 +14,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  # Aplica las migraciones pendientes y termina; web y worker esperan a que acabe bien.
   migrate:
     build:
       context: .
@@ -19,7 +22,7 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql://roomie:${POSTGRES_PASSWORD}@db:5432/roomie
-    command: ["npx", "tsx", "scripts/migrate.ts"]
+    command: ["node", "--import", "tsx", "scripts/migrate.ts"]
     depends_on:
       db:
         condition: service_healthy
@@ -28,22 +31,39 @@ services:
       context: .
       args:
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
+    init: true
+    restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: postgresql://roomie:${POSTGRES_PASSWORD}@db:5432/roomie
       LOCAL_DATABASE: "false"
     ports: ["3000:3000"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     depends_on:
       migrate:
         condition: service_completed_successfully
+  # Recordatorios, envíos y cierre automático de votaciones.
   worker:
     build:
       context: .
       target: build
+    init: true
+    restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: postgresql://roomie:${POSTGRES_PASSWORD}@db:5432/roomie
-    command: ["npx", "tsx", "scripts/worker.ts"]
+    command: ["node", "--import", "tsx", "scripts/worker.ts"]
     depends_on:
       migrate:
         condition: service_completed_successfully
