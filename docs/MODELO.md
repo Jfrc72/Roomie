@@ -72,6 +72,7 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 - Cancelan quien reservó o un administrador, mientras la reserva no haya terminado. Cancelar es una baja lógica y libera el horario.
 - Recordatorio con clave `reservation:<id>` para quien reservó, según su anticipación; se cancela al cancelar la reserva. Si un administrador cancela la reserva de otra persona, esta recibe un aviso.
 - Inicio muestra la próxima reserva activa del hogar (`nextReservation`); `null` cuando no hay ninguna.
+- `/reservas` tiene un calendario semanal (de lunes a domingo, en la hora local del navegador) que pide a la API las reservas de esa semana, y una lista de próximas reservas desde la que se cancelan. Los filtros por recurso y "Solo mis reservas" se aplican a los dos.
 
 ## Reglas de votaciones
 

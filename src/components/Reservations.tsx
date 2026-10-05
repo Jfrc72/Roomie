@@ -4,6 +4,9 @@ import { useState } from "react";
 import {
   CalendarDays,
   CalendarPlus,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
   Package,
   Plus,
   ShieldCheck,
@@ -11,7 +14,14 @@ import {
 } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
 import { api } from "@/lib/api";
-import { formatRange, fromDateInput, toDateInput } from "@/lib/dates";
+import {
+  addDays,
+  formatRange,
+  formatTime,
+  fromDateInput,
+  startOfWeek,
+  toDateInput,
+} from "@/lib/dates";
 import { useData } from "@/lib/use-data";
 import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Reservation, Resource } from "@/types";
@@ -72,15 +82,23 @@ function ReservationBoard({ homeId }: { homeId: string }) {
   const [resourceFilter, setResourceFilter] = useState("all");
   const [onlyMine, setOnlyMine] = useState(false);
   const [newResource, setNewResource] = useState(0);
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const week = useData<Reservation[]>(
+    `/reservations?homeId=${homeId}&from=${encodeURIComponent(weekStart.toISOString())}&to=${encodeURIComponent(addDays(weekStart, 7).toISOString())}`,
+  );
+  function reloadReservations() {
+    reservations.reload();
+    week.reload();
+  }
   function changed() {
     resources.reload();
-    reservations.reload();
+    reloadReservations();
   }
-  const visible = (reservations.data ?? []).filter(
-    (r) =>
-      (resourceFilter === "all" || r.resource_id === resourceFilter) &&
-      (!onlyMine || r.user_id === session.user.id),
-  );
+  // Los filtros se aplican al calendario y a la lista.
+  const matches = (r: Reservation) =>
+    (resourceFilter === "all" || r.resource_id === resourceFilter) &&
+    (!onlyMine || r.user_id === session.user.id);
+  const visible = (reservations.data ?? []).filter(matches);
   return (
     <>
       <PageTitle
@@ -112,7 +130,7 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                   ends_at: fromDateInput(form.get("ends_at")),
                 });
                 setCreating(false);
-                reservations.reload();
+                reloadReservations();
               }}
             >
               <label>
@@ -151,6 +169,41 @@ function ReservationBoard({ homeId }: { homeId: string }) {
             </Form>
           </section>
         )}
+        {!!resources.data?.length && (
+          <>
+            <div className="form filters">
+              <label>
+                Recurso
+                <select
+                  value={resourceFilter}
+                  onChange={(e) => setResourceFilter(e.target.value)}
+                >
+                  <option value="all">Todos</option>
+                  {resources.data.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={onlyMine}
+                  onChange={(e) => setOnlyMine(e.target.checked)}
+                />
+                Solo mis reservas
+              </label>
+            </div>
+            <WeekCalendar
+              weekStart={weekStart}
+              onChange={setWeekStart}
+              reservations={week.data?.filter(matches) ?? null}
+              error={week.error}
+              retry={week.reload}
+            />
+          </>
+        )}
         <div className="settings-grid">
           <section className="panel">
             <div className="section-title">
@@ -169,40 +222,16 @@ function ReservationBoard({ homeId }: { homeId: string }) {
               </Empty>
             ) : (
               <>
-                <div className="form filters">
-                  <label>
-                    Recurso
-                    <select
-                      value={resourceFilter}
-                      onChange={(e) => setResourceFilter(e.target.value)}
-                    >
-                      <option value="all">Todos</option>
-                      {resources.data?.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="check-label">
-                    <input
-                      type="checkbox"
-                      checked={onlyMine}
-                      onChange={(e) => setOnlyMine(e.target.checked)}
-                    />
-                    Solo mis reservas
-                  </label>
-                  <small role="status">
-                    Mostrando {visible.length} de {reservations.data.length}{" "}
-                    reservas
-                  </small>
-                </div>
+                <p role="status">
+                  Mostrando {visible.length} de {reservations.data.length}{" "}
+                  reservas próximas
+                </p>
                 {visible.length ? (
                   visible.map((r) => (
                     <ReservationRow
                       key={r.id}
                       reservation={r}
-                      onChanged={reservations.reload}
+                      onChanged={reloadReservations}
                     />
                   ))
                 ) : (
@@ -372,4 +401,116 @@ function ResourceRow({
       )}
     </>
   );
+}
+// Calendario semanal de solo lectura; cancelar y reservar se hacen desde la lista y el formulario.
+function WeekCalendar({
+  weekStart,
+  onChange,
+  reservations,
+  error,
+  retry,
+}: {
+  weekStart: Date;
+  onChange: (week: Date) => void;
+  reservations: Reservation[] | null;
+  error: string;
+  retry: () => void;
+}) {
+  const { session } = useRoomie();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const today = new Date().toDateString();
+  return (
+    <section className="panel" aria-labelledby="calendario-reservas">
+      <div className="section-title">
+        <h2 id="calendario-reservas">
+          <CalendarRange size={20} /> Semana del{" "}
+          {weekStart.toLocaleDateString("es-CO", {
+            day: "numeric",
+            month: "short",
+          })}{" "}
+          al{" "}
+          {days[6].toLocaleDateString("es-CO", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+        </h2>
+        <div className="actions">
+          <button
+            className="secondary"
+            aria-label="Semana anterior"
+            onClick={() => onChange(addDays(weekStart, -7))}
+          >
+            <ChevronLeft size={17} />
+          </button>
+          <button
+            className="secondary"
+            onClick={() => onChange(startOfWeek(new Date()))}
+          >
+            Esta semana
+          </button>
+          <button
+            className="secondary"
+            aria-label="Semana siguiente"
+            onClick={() => onChange(addDays(weekStart, 7))}
+          >
+            <ChevronRight size={17} />
+          </button>
+        </div>
+      </div>
+      {!reservations ? (
+        <LoadingError error={error} retry={retry} />
+      ) : (
+        <ol className="week-calendar">
+          {days.map((day) => {
+            const end = addDays(day, 1);
+            const items = reservations.filter(
+              (r) => new Date(r.starts_at) < end && new Date(r.ends_at) > day,
+            );
+            const isToday = day.toDateString() === today;
+            return (
+              <li
+                key={day.toISOString()}
+                className={`week-day${isToday ? " is-today" : ""}`}
+              >
+                <h3>
+                  {day.toLocaleDateString("es-CO", {
+                    weekday: "long",
+                    day: "numeric",
+                  })}
+                  {isToday && <span className="badge">Hoy</span>}
+                </h3>
+                {items.length ? (
+                  <ul>
+                    {items.map((r) => (
+                      <li key={r.id}>
+                        <strong>{slot(r, day, end)}</strong>
+                        <span>{r.resource}</span>
+                        <small>
+                          {r.user_id === session.user.id
+                            ? "Tu reserva"
+                            : r.member}
+                        </small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Sin reservas</p>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
+  );
+}
+// Horario de una reserva dentro de un día, también si empieza antes o termina después.
+function slot(reservation: Reservation, day: Date, end: Date) {
+  const from = new Date(reservation.starts_at);
+  const to = new Date(reservation.ends_at);
+  if (from <= day && to >= end) return "Todo el día";
+  if (from <= day) return `Hasta ${formatTime(to)}`;
+  if (to >= end) return `Desde ${formatTime(from)}`;
+  return `${formatTime(from)} – ${formatTime(to)}`;
 }

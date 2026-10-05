@@ -24,6 +24,16 @@ const reservationSchema = z.object({
     error: "Escribe una fecha de fin válida.",
   }),
 });
+const rangeSchema = z.object({
+  from: z.iso.datetime({
+    offset: true,
+    error: "Escribe un rango de fechas válido.",
+  }),
+  to: z.iso.datetime({
+    offset: true,
+    error: "Escribe un rango de fechas válido.",
+  }),
+});
 const maxDays = 7;
 const reservationColumns = `SELECT r.id,r.resource_id,s.name AS resource,m.user_id,u.name AS member,
   m.active AS member_active,r.starts_at,r.ends_at
@@ -123,10 +133,27 @@ export async function reservationsApi(request: Request, path: string[]) {
     const homeId = homeIdFrom(request);
     const role = await requireHome(user.id, homeId);
     if (request.method === "GET") {
-      // Activas que aún no terminan; las pasadas y canceladas quedan como historial.
+      // Sin rango: activas que aún no terminan. Con from/to (calendario): activas que se
+      // cruzan con ese intervalo, incluidas las ya pasadas.
+      const params = new URL(request.url).searchParams;
+      let period = "r.ends_at>now()";
+      const values = [homeId];
+      if (params.has("from") || params.has("to")) {
+        const range = rangeSchema.parse({
+          from: params.get("from"),
+          to: params.get("to"),
+        });
+        const days =
+          (new Date(range.to).getTime() - new Date(range.from).getTime()) /
+          86400000;
+        if (days <= 0 || days > 31)
+          throw new ApiError(400, "El rango debe durar entre 1 y 31 días.");
+        period = "r.ends_at>$2 AND r.starts_at<$3";
+        values.push(range.from, range.to);
+      }
       const rows = await query<Omit<Reservation, "can_cancel">>(
-        `${reservationColumns} WHERE r.home_id=$1 AND r.status='active' AND r.ends_at>now() ORDER BY r.starts_at`,
-        [homeId],
+        `${reservationColumns} WHERE r.home_id=$1 AND r.status='active' AND ${period} ORDER BY r.starts_at`,
+        values,
       );
       return rows.map((r) => ({
         ...r,

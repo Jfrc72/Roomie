@@ -40,7 +40,7 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | POST | `/resources?homeId=...` | `{name, description}`; solo administrador |
 | PATCH | `/resources/:id` | `{name, description}`; solo administrador |
 | DELETE | `/resources/:id` | Retira el recurso (baja lógica); solo administrador y sin reservas próximas (409) |
-| GET | `/reservations?homeId=...` | Reservas activas que aún no terminan, con `can_cancel` |
+| GET | `/reservations?homeId=...` | Reservas activas que aún no terminan, con `can_cancel`. Con `&from=...&to=...` (ISO, 1 a 31 días): las activas que se cruzan con ese intervalo, incluidas las pasadas (calendario) |
 | POST | `/reservations?homeId=...` | `{resource_id, starts_at, ends_at}`; para quien la crea. 409 si se cruza con otra |
 | DELETE | `/reservations/:id` | Cancela (baja lógica); quien reservó o administrador |
 | GET | `/polls?homeId=...` | Votaciones con opciones, `my_option_id`, participación y `can_close`. Antes cierra las vencidas. Recuentos solo si está cerrada; nombres por opción solo si está cerrada y no es anónima |

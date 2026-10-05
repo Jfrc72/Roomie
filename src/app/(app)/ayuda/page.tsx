@@ -35,7 +35,7 @@ export default function Page() {
           ],
           [
             "¿Cómo funcionan las reservas?",
-            "Los administradores agregan los espacios u objetos que se turnan, como la lavadora o la sala. Cualquier integrante puede reservarlos hasta por 7 días, siempre que el horario no se cruce con otra reserva. Quien reservó o un administrador pueden cancelarla y el horario queda libre.",
+            "Los administradores agregan los espacios u objetos que se turnan, como la lavadora o la sala. Cualquier integrante puede reservarlos hasta por 7 días, siempre que el horario no se cruce con otra reserva. Quien reservó o un administrador pueden cancelarla y el horario queda libre. El calendario semanal muestra qué está ocupado cada día.",
           ],
           [
             "¿Cómo funcionan las votaciones?",
