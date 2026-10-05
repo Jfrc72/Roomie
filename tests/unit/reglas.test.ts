@@ -20,14 +20,16 @@ const valid = {
   existing: false,
 };
 
-describe("HU1.3 / HU1.4 · Reglas del último administrador", () => {
-  it("impide retirar al único administrador", () =>
+describe("Reglas del último administrador", () => {
+  it("HU1.3 · impide retirar al único administrador", () =>
     expect(canRemoveAdmin("admin", null, 1)).toBe(false));
-  it("impide degradar al único administrador", () =>
+  it("HU1.4 · impide degradar al único administrador", () =>
     expect(canRemoveAdmin("admin", "member", 1)).toBe(false));
-  it("permite la baja cuando queda otro administrador", () =>
+  it("HU1.3 · permite la baja cuando queda otro administrador", () =>
     expect(canRemoveAdmin("admin", null, 2)).toBe(true));
 });
+it("HU1.4 · permite cambiar a integrante cuando queda otro administrador", () =>
+  expect(canRemoveAdmin("admin", "member", 2)).toBe(true));
 describe("HU1.2 · Reglas de aceptación", () => {
   it("acepta el correo correcto mientras exista espacio", () =>
     expect(invitationProblem(valid, now)).toBeNull());

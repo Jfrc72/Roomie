@@ -180,8 +180,8 @@ describe("HU10.1 · Registro", () => {
   });
 });
 
-describe("HU10.1 / HU10.2 · Sesión", () => {
-  it("abre la invitación pendiente después del login", async () => {
+describe("Sesión", () => {
+  it("HU10.1 · abre la invitación pendiente después del login", async () => {
     window.history.replaceState(
       {},
       "",
@@ -191,7 +191,7 @@ describe("HU10.1 / HU10.2 · Sesión", () => {
     await submitLogin();
     expect(mocks.push).toHaveBeenCalledWith("/invitaciones?token=abc");
   });
-  it("mantiene el formulario cuando las credenciales no coinciden", async () => {
+  it("HU10.1 · mantiene el formulario cuando las credenciales no coinciden", async () => {
     vi.mocked(api).mockRejectedValueOnce(
       new Error("Correo o contraseña incorrectos."),
     );
@@ -202,7 +202,7 @@ describe("HU10.1 / HU10.2 · Sesión", () => {
     );
     expect(mocks.push).not.toHaveBeenCalled();
   });
-  it("cierra la sesión desde la barra superior", async () => {
+  it("HU10.2 · cierra la sesión desde la barra superior", async () => {
     const user = userEvent.setup();
     show(
       <AppShell>
@@ -312,8 +312,8 @@ describe("HU1.1 · Apartamentos", () => {
   });
 });
 
-describe("HU1.3 / HU1.4 · Integrantes y roles", () => {
-  it("promueve a un integrante mediante una confirmación", async () => {
+describe("Integrantes y roles", () => {
+  it("HU1.4 · promueve a un integrante mediante una confirmación", async () => {
     const user = userEvent.setup();
     activateHome();
     show(<HomeManager />);
@@ -326,7 +326,7 @@ describe("HU1.3 / HU1.4 · Integrantes y roles", () => {
       role: "admin",
     });
   });
-  it("presenta el rechazo al intentar retirar al último administrador", async () => {
+  it("HU1.3 · presenta el rechazo al intentar retirar al último administrador", async () => {
     const user = userEvent.setup();
     activateHome();
     vi.mocked(api).mockImplementation(async (path, method = "GET") => {
@@ -350,7 +350,7 @@ describe("HU1.3 / HU1.4 · Integrantes y roles", () => {
     );
     expect(mocks.refresh).not.toHaveBeenCalled();
   });
-  it("muestra los datos sin controles administrativos a un integrante", async () => {
+  it("HU1.3 · muestra los datos sin controles administrativos a un integrante", async () => {
     activateHome("member");
     show(<HomeManager />);
     await homeReady();

@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "test:integration": "tsx --env-file=.env --test --test-concurrency=1 tests/*.test.ts",
     "test:e2e": "playwright test",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "test:hu": "node scripts/check-unit-stories.mjs"
   },
   "dependencies": {
     "async-exit-hook": "^2.0.1",
