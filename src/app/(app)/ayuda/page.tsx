@@ -39,7 +39,7 @@ export default function Page() {
           ],
           [
             "¿Cómo funcionan las votaciones?",
-            "Cualquier integrante abre una votación con 2 a 10 opciones. Se decide por mayoría simple: gana la opción con más votos y un empate no tiene ganadora. Puedes cambiar tu voto mientras siga abierta; los resultados aparecen al cerrarla. En las anónimas nadie ve qué eligió cada persona. La cierran quien la creó, un administrador o la fecha de cierre automático; quien no votó cuenta como abstención.",
+            "Cualquier integrante abre una votación con 2 a 10 opciones y elige cómo se decide: por mayoría simple (gana la opción con más votos y un empate no tiene ganadora) o por unanimidad (gana solo si todos votan por la misma opción). Puedes cambiar tu voto mientras siga abierta; los resultados aparecen al cerrarla. En las anónimas nadie ve qué eligió cada persona. La cierran quien la creó, un administrador o la fecha de cierre automático; quien no votó cuenta como abstención.",
           ],
           [
             "¿Cómo funcionan los acuerdos del hogar?",

@@ -84,10 +84,12 @@ export interface PollOption {
   votes: number | null;
   voters: string[] | null;
 }
+export type PollRule = "simple" | "unanimous";
 export interface Poll {
   id: string;
   title: string;
   description: string;
+  rule: PollRule;
   anonymous: boolean;
   closes_at: string | null;
   status: "open" | "closed";

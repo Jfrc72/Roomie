@@ -23,7 +23,7 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 | task_history | Cambios de estado de cada tarea con su autor; `previous_status` es null al crearla |
 | resources | Espacio u objeto reservable del hogar; `active=false` lo retira sin borrar sus reservas (`db/021_reservas.sql`) |
 | reservations | Recurso, integrante (`membership_id`), inicio, fin y estado `active`/`cancelled` con fecha de cancelación |
-| polls | Pregunta, detalles, regla (`simple`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
+| polls | Pregunta, detalles, regla (`simple` o `unanimous`, `db/026_votaciones_unanimidad.sql`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
 | poll_options | Opciones de cada votación en orden (`position`), sin etiquetas repetidas |
 | votes | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación |
 | rule_versions | Versiones numeradas del reglamento de cada hogar, con texto, resumen de cambios y autor (`db/023_reglamento.sql`) |
@@ -77,7 +77,10 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 
 Acordadas antes de implementar el cálculo:
 
-- Regla: mayoría simple. Gana la opción con más votos. Un empate en el primer lugar no tiene ganadora; si nadie votó, tampoco.
+- Regla, elegida al crear la votación:
+  - Mayoría simple (`simple`): gana la opción con más votos. Un empate en el primer lugar no tiene ganadora; si nadie votó, tampoco.
+  - Unanimidad (`unanimous`): gana solo si todos los integrantes habilitados al cerrar votaron por la misma opción. Una abstención o un voto distinto bastan para que no haya ganadora.
+  - El cálculo está en `pollResult` (`src/lib/polls.ts`) y lo usan tanto el aviso de cierre como la interfaz.
 - Habilitados: cualquier integrante activo vota mientras la votación está abierta y puede cambiar su voto. Al cerrar solo cuentan los votos de quienes siguen activos; los de integrantes retirados se eliminan. Quien no votó cuenta como abstención (`eligible_count` menos votos).
 - Cualquier integrante abre votaciones. Las cierran quien la creó o un administrador, o el cierre automático en `closes_at`. El worker revisa cada 15 segundos y la API cierra las vencidas antes de listarlas. Al cerrar se avisa a los integrantes y se registra la actividad (sin actor si fue automático).
 - Votar comparte la fila de la votación (`FOR SHARE`) y cerrar la bloquea (`FOR UPDATE`), así ningún voto entra después del recuento.

@@ -44,7 +44,7 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | POST | `/reservations?homeId=...` | `{resource_id, starts_at, ends_at}`; para quien la crea. 409 si se cruza con otra |
 | DELETE | `/reservations/:id` | Cancela (baja lógica); quien reservó o administrador |
 | GET | `/polls?homeId=...` | Votaciones con opciones, `my_option_id`, participación y `can_close`. Antes cierra las vencidas. Recuentos solo si está cerrada; nombres por opción solo si está cerrada y no es anónima |
-| POST | `/polls?homeId=...` | `{title, description, anonymous, closes_at, options: string[]}`; 2 a 10 opciones distintas |
+| POST | `/polls?homeId=...` | `{title, description, rule?, anonymous, closes_at, options: string[]}`; `rule` es `simple` (por defecto) o `unanimous`; 2 a 10 opciones distintas |
 | POST | `/polls/:id/votes` | `{option_id}`; crea o cambia el voto propio mientras esté abierta (409 si cerró) |
 | POST | `/polls/:id/close` | `{}`; creador o administrador |
 | GET | `/rules?homeId=...` | Versión vigente, `accepted_by_me`, aceptaciones de los integrantes activos e historial |

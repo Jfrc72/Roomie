@@ -5,7 +5,7 @@ import { Lock, Plus, X } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
 import { api } from "@/lib/api";
 import { formatDate, fromDateInput, toDateInput } from "@/lib/dates";
-import { pollWinners } from "@/lib/polls";
+import { pollResult, pollRules, ruleLabels } from "@/lib/polls";
 import { useData } from "@/lib/use-data";
 import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Poll } from "@/types";
@@ -69,6 +69,7 @@ function PollBoard({ homeId }: { homeId: string }) {
                 await api(`/polls?homeId=${homeId}`, "POST", {
                   title: form.get("title"),
                   description: form.get("description"),
+                  rule: form.get("rule"),
                   anonymous: form.get("anonymous") === "on",
                   closes_at: fromDateInput(form.get("closes_at")),
                   options: String(form.get("options"))
@@ -121,14 +122,29 @@ function PollBoard({ homeId }: { homeId: string }) {
                 Opcional. Quien la crea o un administrador también pueden
                 cerrarla antes.
               </small>
+              <label>
+                Tipo de decisión
+                <select name="rule" defaultValue="simple">
+                  {pollRules.map((rule) => (
+                    <option key={rule} value={rule}>
+                      {ruleLabels[rule]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <small>
+                Mayoría simple: gana la opción con más votos y un empate no
+                tiene ganadora. Unanimidad: gana solo si todos los integrantes
+                votan por la misma opción; una abstención basta para que no haya
+                ganadora.
+              </small>
               <label className="check-label">
                 <input type="checkbox" name="anonymous" />
                 Votación anónima
               </label>
               <small>
                 En una votación anónima nadie en Roomie verá qué eligió cada
-                persona, solo los totales. Se decide por mayoría simple: gana la
-                opción con más votos y un empate no tiene ganadora.
+                persona, solo los totales.
               </small>
             </Form>
           </section>
@@ -185,7 +201,7 @@ function PollCard({
       </div>
       {p.description && <p>{p.description}</p>}
       <p>
-        Propuesta por {p.creator} · Mayoría simple ·{" "}
+        Propuesta por {p.creator} · {ruleLabels[p.rule]} ·{" "}
         {p.closed_at
           ? `Cerrada ${formatDate(p.closed_at)}`
           : p.closes_at
@@ -249,18 +265,19 @@ function PollCard({
   );
 }
 function PollResults({ poll: p }: { poll: Poll }) {
-  const winners = pollWinners(p.options);
+  const { leaders, winner } = pollResult(p.options, p.rule, p.eligible);
   const abstentions = Math.max(0, p.eligible - p.voters);
+  let headline = "Nadie votó";
+  if (winner)
+    headline = `Ganó "${winner.label}"${p.rule === "unanimous" ? " por unanimidad" : ""}`;
+  else if (p.rule === "unanimous" && leaders.length)
+    headline = "No hubo unanimidad: no hay ganadora";
+  else if (leaders.length)
+    headline = `Empate entre ${leaders.map((o) => `"${o.label}"`).join(", ")}: no hay ganadora`;
   return (
     <>
       <p>
-        <strong>
-          {winners.length === 1
-            ? `Ganó "${winners[0].label}"`
-            : winners.length
-              ? `Empate entre ${winners.map((w) => `"${w.label}"`).join(", ")}: no hay ganadora`
-              : "Nadie votó"}
-        </strong>
+        <strong>{headline}</strong>
       </p>
       {p.options.map((o) => (
         <div className="invitation-row" key={o.id}>
@@ -270,7 +287,7 @@ function PollResults({ poll: p }: { poll: Poll }) {
               {o.votes} {o.votes === 1 ? "voto" : "votos"}
               {p.voters > 0 &&
                 ` · ${Math.round(((o.votes ?? 0) * 100) / p.voters)} %`}
-              {winners.length === 1 && winners[0] === o && " · Ganadora"}
+              {winner === o && " · Ganadora"}
             </small>
             {!!o.voters?.length && <small>{o.voters.join(", ")}</small>}
           </div>

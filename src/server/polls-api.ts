@@ -16,6 +16,9 @@ const pollSchema = z.object({
     .string()
     .trim()
     .max(500, "Los detalles admiten hasta 500 caracteres."),
+  rule: z
+    .enum(["simple", "unanimous"], "Elige un tipo de decisión válido.")
+    .default("simple"),
   anonymous: z.boolean(),
   closes_at: z.iso
     .datetime({ offset: true, error: "Escribe una fecha de cierre válida." })
@@ -54,11 +57,12 @@ export async function pollsApi(request: Request, path: string[]) {
         throw new ApiError(400, "La fecha de cierre debe estar en el futuro.");
       return transaction(async (db) => {
         const { rows } = await db.query(
-          "INSERT INTO polls(home_id,title,description,anonymous,closes_at,created_by) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",
+          "INSERT INTO polls(home_id,title,description,rule,anonymous,closes_at,created_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id",
           [
             homeId,
             data.title,
             data.description,
+            data.rule,
             data.anonymous,
             data.closes_at,
             user.id,
@@ -105,7 +109,7 @@ export async function pollsApi(request: Request, path: string[]) {
   return transaction(async (db) => {
     // Votar comparte la fila y cerrar la bloquea: ningún voto entra después del recuento.
     const { rows } = await db.query(
-      `SELECT id,home_id,title,status,closes_at,created_by FROM polls WHERE id=$1 ${data ? "FOR SHARE" : "FOR UPDATE"}`,
+      `SELECT id,home_id,title,rule,status,closes_at,created_by FROM polls WHERE id=$1 ${data ? "FOR SHARE" : "FOR UPDATE"}`,
       [pollId],
     );
     const poll = rows[0];
@@ -154,7 +158,7 @@ async function listPolls(
   role: "admin" | "member",
 ) {
   const polls = await query(
-    `SELECT p.id,p.title,p.description,p.anonymous,p.closes_at,p.status,p.created_by,c.name AS creator,
+    `SELECT p.id,p.title,p.description,p.rule,p.anonymous,p.closes_at,p.status,p.created_by,c.name AS creator,
     p.created_at,p.closed_at,p.eligible_count,
     (SELECT v.option_id FROM votes v JOIN memberships m ON m.id=v.membership_id
       WHERE v.poll_id=p.id AND m.user_id=$2) AS my_option_id,
