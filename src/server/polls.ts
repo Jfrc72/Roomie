@@ -1,12 +1,13 @@
 import type { PoolClient } from "pg";
 import { transaction } from "./db";
 import { notify } from "./notifications";
-import { pollWinners, resultText } from "@/lib/polls";
+import { pollResult } from "@/lib/polls";
+import type { PollRule } from "@/types";
 // Sin dependencias de la sesión: también lo usa el worker para el cierre automático.
 // El llamador debe tener bloqueada la fila de la votación (FOR UPDATE).
 export async function closePoll(
   db: PoolClient,
-  poll: { id: string; home_id: string; title: string },
+  poll: { id: string; home_id: string; title: string; rule: PollRule },
   actorId: string | null,
 ) {
   // Cuentan los votos de quienes siguen activos al cerrar; los de integrantes retirados se descartan.
@@ -32,7 +33,7 @@ export async function closePoll(
     "INSERT INTO activities(home_id,actor_id,message) VALUES($1,$2,$3)",
     [poll.home_id, actorId, `cerró la votación "${poll.title}"`],
   );
-  const message = `"${poll.title}": ${resultText(pollWinners(options))}`;
+  const message = `"${poll.title}": ${pollResult(options, poll.rule, members.rowCount ?? 0).text}`;
   for (const { user_id } of members.rows)
     if (user_id !== actorId)
       await notify(db, {
@@ -48,7 +49,7 @@ export async function closePoll(
 export async function closeExpiredPolls(homeId?: string) {
   await transaction(async (db) => {
     const { rows } = await db.query(
-      `SELECT id,home_id,title FROM polls WHERE status='open' AND closes_at<=now()
+      `SELECT id,home_id,title,rule FROM polls WHERE status='open' AND closes_at<=now()
       ${homeId ? "AND home_id=$1" : ""} FOR UPDATE SKIP LOCKED`,
       homeId ? [homeId] : [],
     );

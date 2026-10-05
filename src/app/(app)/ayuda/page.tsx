@@ -35,15 +35,15 @@ export default function Page() {
           ],
           [
             "¿Cómo funcionan las reservas?",
-            "Los administradores agregan los espacios u objetos que se turnan, como la lavadora o la sala. Cualquier integrante puede reservarlos hasta por 7 días, siempre que el horario no se cruce con otra reserva. Quien reservó o un administrador pueden cancelarla y el horario queda libre.",
+            "Los administradores agregan los espacios u objetos que se turnan, como la lavadora o la sala. Cualquier integrante puede reservarlos hasta por 7 días, siempre que el horario no se cruce con otra reserva. Quien reservó o un administrador pueden cancelarla y el horario queda libre. El calendario semanal muestra qué está ocupado cada día.",
           ],
           [
             "¿Cómo funcionan las votaciones?",
-            "Cualquier integrante abre una votación con 2 a 10 opciones. Se decide por mayoría simple: gana la opción con más votos y un empate no tiene ganadora. Puedes cambiar tu voto mientras siga abierta; los resultados aparecen al cerrarla. En las anónimas nadie ve qué eligió cada persona. La cierran quien la creó, un administrador o la fecha de cierre automático; quien no votó cuenta como abstención.",
+            "Cualquier integrante abre una votación con 2 a 10 opciones y elige cómo se decide: por mayoría simple (gana la opción con más votos y un empate no tiene ganadora) o por unanimidad (gana solo si todos votan por la misma opción). Puedes cambiar tu voto mientras siga abierta; los resultados aparecen al cerrarla. En las anónimas nadie ve qué eligió cada persona. La cierran quien la creó, un administrador o la fecha de cierre automático; quien no votó cuenta como abstención.",
           ],
           [
             "¿Cómo funcionan los acuerdos del hogar?",
-            "Los administradores redactan y publican versiones del reglamento; un asistente de demostración sugiere cláusulas. Cada integrante lee la versión vigente y la acepta, y todos ven quién falta. Al publicar una versión nueva hay que aceptarla de nuevo. Aceptar es un registro de lectura, no una firma electrónica certificada.",
+            "Los administradores redactan y publican versiones del reglamento; un asistente de demostración sugiere cláusulas y propone un reparto equitativo de las tareas si le cuentas que no se están cumpliendo. Cada integrante lee la versión vigente y la acepta, y todos ven quién falta. Al publicar una versión nueva hay que aceptarla de nuevo. Aceptar es un registro de lectura, no una firma electrónica certificada. Si alguien no cumple un acuerdo, cualquier integrante puede reportarlo: se avisa a los administradores y a la persona señalada, y un administrador lo marca como resuelto.",
           ],
           [
             "¿Por qué algunas secciones están en preparación?",

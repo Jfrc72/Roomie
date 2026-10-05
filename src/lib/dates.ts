@@ -7,13 +7,19 @@ export function formatDate(value: string) {
     minute: "2-digit",
   });
 }
+export function formatTime(value: Date) {
+  return value.toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 // Si empieza y termina el mismo día, la fecha se escribe una sola vez.
 export function formatRange(start: string, end: string) {
   const from = new Date(start);
   const to = new Date(end);
   const until =
     from.toDateString() === to.toDateString()
-      ? to.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })
+      ? formatTime(to)
       : formatDate(end);
   return `${from.toLocaleString("es-CO", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} – ${until}`;
 }
@@ -27,4 +33,16 @@ export function toDateInput(value: string | null | undefined) {
 }
 export function fromDateInput(value: FormDataEntryValue | null) {
   return value ? new Date(String(value)).toISOString() : null;
+}
+// Semanas de lunes a domingo en la hora local del navegador.
+export function startOfWeek(value: Date) {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  return date;
+}
+export function addDays(value: Date, days: number) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return date;
 }

@@ -3,20 +3,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
-import { api } from "@/lib/api";
-import { useData } from "@/lib/use-data";
+import { useTaskMoves, useTasks } from "@/hooks/useTasks";
 import { formatDate, toDateInput } from "@/lib/dates";
-import {
-  canAdvance,
-  isOverdue,
-  priorities,
-  priorityLabels,
-  statuses,
-  statusLabels,
-  taskPayload,
-} from "@/lib/tasks";
+import { isOverdue, priorities, priorityLabels, statuses } from "@/lib/tasks";
+import NoHome from "./NoHome";
 import { Empty, Form, LoadingError, PageTitle } from "./ui";
-import type { Home, Member, Task, TaskStatus } from "@/types";
+import type { Member, Task, TaskStatus } from "@/types";
 const columns: Record<TaskStatus, { title: string; empty: string }> = {
   pending: { title: "Pendientes", empty: "Nada por empezar." },
   in_progress: {
@@ -28,18 +20,6 @@ const columns: Record<TaskStatus, { title: string; empty: string }> = {
     empty: "Sin tareas completadas en los últimos 30 días.",
   },
 };
-// El estado se cambia con botones: el tablero no depende de arrastrar.
-const moves: Record<TaskStatus, { status: TaskStatus; label: string }[]> = {
-  pending: [
-    { status: "in_progress", label: "Empezar" },
-    { status: "completed", label: "Completar" },
-  ],
-  in_progress: [
-    { status: "pending", label: "Volver a pendiente" },
-    { status: "completed", label: "Completar" },
-  ],
-  completed: [{ status: "pending", label: "Reabrir" }],
-};
 export function StatusButtons({
   task,
   onMoved,
@@ -47,24 +27,8 @@ export function StatusButtons({
   task: Task;
   onMoved: () => void;
 }) {
-  const { toast } = useRoomie();
-  const [busy, setBusy] = useState(false);
-  const options = moves[task.status].filter(
-    (m) => task.can_edit || canAdvance(task, m.status),
-  );
+  const { options, busy, move } = useTaskMoves(task, onMoved);
   if (!options.length) return null;
-  async function move(status: TaskStatus) {
-    setBusy(true);
-    try {
-      await api(`/tasks/${task.id}`, "PATCH", { status });
-      toast(`Tarea marcada como ${statusLabels[status].toLowerCase()}.`);
-      onMoved();
-    } catch (e) {
-      toast((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <div className="actions">
       {options.map((m) => (
@@ -160,39 +124,17 @@ export default function Tasks() {
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
-      <>
-        <PageTitle
-          title="Tareas"
-          description="Una rutina más justa para todos."
-        />
-        <section className="panel">
-          <Empty title="Primero, un hogar">
-            Crea tu apartamento o acepta una invitación para repartir las tareas
-            con tus roommates.
-          </Empty>
-          <Link className="button" href="/apartamento">
-            Crear mi apartamento
-          </Link>
-        </section>
-      </>
+      <NoHome title="Tareas" description="Una rutina más justa para todos.">
+        Crea tu apartamento o acepta una invitación para repartir las tareas con
+        tus roommates.
+      </NoHome>
     );
   return <TaskBoard homeId={session.activeHomeId} />;
 }
 function TaskBoard({ homeId }: { homeId: string }) {
-  const { session } = useRoomie();
-  const tasks = useData<Task[]>(`/tasks?homeId=${homeId}`);
-  const home = useData<Home & { members: Member[] }>(`/homes/${homeId}`);
+  const { tasks, error, reload, members, visible, filters, createTask } =
+    useTasks(homeId);
   const [creating, setCreating] = useState(false);
-  const [assignee, setAssignee] = useState("all");
-  const [priority, setPriority] = useState("all");
-  const visible = (tasks.data ?? []).filter(
-    (t) =>
-      (assignee === "all" ||
-        (assignee === "mine" && t.assignee_user_id === session.user.id) ||
-        (assignee === "none" && !t.assigned_membership_id) ||
-        t.assigned_membership_id === assignee) &&
-      (priority === "all" || t.priority === priority),
-  );
   return (
     <>
       <PageTitle
@@ -212,30 +154,25 @@ function TaskBoard({ homeId }: { homeId: string }) {
         {creating && (
           <section className="panel narrow">
             <h2>Una nueva responsabilidad</h2>
-            {!home.data ? (
-              <LoadingError error={home.error} retry={home.reload} />
+            {!members.members ? (
+              <LoadingError error={members.error} retry={members.reload} />
             ) : (
               <Form
                 label="Crear tarea"
                 success="Tarea creada."
                 onSave={async (form) => {
-                  await api(
-                    `/tasks?homeId=${homeId}`,
-                    "POST",
-                    taskPayload(form),
-                  );
+                  await createTask(form);
                   setCreating(false);
-                  tasks.reload();
                 }}
               >
-                <TaskFields members={home.data.members} />
+                <TaskFields members={members.members} />
               </Form>
             )}
           </section>
         )}
-        {!tasks.data ? (
-          <LoadingError error={tasks.error} retry={tasks.reload} />
-        ) : !tasks.data.length ? (
+        {!tasks ? (
+          <LoadingError error={error} retry={reload} />
+        ) : !tasks.length ? (
           <section className="panel">
             <Empty title="Una rutina más justa empieza aquí">
               Crea la primera tarea y asígnala a un roommate. Todos verán quién
@@ -248,13 +185,13 @@ function TaskBoard({ homeId }: { homeId: string }) {
               <label>
                 Responsable
                 <select
-                  value={assignee}
-                  onChange={(e) => setAssignee(e.target.value)}
+                  value={filters.assignee}
+                  onChange={(e) => filters.setAssignee(e.target.value)}
                 >
                   <option value="all">Todas</option>
                   <option value="mine">Asignadas a mí</option>
                   <option value="none">Sin asignar</option>
-                  {home.data?.members.map((m) => (
+                  {members.members?.map((m) => (
                     <option key={m.membership_id} value={m.membership_id}>
                       {m.name}
                     </option>
@@ -264,8 +201,8 @@ function TaskBoard({ homeId }: { homeId: string }) {
               <label>
                 Prioridad
                 <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
+                  value={filters.priority}
+                  onChange={(e) => filters.setPriority(e.target.value)}
                 >
                   <option value="all">Todas</option>
                   {priorities.map((p) => (
@@ -276,7 +213,7 @@ function TaskBoard({ homeId }: { homeId: string }) {
                 </select>
               </label>
               <small role="status">
-                Mostrando {visible.length} de {tasks.data.length} tareas
+                Mostrando {visible.length} de {tasks.length} tareas
               </small>
             </div>
             <div className="task-board">
@@ -295,7 +232,7 @@ function TaskBoard({ homeId }: { homeId: string }) {
                     {s === "completed" && <p>Últimos 30 días</p>}
                     {items.length ? (
                       items.map((t) => (
-                        <TaskCard key={t.id} task={t} onMoved={tasks.reload} />
+                        <TaskCard key={t.id} task={t} onMoved={reload} />
                       ))
                     ) : (
                       <p>{columns[s].empty}</p>

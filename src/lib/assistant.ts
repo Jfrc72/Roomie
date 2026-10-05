@@ -80,29 +80,120 @@ const topics = [
       "Un administrador publica cada nueva versión y cada integrante la acepta en Acuerdos.",
     ],
   },
+  {
+    title: "reparto de tareas",
+    keywords: ["rotaci", "turno"],
+    clauses: [
+      "Las tareas del hogar rotan cada semana para que la carga sea pareja entre todos.",
+    ],
+  },
 ];
 export const assistantExamples = [
+  "Somos cuatro y nadie cumple las tareas",
   "Reglas para las visitas",
   "Horarios de silencio",
-  "¿Cómo repartimos el aseo?",
   "Revisa mi borrador",
 ];
 const normalize = (text: string) =>
-  text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 const join = (items: string[]) =>
   items.length > 1
     ? `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`
     : items[0];
+// Caso del pitch: pedir un reparto equitativo cuando no se cumplen las tareas.
+const distributionWords = [
+  "tarea",
+  "cumpl",
+  "repart",
+  "rotaci",
+  "turno",
+  "equitativ",
+  "oficio",
+];
+const numberWords: Record<string, number> = {
+  dos: 2,
+  tres: 3,
+  cuatro: 4,
+  cinco: 5,
+  seis: 6,
+  siete: 7,
+  ocho: 8,
+};
+const areas = ["cocina", "baños", "zonas comunes", "basura"];
+const peopleWords = ["personas", "roommates", "integrantes", "companeros"];
+// "somos cuatro", "5 personas", "vivimos tres"… Solo hogares de 2 a 8 personas.
+function peopleIn(text: string) {
+  const words = text.split(/[^a-z0-9]+/);
+  const count = (word: string) =>
+    numberWords[word] ?? (/^\d+$/.test(word) ? Number(word) : 0);
+  for (let i = 0; i < words.length - 1; i++) {
+    let n = 0;
+    if (words[i] === "somos" || words[i] === "vivimos") n = count(words[i + 1]);
+    else if (peopleWords.includes(words[i + 1])) n = count(words[i]);
+    if (n >= 2 && n <= 8) return n;
+  }
+  return null;
+}
+// Rotación semanal: el área j le toca a la persona (j + semana) mod n. En max(n, 4) semanas
+// todos pasan por todas las áreas; con más de 4 personas, cada semana alguien descansa.
+function distribution(asked: string, members: string[]): AssistantReply {
+  const counted = peopleIn(asked);
+  const n = counted ?? (members.length >= 2 ? members.length : 4);
+  const names =
+    members.length === n
+      ? members
+      : Array.from({ length: n }, (_, i) => `Persona ${i + 1}`);
+  const cycle = Math.max(n, areas.length);
+  const weeks = Array.from({ length: Math.min(cycle, 4) }, (_, week) => {
+    const turns = names.map((name, person) => {
+      const mine = areas.filter((_, area) => (area + week) % n === person);
+      return `${name}: ${mine.length ? mine.join(" y ") : "descansa"}`;
+    });
+    return `Semana ${week + 1}: ${turns.join("; ")}.`;
+  });
+  const notes = [
+    counted === null && members.length < 2
+      ? "No sé cuántas personas viven contigo, así que usé 4; dímelo y la ajusto."
+      : "",
+    names[0] === "Persona 1" && counted !== null
+      ? "Cambia los nombres por los de tu hogar."
+      : "",
+  ].filter(Boolean);
+  return {
+    text: `Para ${n} personas propongo una rotación semanal de ${areas.length} áreas: cada lunes cambian de responsable, así en ${cycle} semanas todos pasan por todas y la carga queda pareja. ${notes.join(" ")}`.trim(),
+    clauses: [
+      `Rotación semanal de tareas (empieza cada lunes):\n${weeks.join("\n")}${cycle > 4 ? "\nDespués se sigue rotando en el mismo orden." : "\nDespués se repite el ciclo."}`,
+      "Cada responsable crea su tarea en Tareas al inicio de la semana y la marca como completada al terminar.",
+      "Quien no pueda cumplir su turno lo cambia con otra persona antes del lunes y lo avisa a todos.",
+      "Si una tarea queda sin hacer dos semanas seguidas, cualquiera puede reportar el incumplimiento en Acuerdos.",
+    ],
+  };
+}
+// Punto de conexión: la interfaz llama a esta función como llamaría a un modelo real.
 export async function askAssistant(
   prompt: string,
   draft: string,
+  members: string[] = [],
 ): Promise<AssistantReply> {
   // Simula el tiempo de respuesta de un modelo.
   await new Promise((resolve) =>
     setTimeout(resolve, 900 + Math.random() * 900),
   );
+  return assistantReply(prompt, draft, members);
+}
+// Respuesta simulada, sin la espera: lógica pura que también usan las pruebas unitarias.
+export function assistantReply(
+  prompt: string,
+  draft: string,
+  members: string[] = [],
+): AssistantReply {
   const asked = normalize(prompt);
   const written = normalize(draft);
+  if (distributionWords.some((word) => asked.includes(word)))
+    return distribution(asked, members);
   const requested = topics.filter((t) =>
     t.keywords.some((k) => asked.includes(k)),
   );

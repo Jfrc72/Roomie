@@ -1,29 +1,15 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, History, ShieldCheck, Trash2 } from "lucide-react";
-import { useRoomie } from "@/context/RoomieContext";
-import { api } from "@/lib/api";
-import { useData } from "@/lib/use-data";
+import { useHomeMembers } from "@/hooks/useHomeMembers";
+import { useTaskDetail } from "@/hooks/useTasks";
 import { formatDate } from "@/lib/dates";
-import {
-  isOverdue,
-  priorityLabels,
-  statuses,
-  statusLabels,
-  taskPayload,
-} from "@/lib/tasks";
+import { isOverdue, priorityLabels, statuses, statusLabels } from "@/lib/tasks";
 import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import { StatusButtons, TaskFields } from "./Tasks";
-import type { Home, Member, Task, TaskHistoryEntry } from "@/types";
+import type { Task } from "@/types";
 export default function TaskDetail({ id }: { id: string }) {
-  const { session } = useRoomie();
-  const router = useRouter();
-  const { data, error, reload } = useData<
-    Task & { history: TaskHistoryEntry[] }
-  >(`/tasks/${id}`);
-  // Al cambiar de apartamento no se sigue mostrando una tarea del anterior.
-  const task = data?.home_id === session.activeHomeId ? data : null;
+  const { task, otherHome, error, reload, update, remove } = useTaskDetail(id);
   return (
     <>
       <PageTitle
@@ -41,14 +27,14 @@ export default function TaskDetail({ id }: { id: string }) {
           </Link>
         }
       />
-      {!data ? (
-        <LoadingError error={error} retry={reload} />
-      ) : !task ? (
+      {otherHome ? (
         <section className="panel">
           <Empty title="Esta tarea es de otro apartamento">
             Cámbialo en el selector de la barra superior para verla.
           </Empty>
         </section>
+      ) : !task ? (
+        <LoadingError error={error} retry={reload} />
       ) : (
         <div className="settings-grid">
           <section className="panel">
@@ -58,16 +44,13 @@ export default function TaskDetail({ id }: { id: string }) {
             </div>
             {task.can_edit ? (
               <>
-                <TaskEditor task={task} onSaved={reload} />
+                <TaskEditor task={task} onSave={update} />
                 <div className="info-note">
                   <Trash2 size={20} />
                   <ConfirmButton
                     label="Eliminar tarea"
                     description="¿Eliminar esta tarea? También se borrará su historial de estados."
-                    onConfirm={async () => {
-                      await api(`/tasks/${task.id}`, "DELETE");
-                      router.push("/tareas");
-                    }}
+                    onConfirm={remove}
                   />
                 </div>
               </>
@@ -140,22 +123,18 @@ export default function TaskDetail({ id }: { id: string }) {
     </>
   );
 }
-function TaskEditor({ task, onSaved }: { task: Task; onSaved: () => void }) {
-  const { data, error, reload } = useData<Home & { members: Member[] }>(
-    `/homes/${task.home_id}`,
-  );
-  if (!data) return <LoadingError error={error} retry={reload} />;
+function TaskEditor({
+  task,
+  onSave,
+}: {
+  task: Task;
+  onSave: (form: FormData) => Promise<void>;
+}) {
+  const { members, error, reload } = useHomeMembers(task.home_id);
+  if (!members) return <LoadingError error={error} retry={reload} />;
   return (
-    <Form
-      onSave={async (form) => {
-        await api(`/tasks/${task.id}`, "PATCH", {
-          ...taskPayload(form),
-          status: form.get("status"),
-        });
-        onSaved();
-      }}
-    >
-      <TaskFields task={task} members={data.members} />
+    <Form onSave={onSave}>
+      <TaskFields task={task} members={members} />
       <label>
         Estado
         <select name="status" defaultValue={task.status}>

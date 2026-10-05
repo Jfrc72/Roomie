@@ -40,16 +40,18 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | POST | `/resources?homeId=...` | `{name, description}`; solo administrador |
 | PATCH | `/resources/:id` | `{name, description}`; solo administrador |
 | DELETE | `/resources/:id` | Retira el recurso (baja lógica); solo administrador y sin reservas próximas (409) |
-| GET | `/reservations?homeId=...` | Reservas activas que aún no terminan, con `can_cancel` |
+| GET | `/reservations?homeId=...` | Reservas activas que aún no terminan, con `can_cancel`. Con `&from=...&to=...` (ISO, 1 a 31 días): las activas que se cruzan con ese intervalo, incluidas las pasadas (calendario) |
 | POST | `/reservations?homeId=...` | `{resource_id, starts_at, ends_at}`; para quien la crea. 409 si se cruza con otra |
 | DELETE | `/reservations/:id` | Cancela (baja lógica); quien reservó o administrador |
 | GET | `/polls?homeId=...` | Votaciones con opciones, `my_option_id`, participación y `can_close`. Antes cierra las vencidas. Recuentos solo si está cerrada; nombres por opción solo si está cerrada y no es anónima |
-| POST | `/polls?homeId=...` | `{title, description, anonymous, closes_at, options: string[]}`; 2 a 10 opciones distintas |
+| POST | `/polls?homeId=...` | `{title, description, rule?, anonymous, closes_at, options: string[]}`; `rule` es `simple` (por defecto) o `unanimous`; 2 a 10 opciones distintas |
 | POST | `/polls/:id/votes` | `{option_id}`; crea o cambia el voto propio mientras esté abierta (409 si cerró) |
 | POST | `/polls/:id/close` | `{}`; creador o administrador |
 | GET | `/rules?homeId=...` | Versión vigente, `accepted_by_me`, aceptaciones de los integrantes activos e historial |
 | POST | `/rules?homeId=...` | `{content, notes}`; publica la versión siguiente; solo administrador |
 | POST | `/rules/:id/accept` | `{}`; acepta la versión vigente (409 si hay una más reciente) |
+| POST | `/rules/reports?homeId=...` | `{clause, description, reported_membership_id}`; reporta un incumplimiento de un acuerdo del reglamento vigente y avisa a los administradores y a la persona señalada |
+| POST | `/rules/reports/:id/resolve` | `{}`; marca el reporte como resuelto y avisa a quien lo hizo; solo administrador |
 | GET | `/expenses?homeId=...` | Gastos, cuotas, resumen mensual, balances bilaterales y pagos recientes |
 | POST | `/expenses?homeId=...` | `{title, category, paid_by_id, total_amount, expense_date, participant_ids}`; divide exactamente hasta centavos |
 | PATCH | `/expenses/:id` | Actualiza el gasto y regenera su división |

@@ -1,12 +1,11 @@
 "use client";
-import Link from "next/link";
 import { useState } from "react";
 import { Lock, Plus, X } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
-import { api } from "@/lib/api";
-import { formatDate, fromDateInput, toDateInput } from "@/lib/dates";
-import { pollWinners } from "@/lib/polls";
-import { useData } from "@/lib/use-data";
+import { usePolls } from "@/hooks/usePolls";
+import { formatDate, toDateInput } from "@/lib/dates";
+import { pollResult, pollRules, ruleLabels } from "@/lib/polls";
+import NoHome from "./NoHome";
 import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Poll } from "@/types";
 const groups = [
@@ -21,27 +20,26 @@ export default function Polls() {
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
-      <>
-        <PageTitle
-          title="Votaciones"
-          description="Las decisiones del hogar se toman en equipo."
-        />
-        <section className="panel">
-          <Empty title="Primero, un hogar">
-            Crea tu apartamento o acepta una invitación para decidir en equipo
-            con tus roommates.
-          </Empty>
-          <Link className="button" href="/apartamento">
-            Crear mi apartamento
-          </Link>
-        </section>
-      </>
+      <NoHome
+        title="Votaciones"
+        description="Las decisiones del hogar se toman en equipo."
+      >
+        Crea tu apartamento o acepta una invitación para decidir en equipo con
+        tus roommates.
+      </NoHome>
     );
   return <PollBoard homeId={session.activeHomeId} />;
 }
 function PollBoard({ homeId }: { homeId: string }) {
-  const polls = useData<Poll[]>(`/polls?homeId=${homeId}`);
-  const list = polls.data;
+  const {
+    polls,
+    groups: lists,
+    error,
+    reload,
+    createPoll,
+    vote,
+    closePoll,
+  } = usePolls(homeId);
   const [creating, setCreating] = useState(false);
   return (
     <>
@@ -66,18 +64,8 @@ function PollBoard({ homeId }: { homeId: string }) {
               label="Abrir votación"
               success="Votación abierta."
               onSave={async (form) => {
-                await api(`/polls?homeId=${homeId}`, "POST", {
-                  title: form.get("title"),
-                  description: form.get("description"),
-                  anonymous: form.get("anonymous") === "on",
-                  closes_at: fromDateInput(form.get("closes_at")),
-                  options: String(form.get("options"))
-                    .split("\n")
-                    .map((o) => o.trim())
-                    .filter(Boolean),
-                });
+                await createPoll(form);
                 setCreating(false);
-                polls.reload();
               }}
             >
               <label>
@@ -121,21 +109,36 @@ function PollBoard({ homeId }: { homeId: string }) {
                 Opcional. Quien la crea o un administrador también pueden
                 cerrarla antes.
               </small>
+              <label>
+                Tipo de decisión
+                <select name="rule" defaultValue="simple">
+                  {pollRules.map((rule) => (
+                    <option key={rule} value={rule}>
+                      {ruleLabels[rule]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <small>
+                Mayoría simple: gana la opción con más votos y un empate no
+                tiene ganadora. Unanimidad: gana solo si todos los integrantes
+                votan por la misma opción; una abstención basta para que no haya
+                ganadora.
+              </small>
               <label className="check-label">
                 <input type="checkbox" name="anonymous" />
                 Votación anónima
               </label>
               <small>
                 En una votación anónima nadie en Roomie verá qué eligió cada
-                persona, solo los totales. Se decide por mayoría simple: gana la
-                opción con más votos y un empate no tiene ganadora.
+                persona, solo los totales.
               </small>
             </Form>
           </section>
         )}
-        {!list ? (
-          <LoadingError error={polls.error} retry={polls.reload} />
-        ) : !list.length ? (
+        {!polls || !lists ? (
+          <LoadingError error={error} retry={reload} />
+        ) : !polls.length ? (
           <section className="panel">
             <Empty title="Decidir juntos empieza aquí">
               Propón una votación para que todos opinen antes de decidir.
@@ -143,7 +146,7 @@ function PollBoard({ homeId }: { homeId: string }) {
           </section>
         ) : (
           groups.map((g) => {
-            const items = list.filter((p) => p.status === g.status);
+            const items = lists[g.status];
             return (
               <section
                 key={g.status}
@@ -156,7 +159,12 @@ function PollBoard({ homeId }: { homeId: string }) {
                 {items.length ? (
                   <div className="settings-grid">
                     {items.map((p) => (
-                      <PollCard key={p.id} poll={p} onChanged={polls.reload} />
+                      <PollCard
+                        key={p.id}
+                        poll={p}
+                        onVote={(form) => vote(p.id, form)}
+                        onClose={() => closePoll(p.id)}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -172,10 +180,12 @@ function PollBoard({ homeId }: { homeId: string }) {
 }
 function PollCard({
   poll: p,
-  onChanged,
+  onVote,
+  onClose,
 }: {
   poll: Poll;
-  onChanged: () => void;
+  onVote: (form: FormData) => Promise<void>;
+  onClose: () => Promise<void>;
 }) {
   return (
     <article className="panel">
@@ -185,7 +195,7 @@ function PollCard({
       </div>
       {p.description && <p>{p.description}</p>}
       <p>
-        Propuesta por {p.creator} · Mayoría simple ·{" "}
+        Propuesta por {p.creator} · {ruleLabels[p.rule]} ·{" "}
         {p.closed_at
           ? `Cerrada ${formatDate(p.closed_at)}`
           : p.closes_at
@@ -203,12 +213,7 @@ function PollCard({
           <Form
             label={p.my_option_id ? "Cambiar mi voto" : "Votar"}
             success="Voto guardado."
-            onSave={async (form) => {
-              await api(`/polls/${p.id}/votes`, "POST", {
-                option_id: form.get("option_id"),
-              });
-              onChanged();
-            }}
+            onSave={onVote}
           >
             <legend className="sr-only">Opciones de {p.title}</legend>
             {p.options.map((o) => (
@@ -236,10 +241,7 @@ function PollCard({
               <ConfirmButton
                 label="Cerrar votación"
                 description="¿Cerrar ahora? Ya no se podrá votar y se publicará el resultado."
-                onConfirm={async () => {
-                  await api(`/polls/${p.id}/close`, "POST", {});
-                  onChanged();
-                }}
+                onConfirm={onClose}
               />
             </div>
           )}
@@ -249,18 +251,19 @@ function PollCard({
   );
 }
 function PollResults({ poll: p }: { poll: Poll }) {
-  const winners = pollWinners(p.options);
+  const { leaders, winner } = pollResult(p.options, p.rule, p.eligible);
   const abstentions = Math.max(0, p.eligible - p.voters);
+  let headline = "Nadie votó";
+  if (winner)
+    headline = `Ganó "${winner.label}"${p.rule === "unanimous" ? " por unanimidad" : ""}`;
+  else if (p.rule === "unanimous" && leaders.length)
+    headline = "No hubo unanimidad: no hay ganadora";
+  else if (leaders.length)
+    headline = `Empate entre ${leaders.map((o) => `"${o.label}"`).join(", ")}: no hay ganadora`;
   return (
     <>
       <p>
-        <strong>
-          {winners.length === 1
-            ? `Ganó "${winners[0].label}"`
-            : winners.length
-              ? `Empate entre ${winners.map((w) => `"${w.label}"`).join(", ")}: no hay ganadora`
-              : "Nadie votó"}
-        </strong>
+        <strong>{headline}</strong>
       </p>
       {p.options.map((o) => (
         <div className="invitation-row" key={o.id}>
@@ -270,7 +273,7 @@ function PollResults({ poll: p }: { poll: Poll }) {
               {o.votes} {o.votes === 1 ? "voto" : "votos"}
               {p.voters > 0 &&
                 ` · ${Math.round(((o.votes ?? 0) * 100) / p.voters)} %`}
-              {winners.length === 1 && winners[0] === o && " · Ganadora"}
+              {winner === o && " · Ganadora"}
             </small>
             {!!o.voters?.length && <small>{o.voters.join(", ")}</small>}
           </div>

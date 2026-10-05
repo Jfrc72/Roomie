@@ -1,9 +1,9 @@
 "use client";
-import Link from "next/link";
 import { Fragment, useState } from "react";
 import {
   BookOpen,
   CircleCheck,
+  Flag,
   PenLine,
   ShieldCheck,
   Sparkles,
@@ -12,14 +12,12 @@ import {
   X,
 } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
-import { api } from "@/lib/api";
-import {
-  askAssistant,
-  assistantExamples,
-  type AssistantReply,
-} from "@/lib/assistant";
+import { useHomeMembers } from "@/hooks/useHomeMembers";
+import { useRuleAssistant } from "@/hooks/useRuleAssistant";
+import { useRules } from "@/hooks/useRules";
+import { assistantExamples } from "@/lib/assistant";
 import { formatDate } from "@/lib/dates";
-import { useData } from "@/lib/use-data";
+import NoHome from "./NoHome";
 import { Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Rules as RulesData, RuleVersion } from "@/types";
 // Un párrafo por bloque separado con línea en blanco; los saltos simples se conservan.
@@ -43,29 +41,29 @@ export default function Rules() {
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
-      <>
-        <PageTitle
-          title="Acuerdos del hogar"
-          description="Pequeños acuerdos para una mejor convivencia."
-        />
-        <section className="panel">
-          <Empty title="Primero, un hogar">
-            Crea tu apartamento o acepta una invitación para escribir sus
-            acuerdos de convivencia.
-          </Empty>
-          <Link className="button" href="/apartamento">
-            Crear mi apartamento
-          </Link>
-        </section>
-      </>
+      <NoHome
+        title="Acuerdos del hogar"
+        description="Pequeños acuerdos para una mejor convivencia."
+      >
+        Crea tu apartamento o acepta una invitación para escribir sus acuerdos
+        de convivencia.
+      </NoHome>
     );
   return <RulesBoard homeId={session.activeHomeId} />;
 }
 function RulesBoard({ homeId }: { homeId: string }) {
-  const { session } = useRoomie();
-  const admin = session.homes.find((h) => h.id === homeId)?.role === "admin";
-  const rules = useData<RulesData>(`/rules?homeId=${homeId}`);
-  const data = rules.data;
+  const {
+    admin,
+    rules: data,
+    error,
+    reload,
+    clauses,
+    publish,
+    accept,
+    report,
+    resolve,
+    resolving,
+  } = useRules(homeId);
   const [editing, setEditing] = useState(false);
   return (
     <>
@@ -91,16 +89,16 @@ function RulesBoard({ homeId }: { homeId: string }) {
       />
       <div className="dashboard-main">
         {!data ? (
-          <LoadingError error={rules.error} retry={rules.reload} />
+          <LoadingError error={error} retry={reload} />
         ) : (
           <>
             {editing && (
               <RuleEditor
                 homeId={homeId}
                 current={data.current}
-                onPublished={() => {
+                onPublish={async (form) => {
+                  await publish(form);
                   setEditing(false);
-                  rules.reload();
                 }}
               />
             )}
@@ -117,7 +115,7 @@ function RulesBoard({ homeId }: { homeId: string }) {
                 <CurrentRules
                   rules={data}
                   current={data.current}
-                  onChanged={rules.reload}
+                  onAccept={() => accept(data.current!.id)}
                 />
                 <section className="panel">
                   <div className="section-title">
@@ -151,6 +149,16 @@ function RulesBoard({ homeId }: { homeId: string }) {
                 </section>
               </div>
             )}
+            {data.current && (
+              <RuleReports
+                rules={data}
+                clauses={clauses}
+                admin={admin}
+                onReport={report}
+                onResolve={resolve}
+                resolving={resolving}
+              />
+            )}
             {!!data.history.length && (
               <section className="panel help">
                 <h2>Versiones anteriores</h2>
@@ -175,11 +183,11 @@ function RulesBoard({ homeId }: { homeId: string }) {
 function CurrentRules({
   rules,
   current,
-  onChanged,
+  onAccept,
 }: {
   rules: RulesData;
   current: RuleVersion;
-  onChanged: () => void;
+  onAccept: () => Promise<void>;
 }) {
   return (
     <section className="panel">
@@ -203,10 +211,7 @@ function CurrentRules({
         <Form
           label="Aceptar reglamento"
           success="Aceptaste el reglamento."
-          onSave={async () => {
-            await api(`/rules/${current.id}/accept`, "POST", {});
-            onChanged();
-          }}
+          onSave={onAccept}
         >
           <label className="check-label">
             <input type="checkbox" required />
@@ -220,13 +225,15 @@ function CurrentRules({
 function RuleEditor({
   homeId,
   current,
-  onPublished,
+  onPublish,
 }: {
   homeId: string;
   current: RuleVersion | null;
-  onPublished: () => void;
+  onPublish: (form: FormData) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(current?.content ?? "");
+  // Con los nombres reales, el asistente propone repartos concretos.
+  const { members } = useHomeMembers(homeId);
   return (
     <div className="settings-grid">
       <section className="panel">
@@ -240,13 +247,7 @@ function RuleEditor({
         <Form
           label="Publicar versión"
           success="Versión publicada."
-          onSave={async (form) => {
-            await api(`/rules?homeId=${homeId}`, "POST", {
-              content: form.get("content"),
-              notes: form.get("notes"),
-            });
-            onPublished();
-          }}
+          onSave={onPublish}
         >
           <label>
             Texto del reglamento
@@ -276,6 +277,7 @@ function RuleEditor({
       </section>
       <RuleAssistant
         draft={draft}
+        members={members?.map((m) => m.name) ?? []}
         onAdd={(clause) =>
           setDraft((d) => (d.trim() ? `${d.trimEnd()}\n\n${clause}` : clause))
         }
@@ -287,26 +289,17 @@ function RuleEditor({
 // mientras "genera" y responde con cláusulas que se pueden agregar al borrador.
 function RuleAssistant({
   draft,
+  members,
   onAdd,
 }: {
   draft: string;
+  members: string[];
   onAdd: (clause: string) => void;
 }) {
-  const [prompt, setPrompt] = useState("");
-  const [turns, setTurns] = useState<
-    { prompt: string; reply: AssistantReply | null }[]
-  >([]);
-  const loading = turns.length > 0 && !turns[turns.length - 1].reply;
-  async function ask(text: string) {
-    const question = text.trim();
-    if (!question || loading) return;
-    setPrompt("");
-    setTurns((t) => [...t, { prompt: question, reply: null }]);
-    const reply = await askAssistant(question, draft);
-    setTurns((t) =>
-      t.map((turn, i) => (i === t.length - 1 ? { ...turn, reply } : turn)),
-    );
-  }
+  const { prompt, setPrompt, turns, loading, ask } = useRuleAssistant(
+    draft,
+    members,
+  );
   return (
     <section className="panel">
       <div className="section-title">
@@ -334,7 +327,7 @@ function RuleAssistant({
                 <p>{turn.reply.text}</p>
                 {turn.reply.clauses.map((clause) => (
                   <div className="invitation-row" key={clause}>
-                    <span>{clause}</span>
+                    <RuleText text={clause} />
                     <button
                       type="button"
                       className="text-button"
@@ -397,5 +390,122 @@ function RuleAssistant({
         </button>
       </form>
     </section>
+  );
+}
+// Reportar que no se cumplió un acuerdo del reglamento vigente y seguir su resolución.
+function RuleReports({
+  rules,
+  clauses,
+  admin,
+  onReport,
+  onResolve,
+  resolving,
+}: {
+  rules: RulesData;
+  clauses: string[];
+  admin: boolean;
+  onReport: (form: FormData) => Promise<void>;
+  onResolve: (reportId: string) => Promise<void>;
+  resolving: string;
+}) {
+  const { session } = useRoomie();
+  const [formKey, setFormKey] = useState(0);
+  const pending = rules.reports.filter((r) => !r.resolved_at).length;
+  return (
+    <div className="settings-grid">
+      <section className="panel">
+        <div className="section-title">
+          <h2>
+            <Flag size={20} /> Reportar incumplimiento
+          </h2>
+        </div>
+        <p>
+          Avisa a los administradores y, si la indicas, a la persona que no
+          cumplió el acuerdo. El reporte muestra tu nombre.
+        </p>
+        {/* La key nueva limpia el formulario después de enviar. */}
+        <Form
+          key={formKey}
+          label="Enviar reporte"
+          success="Reporte enviado."
+          onSave={async (form) => {
+            await onReport(form);
+            setFormKey((v) => v + 1);
+          }}
+        >
+          <label>
+            Acuerdo incumplido
+            <select name="clause" required>
+              {clauses.map((clause) => (
+                <option key={clause} value={clause.slice(0, 300)}>
+                  {clause.length > 90 ? `${clause.slice(0, 89)}…` : clause}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Quién no lo cumplió (opcional)
+            <select name="reported" defaultValue="">
+              <option value="">Sin señalar a nadie</option>
+              {rules.acceptances
+                .filter((m) => m.user_id !== session.user.id)
+                .map((m) => (
+                  <option key={m.membership_id} value={m.membership_id}>
+                    {m.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Qué pasó
+            <textarea
+              name="description"
+              placeholder="Ej. La loza quedó sucia toda la noche"
+              maxLength={500}
+              rows={3}
+            />
+          </label>
+        </Form>
+      </section>
+      <section className="panel">
+        <div className="section-title">
+          <h2>Reportes</h2>
+          <span className="badge">
+            {pending} {pending === 1 ? "pendiente" : "pendientes"}
+          </span>
+        </div>
+        {rules.reports.length ? (
+          rules.reports.map((r) => (
+            <div className="invitation-row" key={r.id}>
+              <div>
+                <strong>{r.clause}</strong>
+                {r.description && <small>{r.description}</small>}
+                <small>
+                  Reportó {r.reporter}
+                  {r.reported && ` · Señalado: ${r.reported}`} ·{" "}
+                  {formatDate(r.created_at)}
+                </small>
+                <small>
+                  {r.resolved_at
+                    ? `Resuelto el ${formatDate(r.resolved_at)}`
+                    : "Pendiente"}
+                </small>
+              </div>
+              {admin && !r.resolved_at && (
+                <button
+                  className="text-button"
+                  disabled={resolving === r.id}
+                  onClick={() => onResolve(r.id)}
+                >
+                  Marcar resuelto
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
+          <p>No hay incumplimientos reportados.</p>
+        )}
+      </section>
+    </div>
   );
 }

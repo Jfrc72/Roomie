@@ -23,11 +23,12 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 | task_history | Cambios de estado de cada tarea con su autor; `previous_status` es null al crearla |
 | resources | Espacio u objeto reservable del hogar; `active=false` lo retira sin borrar sus reservas (`db/021_reservas.sql`) |
 | reservations | Recurso, integrante (`membership_id`), inicio, fin y estado `active`/`cancelled` con fecha de cancelación |
-| polls | Pregunta, detalles, regla (`simple`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
+| polls | Pregunta, detalles, regla (`simple` o `unanimous`, `db/026_votaciones_unanimidad.sql`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
 | poll_options | Opciones de cada votación en orden (`position`), sin etiquetas repetidas |
 | votes | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación |
 | rule_versions | Versiones numeradas del reglamento de cada hogar, con texto, resumen de cambios y autor (`db/023_reglamento.sql`) |
 | rule_acceptances | Aceptación de una versión por integrante y fecha |
+| rule_reports | Incumplimientos reportados: acuerdo (texto copiado), descripción, quién reporta, a quién se señala y resolución (`db/027_incumplimientos.sql`) |
 | expenses | Gasto del hogar, pagador, autor, monto, categoría y fecha (`db/024_shared_modules.sql`) |
 | expense_shares | Cuota exacta por integrante, estado y fecha de pago |
 | direct_payments | Transferencias registradas entre dos integrantes |
@@ -72,12 +73,16 @@ La estructura implementada está en `db/001_base.sql`. Todas las claves principa
 - Cancelan quien reservó o un administrador, mientras la reserva no haya terminado. Cancelar es una baja lógica y libera el horario.
 - Recordatorio con clave `reservation:<id>` para quien reservó, según su anticipación; se cancela al cancelar la reserva. Si un administrador cancela la reserva de otra persona, esta recibe un aviso.
 - Inicio muestra la próxima reserva activa del hogar (`nextReservation`); `null` cuando no hay ninguna.
+- `/reservas` tiene un calendario semanal (de lunes a domingo, en la hora local del navegador) que pide a la API las reservas de esa semana, y una lista de próximas reservas desde la que se cancelan. Los filtros por recurso y "Solo mis reservas" se aplican a los dos.
 
 ## Reglas de votaciones
 
 Acordadas antes de implementar el cálculo:
 
-- Regla: mayoría simple. Gana la opción con más votos. Un empate en el primer lugar no tiene ganadora; si nadie votó, tampoco.
+- Regla, elegida al crear la votación:
+  - Mayoría simple (`simple`): gana la opción con más votos. Un empate en el primer lugar no tiene ganadora; si nadie votó, tampoco.
+  - Unanimidad (`unanimous`): gana solo si todos los integrantes habilitados al cerrar votaron por la misma opción. Una abstención o un voto distinto bastan para que no haya ganadora.
+  - El cálculo está en `pollResult` (`src/lib/polls.ts`) y lo usan tanto el aviso de cierre como la interfaz.
 - Habilitados: cualquier integrante activo vota mientras la votación está abierta y puede cambiar su voto. Al cerrar solo cuentan los votos de quienes siguen activos; los de integrantes retirados se eliminan. Quien no votó cuenta como abstención (`eligible_count` menos votos).
 - Cualquier integrante abre votaciones. Las cierran quien la creó o un administrador, o el cierre automático en `closes_at`. El worker revisa cada 15 segundos y la API cierra las vencidas antes de listarlas. Al cerrar se avisa a los integrantes y se registra la actividad (sin actor si fue automático).
 - Votar comparte la fila de la votación (`FOR SHARE`) y cerrar la bloquea (`FOR UPDATE`), así ningún voto entra después del recuento.
@@ -90,7 +95,15 @@ Acordadas antes de implementar el cálculo:
 - La versión vigente es la más reciente; las anteriores quedan como historial de solo lectura.
 - Cada integrante acepta la versión vigente una vez (clave `rule_version_id, membership_id`); aceptar una versión antigua devuelve 409. Quien publica la acepta al publicarla. Al publicar se avisa a los demás integrantes.
 - Todos ven quién aceptó la versión vigente y quién falta. La aceptación es un registro por versión e integrante, no una firma electrónica certificada.
-- Asistente de acuerdos: única funcionalidad con IA del proyecto, simulada (mock) en `src/lib/assistant.ts`. Recibe una petición, muestra spinner y skeleton durante una espera aleatoria y propone cláusulas desde plantillas según los temas detectados, o revisa qué temas faltan en el borrador. Para conectar un modelo real se reemplaza `askAssistant`.
+- Incumplimientos (conecta el reglamento con las notificaciones):
+  - Cualquier integrante reporta qué acuerdo de la versión vigente no se cumplió. El servidor comprueba que el texto pertenezca a esa versión y guarda una copia.
+  - Opcionalmente se señala a otro integrante activo (no a uno mismo). El reporte no es anónimo.
+  - Se avisa a los administradores y a la persona señalada. Solo un administrador lo marca como resuelto, y entonces se avisa a quien reportó.
+- Asistente de acuerdos: única funcionalidad con IA del proyecto, simulada (mock) en `src/lib/assistant.ts`. Recibe una petición y muestra spinner y skeleton durante una espera aleatoria. Después:
+  - Ante el caso del pitch ("somos cuatro y nadie cumple las tareas"), propone una rotación semanal equitativa de 4 áreas. Toma el número de personas del mensaje o, si no lo dice, de los integrantes del hogar, con sus nombres.
+  - Ante temas de convivencia (limpieza, ruido, visitas…), propone cláusulas desde plantillas.
+  - Ante "revisa mi borrador", indica qué temas faltan.
+  - Para conectar un modelo real se reemplaza `askAssistant`.
 
 ## Contratos propuestos para los módulos pendientes
 

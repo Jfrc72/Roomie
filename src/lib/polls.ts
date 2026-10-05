@@ -1,11 +1,28 @@
-// Mayoría simple: gana la opción con más votos. Devuelve [] si nadie votó y
-// varias opciones si hay empate en el primer lugar; un empate no tiene ganadora.
-export function pollWinners<T extends { votes: number | null }>(options: T[]) {
+import type { PollRule } from "@/types";
+export const pollRules: PollRule[] = ["simple", "unanimous"];
+export const ruleLabels: Record<PollRule, string> = {
+  simple: "Mayoría simple",
+  unanimous: "Unanimidad",
+};
+// Mayoría simple: gana la opción con más votos; un empate no tiene ganadora.
+// Unanimidad: gana solo si todos los integrantes habilitados eligieron la misma opción,
+// así que cualquier abstención o voto distinto deja la votación sin ganadora.
+export function pollResult<T extends { label: string; votes: number | null }>(
+  options: T[],
+  rule: PollRule,
+  eligible: number,
+) {
   const top = Math.max(0, ...options.map((o) => o.votes ?? 0));
-  return top ? options.filter((o) => o.votes === top) : [];
-}
-export function resultText(winners: { label: string }[]) {
-  if (!winners.length) return "nadie votó.";
-  if (winners.length > 1) return `empate entre ${winners.length} opciones.`;
-  return `ganó "${winners[0].label}".`;
+  const leaders = top ? options.filter((o) => o.votes === top) : [];
+  const winner =
+    leaders.length === 1 && (rule === "simple" || top === eligible)
+      ? leaders[0]
+      : null;
+  let text: string;
+  if (!top) text = "nadie votó.";
+  else if (winner)
+    text = `ganó "${winner.label}"${rule === "unanimous" ? " por unanimidad" : ""}.`;
+  else if (rule === "unanimous") text = "no hubo unanimidad.";
+  else text = `empate entre ${leaders.length} opciones.`;
+  return { leaders, winner, text };
 }

@@ -77,11 +77,50 @@ La base de Docker es independiente de la de `npm run dev` (`.roomie-data/`): las
 npm run lint
 npm run typecheck
 npm run build
-# Con npm run dev abierto en otra terminal:
+# Pruebas unitarias: no necesitan servidor ni base de datos.
+npm run test:unit
+# Todas las pruebas (integración y unitarias), con npm run dev abierto en otra terminal:
 npm test
 ```
 
-Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, tareas (permisos, estados, historial, recordatorios y resumen de Inicio), reservas (recursos, cruces simultáneos, cancelación y avisos), gastos/pagos, compras y mantenimiento, votaciones (permisos, anonimato, cambio de voto, recuento y cierre automático) y acuerdos (versiones, aceptaciones, publicaciones simultáneas y respuestas del asistente). Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo.
+Las pruebas de integración recorren la API real: sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, gastos y pagos, compras, mantenimiento, tareas, reservas, votaciones y acuerdos. Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo. Las unitarias (`tests/unit/`) prueban la lógica pura: estados de tareas, cálculo de resultados de votaciones, fechas del calendario y el asistente de IA simulada.
+
+Las pruebas llevan en el nombre el identificador de la historia de usuario que cubren (por ejemplo `HU3.1.2`). Las historias de todas las funcionalidades, con sus criterios de aceptación y sus pruebas, están en [docs/HISTORIAS.md](docs/HISTORIAS.md) y en la [wiki del repositorio](https://github.com/Jfrc72/Roomie/wiki/Historias-de-usuario).
+
+## Justificaciones técnicas
+
+**Next.js (App Router), React y TypeScript en un solo proyecto.** La interfaz y la API viven juntas: la API es un único manejador (`src/app/api/[...path]/route.ts`) que centraliza el formato JSON, los errores y la comprobación de origen, y delega en un módulo por funcionalidad (`src/server/*-api.ts`). Así no hay CORS que configurar, frontend y backend comparten tipos (`src/types`) y se despliega una sola aplicación.
+
+**PostgreSQL.** Los datos son relacionales (hogares, integrantes, cuotas de gastos, votos, aceptaciones) y varias reglas se garantizan en la propia base, no solo en el navegador:
+- Claves foráneas y `CHECK` para estados y valores válidos.
+- `UNIQUE` para impedir votos o aceptaciones duplicadas.
+- Restricción `EXCLUDE` (extensión `btree_gist`) que impide reservas cruzadas del mismo recurso, incluso si llegan a la vez.
+- Importes en `numeric(12,2)`, sin errores de coma flotante.
+
+**SQL parametrizado con `pg`, sin ORM.** Permite controlar transacciones y bloqueos de filas (`FOR UPDATE` / `FOR SHARE`) donde hay concurrencia: altas de integrantes, numeración de versiones del reglamento, cierre de votaciones. Los parámetros `$1, $2…` evitan inyección SQL. Las migraciones son archivos SQL numerados (`db/`), aplicados en orden y una sola vez con un bloqueo consultivo.
+
+**Seguridad.**
+- Sesiones propias en la base de datos con cookie `HttpOnly` (sin tokens en `localStorage`), revocables al cerrar sesión o cambiar la contraseña.
+- Contraseñas con `scrypt` y límite de intentos de login.
+- Las escrituras exigen un `Origin` igual a `APP_URL` (protección CSRF).
+- Los permisos (administrador o integrante, autor de cada registro) se comprueban siempre en el servidor con el hogar real del registro, nunca con datos enviados por el cliente.
+- Todas las entradas de la API se validan con `zod` antes de tocar la base de datos.
+
+**Worker separado.** Recordatorios, envíos por correo o push y el cierre automático de votaciones corren en `scripts/worker.ts`, fuera de las peticiones web. Los avisos se encolan en la base (`deliveries`) con reintentos, y cada uno tiene una clave única que evita duplicados.
+
+**Estado en el cliente y hooks.** Un Context (`RoomieContext`) guarda solo la sesión, el hogar activo y los avisos temporales. Cada módulo tiene hooks propios en `src/hooks/` (`useGastos`, `useTasks`, `useReservations`, `usePolls`, `useRules`, `useRuleAssistant`…) que concentran la carga de datos, los filtros, las acciones contra la API y los estados de carga. Los componentes se ocupan solo de la presentación. `useUrlState` guarda en la URL los filtros y la semana del calendario: se conservan al recargar y al compartir el enlace, y "Atrás" vuelve a la semana anterior. Al cambiar de hogar se reinicia el estado de las páginas para no mostrar datos del anterior.
+
+**Interfaz y accesibilidad.** CSS propio con variables (`src/app/globals.css`) y componentes reutilizables (`src/components/ui.tsx`), sin framework de UI, para mantener un diseño coherente y liviano. Incluye:
+- Etiquetas en todos los campos y regiones `aria-live` para avisos y estados de carga.
+- Foco visible, enlace "Saltar al contenido" y botones de al menos 44 px.
+- Estados que no dependen solo del color y respeto de `prefers-reduced-motion`.
+- El tablero de tareas se opera con botones, sin arrastrar.
+
+**IA simulada.** El asistente de Acuerdos usa un mock aislado en `src/lib/assistant.ts` con la misma forma que tendría una llamada a un modelo real. En el ciclo 2 solo hay que reemplazar esa función.
+
+**Docker.** Imagen en varias etapas con la salida `standalone` de Next.js, y Compose con servicios separados: base de datos, migraciones (se ejecutan antes de arrancar), web (con comprobación de salud) y worker.
+
+**Pruebas.** `node:test` con pruebas de integración que recorren la API real contra PostgreSQL: permisos, validaciones y concurrencia. Cada prueba crea sus propios datos y los borra al terminar.
 
 ## Continuar en equipo
 

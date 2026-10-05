@@ -13,6 +13,21 @@ export const priorityLabels: Record<TaskPriority, string> = {
   medium: "Media",
   low: "Baja",
 };
+// El estado se cambia con botones: el tablero no depende de arrastrar.
+export const statusMoves: Record<
+  TaskStatus,
+  { status: TaskStatus; label: string }[]
+> = {
+  pending: [
+    { status: "in_progress", label: "Empezar" },
+    { status: "completed", label: "Completar" },
+  ],
+  in_progress: [
+    { status: "pending", label: "Volver a pendiente" },
+    { status: "completed", label: "Completar" },
+  ],
+  completed: [{ status: "pending", label: "Reabrir" }],
+};
 // Sin responsable, cualquier integrante puede empezarla o completarla, pero no retroceder su estado.
 export function canAdvance(
   task: Pick<Task, "assigned_membership_id" | "status">,

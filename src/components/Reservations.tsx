@@ -1,18 +1,20 @@
 "use client";
-import Link from "next/link";
 import { useState } from "react";
 import {
   CalendarDays,
   CalendarPlus,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
   Package,
   Plus,
   ShieldCheck,
   X,
 } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
-import { api } from "@/lib/api";
-import { formatRange, fromDateInput, toDateInput } from "@/lib/dates";
-import { useData } from "@/lib/use-data";
+import { useReservations } from "@/hooks/useReservations";
+import { addDays, formatRange, formatTime, toDateInput } from "@/lib/dates";
+import NoHome from "./NoHome";
 import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Reservation, Resource } from "@/types";
 function ResourceFields({ resource }: { resource?: Resource }) {
@@ -45,42 +47,31 @@ export default function Reservations() {
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
-      <>
-        <PageTitle
-          title="Reservas"
-          description="Un momento para cada persona, sin cruces."
-        />
-        <section className="panel">
-          <Empty title="Primero, un hogar">
-            Crea tu apartamento o acepta una invitación para reservar los
-            espacios que comparten.
-          </Empty>
-          <Link className="button" href="/apartamento">
-            Crear mi apartamento
-          </Link>
-        </section>
-      </>
+      <NoHome
+        title="Reservas"
+        description="Un momento para cada persona, sin cruces."
+      >
+        Crea tu apartamento o acepta una invitación para reservar los espacios
+        que comparten.
+      </NoHome>
     );
   return <ReservationBoard homeId={session.activeHomeId} />;
 }
 function ReservationBoard({ homeId }: { homeId: string }) {
-  const { session } = useRoomie();
-  const admin = session.homes.find((h) => h.id === homeId)?.role === "admin";
-  const resources = useData<Resource[]>(`/resources?homeId=${homeId}`);
-  const reservations = useData<Reservation[]>(`/reservations?homeId=${homeId}`);
+  const {
+    admin,
+    resources,
+    upcoming,
+    week,
+    filters,
+    reserve,
+    cancel,
+    addResource,
+    updateResource,
+    retireResource,
+  } = useReservations(homeId);
   const [creating, setCreating] = useState(false);
-  const [resourceFilter, setResourceFilter] = useState("all");
-  const [onlyMine, setOnlyMine] = useState(false);
   const [newResource, setNewResource] = useState(0);
-  function changed() {
-    resources.reload();
-    reservations.reload();
-  }
-  const visible = (reservations.data ?? []).filter(
-    (r) =>
-      (resourceFilter === "all" || r.resource_id === resourceFilter) &&
-      (!onlyMine || r.user_id === session.user.id),
-  );
   return (
     <>
       <PageTitle
@@ -106,13 +97,8 @@ function ReservationBoard({ homeId }: { homeId: string }) {
               label="Reservar"
               success="Reserva creada."
               onSave={async (form) => {
-                await api(`/reservations?homeId=${homeId}`, "POST", {
-                  resource_id: form.get("resource_id"),
-                  starts_at: fromDateInput(form.get("starts_at")),
-                  ends_at: fromDateInput(form.get("ends_at")),
-                });
+                await reserve(form);
                 setCreating(false);
-                reservations.reload();
               }}
             >
               <label>
@@ -151,6 +137,41 @@ function ReservationBoard({ homeId }: { homeId: string }) {
             </Form>
           </section>
         )}
+        {!!resources.data?.length && (
+          <>
+            <div className="form filters">
+              <label>
+                Recurso
+                <select
+                  value={filters.resource}
+                  onChange={(e) => filters.setResource(e.target.value)}
+                >
+                  <option value="all">Todos</option>
+                  {resources.data.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={filters.onlyMine}
+                  onChange={(e) => filters.setOnlyMine(e.target.checked)}
+                />
+                Solo mis reservas
+              </label>
+            </div>
+            <WeekCalendar
+              weekStart={week.start}
+              onChange={week.goTo}
+              reservations={week.reservations}
+              error={week.error}
+              retry={week.reload}
+            />
+          </>
+        )}
         <div className="settings-grid">
           <section className="panel">
             <div className="section-title">
@@ -158,51 +179,24 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                 <CalendarDays size={20} /> Próximas reservas
               </h2>
             </div>
-            {!reservations.data ? (
-              <LoadingError
-                error={reservations.error}
-                retry={reservations.reload}
-              />
-            ) : !reservations.data.length ? (
+            {!upcoming.data ? (
+              <LoadingError error={upcoming.error} retry={upcoming.reload} />
+            ) : !upcoming.data.length ? (
               <Empty title="Todo libre por ahora">
                 Cuando alguien reserve un espacio, aparecerá aquí.
               </Empty>
             ) : (
               <>
-                <div className="form filters">
-                  <label>
-                    Recurso
-                    <select
-                      value={resourceFilter}
-                      onChange={(e) => setResourceFilter(e.target.value)}
-                    >
-                      <option value="all">Todos</option>
-                      {resources.data?.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="check-label">
-                    <input
-                      type="checkbox"
-                      checked={onlyMine}
-                      onChange={(e) => setOnlyMine(e.target.checked)}
-                    />
-                    Solo mis reservas
-                  </label>
-                  <small role="status">
-                    Mostrando {visible.length} de {reservations.data.length}{" "}
-                    reservas
-                  </small>
-                </div>
-                {visible.length ? (
-                  visible.map((r) => (
+                <p role="status">
+                  Mostrando {upcoming.visible.length} de {upcoming.data.length}{" "}
+                  reservas próximas
+                </p>
+                {upcoming.visible.length ? (
+                  upcoming.visible.map((r) => (
                     <ReservationRow
                       key={r.id}
                       reservation={r}
-                      onChanged={reservations.reload}
+                      onCancel={() => cancel(r.id)}
                     />
                   ))
                 ) : (
@@ -234,7 +228,8 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                   key={r.id}
                   resource={r}
                   admin={admin}
-                  onChanged={changed}
+                  onUpdate={(form) => updateResource(r.id, form)}
+                  onRetire={() => retireResource(r.id)}
                 />
               ))
             )}
@@ -264,13 +259,8 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                 label="Agregar recurso"
                 success="Recurso agregado."
                 onSave={async (form) => {
-                  await api(
-                    `/resources?homeId=${homeId}`,
-                    "POST",
-                    Object.fromEntries(form),
-                  );
+                  await addResource(form);
                   setNewResource((v) => v + 1);
-                  resources.reload();
                 }}
               >
                 <ResourceFields />
@@ -284,10 +274,10 @@ function ReservationBoard({ homeId }: { homeId: string }) {
 }
 function ReservationRow({
   reservation: r,
-  onChanged,
+  onCancel,
 }: {
   reservation: Reservation;
-  onChanged: () => void;
+  onCancel: () => Promise<void>;
 }) {
   const { session } = useRoomie();
   const ongoing = new Date(r.starts_at) <= new Date();
@@ -309,10 +299,7 @@ function ReservationRow({
         <ConfirmButton
           label="Cancelar reserva"
           description={`¿Cancelar esta reserva de ${r.resource}? El horario quedará libre.`}
-          onConfirm={async () => {
-            await api(`/reservations/${r.id}`, "DELETE");
-            onChanged();
-          }}
+          onConfirm={onCancel}
         />
       )}
     </div>
@@ -321,11 +308,13 @@ function ReservationRow({
 function ResourceRow({
   resource,
   admin,
-  onChanged,
+  onUpdate,
+  onRetire,
 }: {
   resource: Resource;
   admin: boolean;
-  onChanged: () => void;
+  onUpdate: (form: FormData) => Promise<void>;
+  onRetire: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   return (
@@ -346,10 +335,7 @@ function ResourceRow({
             <ConfirmButton
               label="Retirar"
               description={`¿Retirar ${resource.name}? Ya no se podrá reservar; las reservas pasadas se conservan.`}
-              onConfirm={async () => {
-                await api(`/resources/${resource.id}`, "DELETE");
-                onChanged();
-              }}
+              onConfirm={onRetire}
             />
           </div>
         )}
@@ -358,13 +344,8 @@ function ResourceRow({
         <Form
           success="Recurso actualizado."
           onSave={async (form) => {
-            await api(
-              `/resources/${resource.id}`,
-              "PATCH",
-              Object.fromEntries(form),
-            );
+            await onUpdate(form);
             setEditing(false);
-            onChanged();
           }}
         >
           <ResourceFields resource={resource} />
@@ -372,4 +353,113 @@ function ResourceRow({
       )}
     </>
   );
+}
+// Calendario semanal de solo lectura; cancelar y reservar se hacen desde la lista y el formulario.
+function WeekCalendar({
+  weekStart,
+  onChange,
+  reservations,
+  error,
+  retry,
+}: {
+  weekStart: Date;
+  onChange: (week: Date) => void;
+  reservations: Reservation[] | null;
+  error: string;
+  retry: () => void;
+}) {
+  const { session } = useRoomie();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const today = new Date().toDateString();
+  return (
+    <section className="panel" aria-labelledby="calendario-reservas">
+      <div className="section-title">
+        <h2 id="calendario-reservas">
+          <CalendarRange size={20} /> Semana del{" "}
+          {weekStart.toLocaleDateString("es-CO", {
+            day: "numeric",
+            month: "short",
+          })}{" "}
+          al{" "}
+          {days[6].toLocaleDateString("es-CO", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+        </h2>
+        <div className="actions">
+          <button
+            className="secondary"
+            aria-label="Semana anterior"
+            onClick={() => onChange(addDays(weekStart, -7))}
+          >
+            <ChevronLeft size={17} />
+          </button>
+          <button className="secondary" onClick={() => onChange(new Date())}>
+            Esta semana
+          </button>
+          <button
+            className="secondary"
+            aria-label="Semana siguiente"
+            onClick={() => onChange(addDays(weekStart, 7))}
+          >
+            <ChevronRight size={17} />
+          </button>
+        </div>
+      </div>
+      {!reservations ? (
+        <LoadingError error={error} retry={retry} />
+      ) : (
+        <ol className="week-calendar">
+          {days.map((day) => {
+            const end = addDays(day, 1);
+            const items = reservations.filter(
+              (r) => new Date(r.starts_at) < end && new Date(r.ends_at) > day,
+            );
+            const isToday = day.toDateString() === today;
+            return (
+              <li
+                key={day.toISOString()}
+                className={`week-day${isToday ? " is-today" : ""}`}
+              >
+                <h3>
+                  {day.toLocaleDateString("es-CO", {
+                    weekday: "long",
+                    day: "numeric",
+                  })}
+                  {isToday && <span className="badge">Hoy</span>}
+                </h3>
+                {items.length ? (
+                  <ul>
+                    {items.map((r) => (
+                      <li key={r.id}>
+                        <strong>{slot(r, day, end)}</strong>
+                        <span>{r.resource}</span>
+                        <small>
+                          {r.user_id === session.user.id
+                            ? "Tu reserva"
+                            : r.member}
+                        </small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Sin reservas</p>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
+  );
+}
+// Horario de una reserva dentro de un día, también si empieza antes o termina después.
+function slot(reservation: Reservation, day: Date, end: Date) {
+  const from = new Date(reservation.starts_at);
+  const to = new Date(reservation.ends_at);
+  if (from <= day && to >= end) return "Todo el día";
+  if (from <= day) return `Hasta ${formatTime(to)}`;
+  if (to >= end) return `Desde ${formatTime(from)}`;
+  return `${formatTime(from)} – ${formatTime(to)}`;
 }
