@@ -99,7 +99,11 @@ Acordadas antes de implementar el cálculo:
   - Cualquier integrante reporta qué acuerdo de la versión vigente no se cumplió. El servidor comprueba que el texto pertenezca a esa versión y guarda una copia.
   - Opcionalmente se señala a otro integrante activo (no a uno mismo). El reporte no es anónimo.
   - Se avisa a los administradores y a la persona señalada. Solo un administrador lo marca como resuelto, y entonces se avisa a quien reportó.
-- Asistente de acuerdos: única funcionalidad con IA del proyecto, simulada (mock) en `src/lib/assistant.ts`. Recibe una petición, muestra spinner y skeleton durante una espera aleatoria y propone cláusulas desde plantillas según los temas detectados, o revisa qué temas faltan en el borrador. Para conectar un modelo real se reemplaza `askAssistant`.
+- Asistente de acuerdos: única funcionalidad con IA del proyecto, simulada (mock) en `src/lib/assistant.ts`. Recibe una petición y muestra spinner y skeleton durante una espera aleatoria. Después:
+  - Ante el caso del pitch ("somos cuatro y nadie cumple las tareas"), propone una rotación semanal equitativa de 4 áreas. Toma el número de personas del mensaje o, si no lo dice, de los integrantes del hogar, con sus nombres.
+  - Ante temas de convivencia (limpieza, ruido, visitas…), propone cláusulas desde plantillas.
+  - Ante "revisa mi borrador", indica qué temas faltan.
+  - Para conectar un modelo real se reemplaza `askAssistant`.
 
 ## Contratos propuestos para los módulos pendientes
 

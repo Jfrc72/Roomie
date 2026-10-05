@@ -43,7 +43,7 @@ export default function Page() {
           ],
           [
             "¿Cómo funcionan los acuerdos del hogar?",
-            "Los administradores redactan y publican versiones del reglamento; un asistente de demostración sugiere cláusulas. Cada integrante lee la versión vigente y la acepta, y todos ven quién falta. Al publicar una versión nueva hay que aceptarla de nuevo. Aceptar es un registro de lectura, no una firma electrónica certificada. Si alguien no cumple un acuerdo, cualquier integrante puede reportarlo: se avisa a los administradores y a la persona señalada, y un administrador lo marca como resuelto.",
+            "Los administradores redactan y publican versiones del reglamento; un asistente de demostración sugiere cláusulas y propone un reparto equitativo de las tareas si le cuentas que no se están cumpliendo. Cada integrante lee la versión vigente y la acepta, y todos ven quién falta. Al publicar una versión nueva hay que aceptarla de nuevo. Aceptar es un registro de lectura, no una firma electrónica certificada. Si alguien no cumple un acuerdo, cualquier integrante puede reportarlo: se avisa a los administradores y a la persona señalada, y un administrador lo marca como resuelto.",
           ],
           [
             "¿Por qué algunas secciones están en preparación?",

@@ -22,7 +22,7 @@ import {
 import { formatDate } from "@/lib/dates";
 import { useData } from "@/lib/use-data";
 import { Empty, Form, LoadingError, PageTitle } from "./ui";
-import type { Rules as RulesData, RuleVersion } from "@/types";
+import type { Home, Member, Rules as RulesData, RuleVersion } from "@/types";
 // Un párrafo por bloque separado con línea en blanco; los saltos simples se conservan.
 function RuleText({ text }: { text: string }) {
   return (
@@ -237,6 +237,8 @@ function RuleEditor({
   onPublished: () => void;
 }) {
   const [draft, setDraft] = useState(current?.content ?? "");
+  // Con los nombres reales, el asistente propone repartos concretos.
+  const home = useData<Home & { members: Member[] }>(`/homes/${homeId}`);
   return (
     <div className="settings-grid">
       <section className="panel">
@@ -286,6 +288,7 @@ function RuleEditor({
       </section>
       <RuleAssistant
         draft={draft}
+        members={home.data?.members.map((m) => m.name) ?? []}
         onAdd={(clause) =>
           setDraft((d) => (d.trim() ? `${d.trimEnd()}\n\n${clause}` : clause))
         }
@@ -297,9 +300,11 @@ function RuleEditor({
 // mientras "genera" y responde con cláusulas que se pueden agregar al borrador.
 function RuleAssistant({
   draft,
+  members,
   onAdd,
 }: {
   draft: string;
+  members: string[];
   onAdd: (clause: string) => void;
 }) {
   const [prompt, setPrompt] = useState("");
@@ -312,7 +317,7 @@ function RuleAssistant({
     if (!question || loading) return;
     setPrompt("");
     setTurns((t) => [...t, { prompt: question, reply: null }]);
-    const reply = await askAssistant(question, draft);
+    const reply = await askAssistant(question, draft, members);
     setTurns((t) =>
       t.map((turn, i) => (i === t.length - 1 ? { ...turn, reply } : turn)),
     );
@@ -344,7 +349,7 @@ function RuleAssistant({
                 <p>{turn.reply.text}</p>
                 {turn.reply.clauses.map((clause) => (
                   <div className="invitation-row" key={clause}>
-                    <span>{clause}</span>
+                    <RuleText text={clause} />
                     <button
                       type="button"
                       className="text-button"
