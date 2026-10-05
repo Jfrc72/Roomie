@@ -11,6 +11,7 @@ import { shoppingApi } from "@/server/shopping-api";
 import { maintenanceApi } from "@/server/maintenance-api";
 import { ApiError, checkOrigin, requireUser } from "@/server/security";
 import { query } from "@/server/db";
+import { getLanguage, translate } from "@/lib/i18n";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,15 @@ async function handle(
   request: Request,
   context: { params: Promise<{ path: string[] }> },
 ) {
+  const cookie = request.headers
+    .get("cookie")
+    ?.split(";")
+    .map((v) => v.trim())
+    .find((v) => v.startsWith("roomie_language="))
+    ?.split("=")[1];
+  const language = getLanguage(cookie);
+  const failure = (message: string, status: number) =>
+    Response.json({ error: translate(message, language) }, { status });
   try {
     checkOrigin(request);
     const { path } = await context.params;
@@ -47,7 +57,7 @@ async function handle(
       const user = await requireUser();
       const homes = await query(
         `SELECT h.*,m.role,(SELECT count(*)::int FROM memberships WHERE home_id=h.id AND active) AS member_count
-        FROM homes h JOIN memberships m ON m.home_id=h.id WHERE m.user_id=$1 AND m.active ORDER BY h.created_at`,
+        FROM homes h JOIN memberships m ON m.home_id=h.id WHERE m.user_id=$1 AND m.active AND h.archived_at IS NULL ORDER BY h.created_at`,
         [user.id],
       );
       result = {
@@ -63,24 +73,17 @@ async function handle(
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    if (error instanceof ApiError)
-      return Response.json({ error: error.message }, { status: error.status });
+    if (error instanceof ApiError) return failure(error.message, error.status);
     if (error instanceof ZodError)
-      return Response.json({ error: error.issues[0].message }, { status: 400 });
+      return failure("Revisa los campos: los datos no son válidos.", 400);
     if (error instanceof SyntaxError)
-      return Response.json(
-        { error: "El formato de la solicitud no es válido." },
-        { status: 400 },
-      );
+      return failure("El formato de la solicitud no es válido.", 400);
     if ((error as { code?: string }).code === "23505")
-      return Response.json(
-        { error: "Ya existe un registro con estos datos." },
-        { status: 409 },
-      );
+      return failure("Ya existe un registro con estos datos.", 409);
     console.error("API:", error);
-    return Response.json(
-      { error: "No pudimos completar la operación. Intenta nuevamente." },
-      { status: 500 },
+    return failure(
+      "No pudimos completar la operación. Intenta nuevamente.",
+      500,
     );
   }
 }

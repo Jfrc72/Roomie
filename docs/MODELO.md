@@ -1,39 +1,39 @@
 # Modelo y reglas compartidas
 
-La estructura implementada está en `db/001_base.sql`. Todas las claves principales son UUID. Las fechas de eventos son `timestamptz`; convertir para mostrarlas al usuario, no guardar fechas ya formateadas.
+La base común está en `db/001_base.sql`; las siguientes migraciones de `db/` añaden los módulos y ajustes. Todas las claves principales son UUID. Las fechas de eventos son `timestamptz`; convertir para mostrarlas al usuario, no guardar fechas ya formateadas.
 
 ## Tablas implementadas
 
-| Tabla | Función |
-| --- | --- |
-| users | Nombre, correo único normalizado y hash de contraseña |
-| sessions | Hash del token, usuario, expiración y hogar activo |
-| homes | Nombre, dirección y descripción |
-| memberships | Relación usuario-hogar, rol y estado activo |
-| invitations | Correo, hogar, hash del enlace, vencimiento y estado |
-| activities | Autor, hogar y descripción de un evento |
-| notification_preferences | Canales elegidos y anticipación de recordatorios |
-| notifications | Mensaje, destinatario, hogar y fecha de lectura |
-| reminders | Pendientes de los módulos con fecha límite y clave estable |
-| deliveries | Cola de entrega por email/push, intentos y resultado |
-| push_subscriptions | Dispositivos autorizados por cada usuario |
-| login_attempts | Límite temporal de intentos por correo |
-| migrations | Migraciones SQL aplicadas |
-| tasks | Tarea del hogar: responsable (`assigned_membership_id`), fecha límite, prioridad `low`/`medium`/`high`, estado, autor y fecha de finalización (`db/020_tareas.sql`) |
-| task_history | Cambios de estado de cada tarea con su autor; `previous_status` es null al crearla |
-| resources | Espacio u objeto reservable del hogar; `active=false` lo retira sin borrar sus reservas (`db/021_reservas.sql`) |
-| reservations | Recurso, integrante (`membership_id`), inicio, fin y estado `active`/`cancelled` con fecha de cancelación |
-| polls | Pregunta, detalles, regla (`simple` o `unanimous`, `db/026_votaciones_unanimidad.sql`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
-| poll_options | Opciones de cada votación en orden (`position`), sin etiquetas repetidas |
-| votes | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación |
-| rule_versions | Versiones numeradas del reglamento de cada hogar, con texto, resumen de cambios y autor (`db/023_reglamento.sql`) |
-| rule_acceptances | Aceptación de una versión por integrante y fecha |
-| rule_reports | Incumplimientos reportados: acuerdo (texto copiado), descripción, quién reporta, a quién se señala y resolución (`db/027_incumplimientos.sql`) |
-| expenses | Gasto del hogar, pagador, autor, monto, categoría y fecha (`db/024_shared_modules.sql`) |
-| expense_shares | Cuota exacta por integrante, estado y fecha de pago |
-| direct_payments | Transferencias registradas entre dos integrantes |
-| shopping_items | Producto, cantidad, precio estimado, comprador asignado y quien lo compró (`db/024_shared_modules.sql`, `db/025_shopping_assignment.sql`) |
-| maintenance_reports | Reporte, categoría, costo estimado, prioridad, estado y responsable |
+| Tabla                    | Función                                                                                                                                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| users                    | Nombre, correo único normalizado y hash de contraseña                                                                                                                                                     |
+| sessions                 | Hash del token, usuario, expiración y hogar activo                                                                                                                                                        |
+| homes                    | Nombre, dirección y descripción                                                                                                                                                                           |
+| memberships              | Relación usuario-hogar, rol y estado activo                                                                                                                                                               |
+| invitations              | Correo, hogar, hash del enlace, vencimiento y estado                                                                                                                                                      |
+| activities               | Autor, hogar y descripción de un evento                                                                                                                                                                   |
+| notification_preferences | Canales elegidos y anticipación de recordatorios                                                                                                                                                          |
+| notifications            | Mensaje, destinatario, hogar y fecha de lectura                                                                                                                                                           |
+| reminders                | Pendientes de los módulos con fecha límite y clave estable                                                                                                                                                |
+| deliveries               | Cola de entrega por email/push, intentos y resultado                                                                                                                                                      |
+| push_subscriptions       | Dispositivos autorizados por cada usuario                                                                                                                                                                 |
+| login_attempts           | Límite temporal de intentos por correo                                                                                                                                                                    |
+| migrations               | Migraciones SQL aplicadas                                                                                                                                                                                 |
+| tasks                    | Tarea del hogar: responsable (`assigned_membership_id`), fecha límite, prioridad `low`/`medium`/`high`, estado, autor y fecha de finalización (`db/020_tareas.sql`)                                       |
+| task_history             | Cambios de estado de cada tarea con su autor; `previous_status` es null al crearla                                                                                                                        |
+| resources                | Espacio u objeto reservable del hogar; `active=false` lo retira sin borrar sus reservas (`db/021_reservas.sql`)                                                                                           |
+| reservations             | Recurso, integrante (`membership_id`), inicio, fin y estado `active`/`cancelled` con fecha de cancelación                                                                                                 |
+| polls                    | Pregunta, detalles, regla (`simple` o `unanimous`, `db/026_votaciones_unanimidad.sql`), anónima, cierre automático, estado y, al cerrar, integrantes activos (`eligible_count`) (`db/022_votaciones.sql`) |
+| poll_options             | Opciones de cada votación en orden (`position`), sin etiquetas repetidas                                                                                                                                  |
+| votes                    | Un voto por integrante y votación (clave `poll_id, membership_id`); la opción debe pertenecer a la votación                                                                                               |
+| rule_versions            | Versiones numeradas del reglamento de cada hogar, con texto, resumen de cambios y autor (`db/023_reglamento.sql`)                                                                                         |
+| rule_acceptances         | Aceptación de una versión por integrante y fecha                                                                                                                                                          |
+| rule_reports             | Incumplimientos reportados: acuerdo (texto copiado), descripción, quién reporta, a quién se señala y resolución (`db/027_incumplimientos.sql`)                                                            |
+| expenses                 | Gasto del hogar, pagador, autor, monto, categoría y fecha (`db/024_shared_modules.sql`)                                                                                                                   |
+| expense_shares           | Cuota exacta por integrante, estado y fecha de pago                                                                                                                                                       |
+| direct_payments          | Transferencias registradas entre dos integrantes                                                                                                                                                          |
+| shopping_items           | Producto, cantidad, precio estimado, comprador asignado y quien lo compró (`db/024_shared_modules.sql`, `db/025_shopping_assignment.sql`)                                                                 |
+| maintenance_reports      | Reporte, categoría, costo estimado, prioridad, estado y responsable                                                                                                                                       |
 
 ## Reglas existentes
 
@@ -105,20 +105,9 @@ Acordadas antes de implementar el cálculo:
   - Ante "revisa mi borrador", indica qué temas faltan.
   - Para conectar un modelo real se reemplaza `askAssistant`.
 
-## Contratos propuestos para los módulos pendientes
+## Módulos compartidos implementados
 
-No son tablas ya implementadas. Cada responsable creará su migración y tipos, conservando estas relaciones:
-
-| Entidad | Campos principales acordados |
-| --- | --- |
-| Gasto | id, home_id, title, amount_minor, currency, paid_by_membership_id, category, occurred_at, created_by |
-| Participación | expense_id, membership_id, share_minor |
-| Pago entre integrantes | home_id, from_membership_id, to_membership_id, amount_minor, paid_at |
-| Lista de compras | id, home_id, name, created_by, created_at |
-| Producto de lista | id, list_id, title, quantity, buyer_membership_id, purchased_at, expense_id opcional |
-| Ticket | id, home_id, title, description, status, manager_membership_id, expense_id opcional |
-
-Importes: enteros en la unidad menor de la moneda (`amount_minor`), no números de coma flotante. Para COP, 100 representa un peso. La suma de participaciones debe coincidir exactamente con el total; repartir cualquier residuo de manera determinista. El adaptador del dashboard convierte a pesos para mostrar.
+`024_shared_modules.sql` y `025_shopping_assignment.sql` añaden gastos, cuotas, pagos entre integrantes, compras y mantenimiento. Los montos usan `numeric(12,2)`; se reparten exactamente al centavo. Gastos, productos y reportes tienen una baja reversible con `deleted_at`. Las asignaciones usan la membresía del hogar.
 
 Reasignar responsables solo a miembros activos de ese hogar. Los antiguos pueden seguir apareciendo en el historial. Conservar el vínculo original al convertir compra/reparación en gasto para impedir duplicados.
 
@@ -130,3 +119,7 @@ Reasignar responsables solo a miembros activos de ese hogar. Los antiguos pueden
 - Votaciones: `open`, `closed`.
 
 Guardar valores estables en inglés y mostrar etiquetas en español. El manejo de empates, abstenciones y miembros habilitados en las votaciones está en "Reglas de votaciones".
+
+## Bajas de cuentas, hogares y avisos
+
+`002_ciclo1.sql` añade `users.active`, `homes.archived_at` y `notifications.dismissed_at`, sin modificar las migraciones de los compañeros. Las bajas conservan los identificadores y las referencias del historial. Cerrar la cuenta desactiva sus membresías y sesiones; archivar el hogar retira el acceso y cancela invitaciones, recordatorios y envíos pendientes. Eliminar un aviso conserva su clave para impedir que se genere de nuevo.

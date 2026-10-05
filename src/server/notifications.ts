@@ -12,7 +12,7 @@ export async function notify(db: PoolClient, data: NotificationInput) {
   if (!isInternalPath(data.href))
     throw new Error("La notificación debe apuntar a una ruta interna.");
   const member = await db.query(
-    "SELECT id FROM memberships WHERE home_id=$1 AND user_id=$2 AND active",
+    "SELECT m.id FROM memberships m JOIN homes h ON h.id=m.home_id JOIN users u ON u.id=m.user_id WHERE m.home_id=$1 AND m.user_id=$2 AND m.active AND u.active AND h.archived_at IS NULL",
     [data.homeId, data.userId],
   );
   if (!member.rowCount) return;
@@ -46,6 +46,8 @@ export async function scheduleReminder(
   db: PoolClient,
   data: NotificationInput & { sourceKey: string; dueAt: Date },
 ) {
+  if (!isInternalPath(data.href))
+    throw new Error("El recordatorio debe apuntar a una ruta interna.");
   await db.query(
     `INSERT INTO reminders(home_id,user_id,source_key,title,message,href,due_at) VALUES($1,$2,$3,$4,$5,$6,$7)
     ON CONFLICT(source_key) DO UPDATE SET user_id=excluded.user_id,title=excluded.title,message=excluded.message,href=excluded.href,due_at=excluded.due_at,processed_at=null`,

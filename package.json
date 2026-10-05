@@ -12,8 +12,11 @@
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "worker": "tsx --env-file=.env scripts/worker.ts",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --env-file=.env --test tests/*.test.ts tests/unit/*.test.ts",
-    "test:unit": "tsx --test tests/unit/*.test.ts"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "tsx --env-file=.env --test --test-concurrency=1 tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "async-exit-hook": "^2.0.1",
@@ -27,6 +30,11 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
@@ -36,7 +44,9 @@
     "embedded-postgres": "^17.10.0-beta.17",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "jsdom": "^26.1.0",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

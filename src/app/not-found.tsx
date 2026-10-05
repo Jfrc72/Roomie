@@ -1,11 +1,14 @@
+"use client";
+import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 export default function NotFound() {
+  const { t } = useLanguage();
   return (
     <main className="standalone">
-      <h1>Esta puerta no lleva a ninguna parte</h1>
-      <p>No encontramos la página que buscas.</p>
+      <h1>{t("Esta puerta no lleva a ninguna parte")}</h1>
+      <p>{t("No encontramos la página que buscas.")}</p>
       <Link className="button" href="/">
-        Volver al inicio
+        {t("Volver al inicio")}
       </Link>
     </main>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/context/LanguageContext";
 import { useState } from "react";
 import { Plus, Users, Mail, Copy, ShieldCheck } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
@@ -13,34 +14,35 @@ interface Invitation {
   expires_at: string;
 }
 function HomeFields({ home }: { home?: Home }) {
+  const { t } = useLanguage();
   return (
     <>
       <label>
-        Nombre del apartamento
+        {t("Nombre del apartamento")}
         <input
           name="name"
           defaultValue={home?.name}
-          placeholder="Ej. Apartamento 302"
+          placeholder={t("Ej. Apartamento 302")}
           required
           minLength={2}
           maxLength={80}
         />
       </label>
       <label>
-        Dirección
+        {t("Dirección")}
         <input
           name="address"
           defaultValue={home?.address}
-          placeholder="Calle, edificio o residencia"
+          placeholder={t("Calle, edificio o residencia")}
           maxLength={200}
         />
       </label>
       <label>
-        Sobre nuestro hogar
+        {t("Sobre nuestro hogar")}
         <textarea
           name="description"
           defaultValue={home?.description}
-          placeholder="Un pequeño resumen del lugar que comparten"
+          placeholder={t("Un pequeño resumen del lugar que comparten")}
           maxLength={500}
           rows={3}
         />
@@ -49,15 +51,16 @@ function HomeFields({ home }: { home?: Home }) {
   );
 }
 export default function HomeManager() {
+  const { t } = useLanguage();
   const { session, refresh } = useRoomie();
   const [creating, setCreating] = useState(false);
   const home = session.homes.find((h) => h.id === session.activeHomeId);
   return (
     <>
       <PageTitle
-        eyebrow="NUESTRO ESPACIO"
-        title="Mi apartamento"
-        description="Las personas y los acuerdos empiezan por un hogar."
+        eyebrow={t("NUESTRO ESPACIO")}
+        title={t("Mi apartamento")}
+        description={t("Las personas y los acuerdos empiezan por un hogar.")}
         action={
           home && (
             <button
@@ -65,21 +68,22 @@ export default function HomeManager() {
               onClick={() => setCreating(!creating)}
             >
               <Plus size={17} />
-              {creating ? "Cancelar" : "Crear otro apartamento"}
+              {t(creating ? "Cancelar" : "Crear otro apartamento")}
             </button>
           )
         }
       />
       {(!home || creating) && (
         <section className="panel narrow">
-          <h2>Un espacio para compartir</h2>
+          <h2>{t("Un espacio para compartir")}</h2>
           <p>
-            Podrás invitar hasta 7 personas más. Tú serás el primer
-            administrador.
+            {t(
+              "Podrás invitar hasta 7 personas más. Tú serás el primer administrador.",
+            )}
           </p>
           <Form
-            label="Crear apartamento"
-            success="Tu nuevo hogar está listo."
+            label={t("Crear apartamento")}
+            success={t("Tu nuevo hogar está listo.")}
             onSave={async (data) => {
               await api("/homes", "POST", Object.fromEntries(data));
               await refresh();
@@ -95,6 +99,7 @@ export default function HomeManager() {
   );
 }
 function HomeDetails({ home }: { home: Home }) {
+  const { t } = useLanguage();
   const { refresh, toast } = useRoomie();
   const { data, error, reload } = useData<Home & { members: Member[] }>(
     `/homes/${home.id}`,
@@ -111,9 +116,9 @@ function HomeDetails({ home }: { home: Home }) {
     <div className="settings-grid">
       <section className="panel">
         <div className="section-title">
-          <h2>Información del hogar</h2>
+          <h2>{t("Información del hogar")}</h2>
           <span className="badge">
-            {admin ? "Administrador" : "Integrante"}
+            {t(admin ? "Administrador" : "Integrante")}
           </span>
         </div>
         {admin ? (
@@ -127,28 +132,31 @@ function HomeDetails({ home }: { home: Home }) {
           </Form>
         ) : (
           <dl>
-            <dt>Nombre</dt>
+            <dt>{t("Nombre")}</dt>
             <dd>{data.name}</dd>
-            <dt>Dirección</dt>
-            <dd>{data.address || "Sin dirección"}</dd>
-            <dt>Descripción</dt>
-            <dd>{data.description || "Sin descripción"}</dd>
+            <dt>{t("Dirección")}</dt>
+            <dd>{data.address || t("Sin dirección")}</dd>
+            <dt>{t("Descripción")}</dt>
+            <dd>{data.description || t("Sin descripción")}</dd>
           </dl>
         )}
         <div className="info-note">
           <ShieldCheck size={20} />
           <p>
-            Solo los administradores pueden cambiar los datos, invitar personas
-            y gestionar sus roles.
+            {t(
+              "Solo los administradores pueden cambiar los datos, invitar personas y gestionar sus roles.",
+            )}
           </p>
         </div>
       </section>
       <section className="panel">
         <div className="section-title">
           <h2>
-            <Users size={20} /> Roommates
+            <Users size={20} /> {t("Roommates")}
           </h2>
-          <span className="badge">{data.members.length} de 8</span>
+          <span className="badge">
+            {data.members.length} {t("de 8")}
+          </span>
         </div>
         <div className="member-list">
           {data.members.map((m) => (
@@ -160,18 +168,20 @@ function HomeDetails({ home }: { home: Home }) {
                 <strong>{m.name}</strong>
                 <small>{m.email}</small>
                 <span className="role-text">
-                  {m.role === "admin" ? "Administrador" : "Integrante"}
+                  {t(m.role === "admin" ? "Administrador" : "Integrante")}
                 </span>
               </div>
               {admin && (
                 <div className="member-actions">
                   <ConfirmButton
-                    label={
+                    label={t(
                       m.role === "admin"
                         ? "Cambiar a integrante"
-                        : "Hacer administrador"
-                    }
-                    description={`¿Cambiar el rol de ${m.name}?`}
+                        : "Hacer administrador",
+                    )}
+                    description={t("¿Cambiar el rol de {name}?", {
+                      name: m.name,
+                    })}
                     onConfirm={async () => {
                       await api(
                         `/homes/${home.id}/members/${m.membership_id}`,
@@ -182,8 +192,11 @@ function HomeDetails({ home }: { home: Home }) {
                     }}
                   />
                   <ConfirmButton
-                    label="Retirar"
-                    description={`¿Retirar a ${m.name}? Perderá acceso al apartamento; su historial se conservará.`}
+                    label={t("Retirar")}
+                    description={t(
+                      "¿Retirar a {name}? Perderá acceso al apartamento; su historial se conservará.",
+                      { name: m.name },
+                    )}
                     onConfirm={async () => {
                       await api(
                         `/homes/${home.id}/members/${m.membership_id}`,
@@ -202,16 +215,17 @@ function HomeDetails({ home }: { home: Home }) {
         <section className="panel">
           <div className="section-title">
             <h2>
-              <Mail size={19} /> Invitar a un roommate
+              <Mail size={19} /> {t("Invitar a un roommate")}
             </h2>
           </div>
           <p>
-            El enlace solo podrá aceptarlo una cuenta con este correo. Vence en
-            7 días.
+            {t(
+              "El enlace solo podrá aceptarlo una cuenta con este correo. Vence en 7 días.",
+            )}
           </p>
           <Form
-            label="Crear invitación"
-            success="Enlace de invitación creado."
+            label={t("Crear invitación")}
+            success={t("Enlace de invitación creado.")}
             onSave={async (form) => {
               const result = await api<{ url: string }>(
                 `/homes/${home.id}/invitations`,
@@ -223,19 +237,19 @@ function HomeDetails({ home }: { home: Home }) {
             }}
           >
             <label>
-              Correo de la persona
+              {t("Correo de la persona")}
               <input
                 name="email"
                 type="email"
                 required
-                placeholder="roommate@correo.com"
+                placeholder={t("roommate@correo.com")}
               />
             </label>
           </Form>
           {inviteLink && (
             <div className="invite-result">
               <label>
-                Enlace para compartir
+                {t("Enlace para compartir")}
                 <input
                   readOnly
                   value={inviteLink}
@@ -254,50 +268,74 @@ function HomeDetails({ home }: { home: Home }) {
                 }
               >
                 <Copy size={16} />
-                Copiar enlace
+                {t("Copiar enlace")}
               </button>
               <small>
-                Comparte este enlace directamente. No se ha enviado un correo
-                automáticamente.
+                {t(
+                  "Comparte este enlace directamente. No se ha enviado un correo automáticamente.",
+                )}
               </small>
             </div>
           )}
         </section>
       )}
       {admin && <Invitations key={invitesVersion} homeId={home.id} />}
+      {admin && (
+        <section className="panel">
+          <h2>{t("Archivar apartamento")}</h2>
+          <p>
+            {t(
+              "Dejará de estar disponible para todos sus integrantes. El historial compartido se conservará.",
+            )}
+          </p>
+          <ConfirmButton
+            label={t("Archivar apartamento")}
+            description={t(
+              "¿Archivar este apartamento para todos sus integrantes?",
+            )}
+            onConfirm={async () => {
+              await api(`/homes/${home.id}`, "DELETE");
+              await refresh();
+            }}
+          />
+        </section>
+      )}
     </div>
   );
 }
 function Invitations({ homeId }: { homeId: string }) {
+  const { t } = useLanguage();
   const { data, error, reload } = useData<Invitation[]>(
     `/homes/${homeId}/invitations`,
   );
   return (
     <section className="panel">
-      <h2>Invitaciones del hogar</h2>
+      <h2>{t("Invitaciones del hogar")}</h2>
       {!data ? (
         <LoadingError error={error} retry={reload} />
       ) : !data.length ? (
-        <p>Aún no has enviado invitaciones.</p>
+        <p>{t("Aún no has enviado invitaciones.")}</p>
       ) : (
         data.map((i) => (
           <div className="invitation-row" key={i.id}>
             <div>
               <strong>{i.email}</strong>
               <small>
-                {i.status === "accepted"
-                  ? "Aceptada"
-                  : i.status === "revoked"
-                    ? "Cancelada"
-                    : new Date(i.expires_at) < new Date()
-                      ? "Vencida"
-                      : "Pendiente"}
+                {t(
+                  i.status === "accepted"
+                    ? "Aceptada"
+                    : i.status === "revoked"
+                      ? "Cancelada"
+                      : new Date(i.expires_at) < new Date()
+                        ? "Vencida"
+                        : "Pendiente",
+                )}
               </small>
             </div>
             {i.status === "pending" && new Date(i.expires_at) > new Date() && (
               <ConfirmButton
-                label="Cancelar invitación"
-                description="El enlace dejará de funcionar."
+                label={t("Cancelar invitación")}
+                description={t("El enlace dejará de funcionar.")}
                 onConfirm={async () => {
                   await api(`/homes/${homeId}/invitations/${i.id}`, "DELETE");
                   reload();

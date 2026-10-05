@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/context/LanguageContext";
 import { useState } from "react";
 import {
   CalendarDays,
@@ -18,25 +19,26 @@ import NoHome from "./NoHome";
 import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Reservation, Resource } from "@/types";
 function ResourceFields({ resource }: { resource?: Resource }) {
+  const { t } = useLanguage();
   return (
     <>
       <label>
-        Nombre
+        {t("Nombre")}
         <input
           name="name"
           defaultValue={resource?.name}
-          placeholder="Ej. Lavadora"
+          placeholder={t("Ej. Lavadora")}
           required
           minLength={2}
           maxLength={80}
         />
       </label>
       <label>
-        Descripción
+        {t("Descripción")}
         <input
           name="description"
           defaultValue={resource?.description}
-          placeholder="Dónde está o cómo se usa"
+          placeholder={t("Dónde está o cómo se usa")}
           maxLength={300}
         />
       </label>
@@ -44,20 +46,23 @@ function ResourceFields({ resource }: { resource?: Resource }) {
   );
 }
 export default function Reservations() {
+  const { t } = useLanguage();
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
       <NoHome
-        title="Reservas"
-        description="Un momento para cada persona, sin cruces."
+        title={t("Reservas")}
+        description={t("Un momento para cada persona, sin cruces.")}
       >
-        Crea tu apartamento o acepta una invitación para reservar los espacios
-        que comparten.
+        {t(
+          "Crea tu apartamento o acepta una invitación para reservar los espacios que comparten.",
+        )}
       </NoHome>
     );
   return <ReservationBoard homeId={session.activeHomeId} />;
 }
 function ReservationBoard({ homeId }: { homeId: string }) {
+  const { t } = useLanguage();
   const {
     admin,
     resources,
@@ -75,8 +80,8 @@ function ReservationBoard({ homeId }: { homeId: string }) {
   return (
     <>
       <PageTitle
-        title="Reservas"
-        description="Un momento para cada persona, sin cruces."
+        title={t("Reservas")}
+        description={t("Un momento para cada persona, sin cruces.")}
         action={
           !!resources.data?.length && (
             <button
@@ -84,7 +89,7 @@ function ReservationBoard({ homeId }: { homeId: string }) {
               onClick={() => setCreating(!creating)}
             >
               {creating ? <X size={17} /> : <Plus size={17} />}
-              {creating ? "Cancelar" : "Nueva reserva"}
+              {creating ? t("Cancelar") : t("Nueva reserva")}
             </button>
           )
         }
@@ -92,17 +97,17 @@ function ReservationBoard({ homeId }: { homeId: string }) {
       <div className="dashboard-main">
         {creating && resources.data && (
           <section className="panel narrow">
-            <h2>Reservar un espacio</h2>
+            <h2>{t("Reservar un espacio")}</h2>
             <Form
-              label="Reservar"
-              success="Reserva creada."
+              label={t("Reservar")}
+              success={t("Reserva creada.")}
               onSave={async (form) => {
                 await reserve(form);
                 setCreating(false);
               }}
             >
               <label>
-                Recurso
+                {t("Recurso")}
                 <select name="resource_id" required>
                   {resources.data.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -112,7 +117,7 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                 </select>
               </label>
               <label>
-                Inicio
+                {t("Inicio de la reserva")}
                 <input
                   name="starts_at"
                   type="datetime-local"
@@ -121,7 +126,7 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                 />
               </label>
               <label>
-                Fin
+                {t("Fin")}
                 <input
                   name="ends_at"
                   type="datetime-local"
@@ -130,9 +135,9 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                 />
               </label>
               <small>
-                No puede cruzarse con otra reserva del mismo recurso y dura como
-                máximo 7 días. Recibirás un recordatorio según tus preferencias
-                de notificación.
+                {t(
+                  "No puede cruzarse con otra reserva del mismo recurso y dura como máximo 7 días. Recibirás un recordatorio según tus preferencias de notificación.",
+                )}
               </small>
             </Form>
           </section>
@@ -141,12 +146,12 @@ function ReservationBoard({ homeId }: { homeId: string }) {
           <>
             <div className="form filters">
               <label>
-                Recurso
+                {t("Recurso")}
                 <select
                   value={filters.resource}
                   onChange={(e) => filters.setResource(e.target.value)}
                 >
-                  <option value="all">Todos</option>
+                  <option value="all">{t("Todos")}</option>
                   {resources.data.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.name}
@@ -160,7 +165,7 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                   checked={filters.onlyMine}
                   onChange={(e) => filters.setOnlyMine(e.target.checked)}
                 />
-                Solo mis reservas
+                {t("Solo mis reservas")}
               </label>
             </div>
             <WeekCalendar
@@ -176,20 +181,20 @@ function ReservationBoard({ homeId }: { homeId: string }) {
           <section className="panel">
             <div className="section-title">
               <h2>
-                <CalendarDays size={20} /> Próximas reservas
+                <CalendarDays size={20} /> {t("Próximas reservas")}
               </h2>
             </div>
             {!upcoming.data ? (
               <LoadingError error={upcoming.error} retry={upcoming.reload} />
             ) : !upcoming.data.length ? (
-              <Empty title="Todo libre por ahora">
-                Cuando alguien reserve un espacio, aparecerá aquí.
+              <Empty title={t("Todo libre por ahora")}>
+                {t("Cuando alguien reserve un espacio, aparecerá aquí.")}
               </Empty>
             ) : (
               <>
                 <p role="status">
-                  Mostrando {upcoming.visible.length} de {upcoming.data.length}{" "}
-                  reservas próximas
+                  {t("Mostrando")} {upcoming.visible.length} {t("de")}{" "}
+                  {upcoming.data.length} {t("reservas próximas")}
                 </p>
                 {upcoming.visible.length ? (
                   upcoming.visible.map((r) => (
@@ -200,7 +205,7 @@ function ReservationBoard({ homeId }: { homeId: string }) {
                     />
                   ))
                 ) : (
-                  <p>Ninguna reserva coincide con los filtros.</p>
+                  <p>{t("Ninguna reserva coincide con los filtros.")}</p>
                 )}
               </>
             )}
@@ -208,7 +213,7 @@ function ReservationBoard({ homeId }: { homeId: string }) {
           <section className="panel">
             <div className="section-title">
               <h2>
-                <Package size={20} /> Espacios y objetos
+                <Package size={20} /> {t("Espacios y objetos")}
               </h2>
               {resources.data && (
                 <span className="badge">{resources.data.length}</span>
@@ -219,8 +224,12 @@ function ReservationBoard({ homeId }: { homeId: string }) {
             ) : !resources.data.length ? (
               <p>
                 {admin
-                  ? "Agrega lo que comparten, como la lavadora o la sala de estudio, para empezar a reservar."
-                  : "Aún no hay recursos para reservar. Pide a un administrador que agregue lo que comparten."}
+                  ? t(
+                      "Agrega lo que comparten, como la lavadora o la sala de estudio, para empezar a reservar.",
+                    )
+                  : t(
+                      "Aún no hay recursos para reservar. Pide a un administrador que agregue lo que comparten.",
+                    )}
               </p>
             ) : (
               resources.data.map((r) => (
@@ -237,7 +246,9 @@ function ReservationBoard({ homeId }: { homeId: string }) {
               <div className="info-note">
                 <ShieldCheck size={20} />
                 <p>
-                  Solo los administradores agregan, editan o retiran recursos.
+                  {t(
+                    "Solo los administradores agregan, editan o retiran recursos.",
+                  )}
                 </p>
               </div>
             )}
@@ -246,18 +257,19 @@ function ReservationBoard({ homeId }: { homeId: string }) {
             <section className="panel">
               <div className="section-title">
                 <h2>
-                  <CalendarPlus size={20} /> Agregar un recurso
+                  <CalendarPlus size={20} /> {t("Agregar un recurso")}
                 </h2>
               </div>
               <p>
-                Un espacio u objeto que se turnan, como la lavadora, la sala o
-                la bicicleta.
+                {t(
+                  "Un espacio u objeto que se turnan, como la lavadora, la sala o la bicicleta.",
+                )}
               </p>
               {/* La key nueva limpia el formulario después de guardar. */}
               <Form
                 key={newResource}
-                label="Agregar recurso"
-                success="Recurso agregado."
+                label={t("Agregar recurso")}
+                success={t("Recurso agregado.")}
                 onSave={async (form) => {
                   await addResource(form);
                   setNewResource((v) => v + 1);
@@ -279,6 +291,7 @@ function ReservationRow({
   reservation: Reservation;
   onCancel: () => Promise<void>;
 }) {
+  const { t, locale } = useLanguage();
   const { session } = useRoomie();
   const ongoing = new Date(r.starts_at) <= new Date();
   return (
@@ -286,19 +299,25 @@ function ReservationRow({
       <div>
         <strong>{r.resource}</strong>
         <small>
-          {formatRange(r.starts_at, r.ends_at)}
-          {ongoing && " · En curso"}
+          {formatRange(r.starts_at, r.ends_at, locale)}
+          {ongoing && t(" · En curso")}
         </small>
         <small>
           {r.user_id === session.user.id
-            ? "Tu reserva"
-            : `Reservado por ${r.member}${r.member_active ? "" : " (ya no pertenece)"}`}
+            ? t("Tu reserva")
+            : t("Reservado por {value1}{value2}", {
+                value1: r.member,
+                value2: r.member_active ? "" : " (ya no pertenece)",
+              })}
         </small>
       </div>
       {r.can_cancel && (
         <ConfirmButton
-          label="Cancelar reserva"
-          description={`¿Cancelar esta reserva de ${r.resource}? El horario quedará libre.`}
+          label={t("Cancelar reserva")}
+          description={t(
+            "¿Cancelar esta reserva de {value1}? El horario quedará libre.",
+            { value1: r.resource },
+          )}
           onConfirm={onCancel}
         />
       )}
@@ -316,13 +335,14 @@ function ResourceRow({
   onUpdate: (form: FormData) => Promise<void>;
   onRetire: () => Promise<void>;
 }) {
+  const { t } = useLanguage();
   const [editing, setEditing] = useState(false);
   return (
     <>
       <div className="invitation-row">
         <div>
           <strong>{resource.name}</strong>
-          <small>{resource.description || "Sin descripción"}</small>
+          <small>{resource.description || t("Sin descripción")}</small>
         </div>
         {admin && (
           <div className="member-actions">
@@ -330,11 +350,14 @@ function ResourceRow({
               className="text-button"
               onClick={() => setEditing(!editing)}
             >
-              {editing ? "Cerrar edición" : "Editar"}
+              {editing ? t("Cerrar edición") : t("Editar")}
             </button>
             <ConfirmButton
-              label="Retirar"
-              description={`¿Retirar ${resource.name}? Ya no se podrá reservar; las reservas pasadas se conservan.`}
+              label={t("Retirar")}
+              description={t(
+                "¿Retirar {value1}? Ya no se podrá reservar; las reservas pasadas se conservan.",
+                { value1: resource.name },
+              )}
               onConfirm={onRetire}
             />
           </div>
@@ -342,7 +365,7 @@ function ResourceRow({
       </div>
       {editing && (
         <Form
-          success="Recurso actualizado."
+          success={t("Recurso actualizado.")}
           onSave={async (form) => {
             await onUpdate(form);
             setEditing(false);
@@ -368,6 +391,7 @@ function WeekCalendar({
   error: string;
   retry: () => void;
 }) {
+  const { t, locale } = useLanguage();
   const { session } = useRoomie();
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const today = new Date().toDateString();
@@ -375,13 +399,13 @@ function WeekCalendar({
     <section className="panel" aria-labelledby="calendario-reservas">
       <div className="section-title">
         <h2 id="calendario-reservas">
-          <CalendarRange size={20} /> Semana del{" "}
-          {weekStart.toLocaleDateString("es-CO", {
+          <CalendarRange size={20} /> {t("Semana del")}{" "}
+          {weekStart.toLocaleDateString(locale, {
             day: "numeric",
             month: "short",
           })}{" "}
-          al{" "}
-          {days[6].toLocaleDateString("es-CO", {
+          {t("al")}{" "}
+          {days[6].toLocaleDateString(locale, {
             day: "numeric",
             month: "short",
             year: "numeric",
@@ -390,17 +414,17 @@ function WeekCalendar({
         <div className="actions">
           <button
             className="secondary"
-            aria-label="Semana anterior"
+            aria-label={t("Semana anterior")}
             onClick={() => onChange(addDays(weekStart, -7))}
           >
             <ChevronLeft size={17} />
           </button>
           <button className="secondary" onClick={() => onChange(new Date())}>
-            Esta semana
+            {t("Esta semana")}
           </button>
           <button
             className="secondary"
-            aria-label="Semana siguiente"
+            aria-label={t("Semana siguiente")}
             onClick={() => onChange(addDays(weekStart, 7))}
           >
             <ChevronRight size={17} />
@@ -408,7 +432,7 @@ function WeekCalendar({
         </div>
       </div>
       {!reservations ? (
-        <LoadingError error={error} retry={retry} />
+        <LoadingError error={t(error)} retry={retry} />
       ) : (
         <ol className="week-calendar">
           {days.map((day) => {
@@ -423,28 +447,28 @@ function WeekCalendar({
                 className={`week-day${isToday ? " is-today" : ""}`}
               >
                 <h3>
-                  {day.toLocaleDateString("es-CO", {
+                  {day.toLocaleDateString(locale, {
                     weekday: "long",
                     day: "numeric",
                   })}
-                  {isToday && <span className="badge">Hoy</span>}
+                  {isToday && <span className="badge">{t("Hoy")}</span>}
                 </h3>
                 {items.length ? (
                   <ul>
                     {items.map((r) => (
                       <li key={r.id}>
-                        <strong>{slot(r, day, end)}</strong>
+                        <strong>{slot(r, day, end, locale, t)}</strong>
                         <span>{r.resource}</span>
                         <small>
                           {r.user_id === session.user.id
-                            ? "Tu reserva"
+                            ? t("Tu reserva")
                             : r.member}
                         </small>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p>Sin reservas</p>
+                  <p>{t("Sin reservas")}</p>
                 )}
               </li>
             );
@@ -455,11 +479,17 @@ function WeekCalendar({
   );
 }
 // Horario de una reserva dentro de un día, también si empieza antes o termina después.
-function slot(reservation: Reservation, day: Date, end: Date) {
+function slot(
+  reservation: Reservation,
+  day: Date,
+  end: Date,
+  locale: string,
+  t: ReturnType<typeof useLanguage>["t"],
+) {
   const from = new Date(reservation.starts_at);
   const to = new Date(reservation.ends_at);
-  if (from <= day && to >= end) return "Todo el día";
-  if (from <= day) return `Hasta ${formatTime(to)}`;
-  if (to >= end) return `Desde ${formatTime(from)}`;
-  return `${formatTime(from)} – ${formatTime(to)}`;
+  if (from <= day && to >= end) return t("Todo el día");
+  if (from <= day) return t("Hasta {time}", { time: formatTime(to, locale) });
+  if (to >= end) return t("Desde {time}", { time: formatTime(from, locale) });
+  return `${formatTime(from, locale)} – ${formatTime(to, locale)}`;
 }

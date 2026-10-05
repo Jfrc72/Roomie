@@ -54,7 +54,7 @@ export async function tick() {
     ORDER BY d.next_attempt_at LIMIT 10 FOR UPDATE OF d SKIP LOCKED`);
     for (const row of rows) {
       const membership = await db.query(
-        "SELECT id FROM memberships WHERE user_id=$1 AND home_id=$2 AND active",
+        "SELECT m.id FROM memberships m JOIN homes h ON h.id=m.home_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND m.home_id=$2 AND m.active AND u.active AND h.archived_at IS NULL",
         [row.user_id, row.home_id],
       );
       if (

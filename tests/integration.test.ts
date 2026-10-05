@@ -232,6 +232,65 @@ test("Base completa: acceso, hogares, invitaciones, permisos y avisos", async (t
       );
     });
     await t.test(
+      "eliminar un aviso respeta propiedad y evita que reaparezca",
+      async () => {
+        const list = (await member.call(`/notifications?homeId=${homeId}`)).json
+          .data;
+        const noticeId = list[0].id;
+        assert.equal(
+          (await outsider.call(`/notifications/${noticeId}`, "DELETE")).status,
+          404,
+        );
+        assert.equal(
+          (await member.call(`/notifications/${noticeId}`, "DELETE")).status,
+          200,
+        );
+        assert(
+          !(
+            await member.call(`/notifications?homeId=${homeId}`)
+          ).json.data.some((n: { id: string }) => n.id === noticeId),
+        );
+        assert.equal(
+          (
+            await member.call(`/notifications/${noticeId}`, "PATCH", {
+              read: false,
+            })
+          ).status,
+          404,
+        );
+      },
+    );
+    await t.test(
+      "preferencias válidas persisten y la anticipación fuera de rango se rechaza",
+      async () => {
+        assert.equal(
+          (
+            await member.call("/notifications/preferences", "PATCH", {
+              email_enabled: false,
+              push_enabled: false,
+              reminder_hours: 6,
+            })
+          ).status,
+          200,
+        );
+        assert.equal(
+          (await member.call("/notifications/preferences")).json.data
+            .reminder_hours,
+          6,
+        );
+        assert.equal(
+          (
+            await member.call("/notifications/preferences", "PATCH", {
+              email_enabled: false,
+              push_enabled: false,
+              reminder_hours: 169,
+            })
+          ).status,
+          400,
+        );
+      },
+    );
+    await t.test(
       "recordatorios vencidos generan un aviso, sin duplicarlo",
       async () => {
         process.env.WORKER_TEST = "1";
@@ -383,6 +442,86 @@ test("Base completa: acceso, hogares, invitaciones, permisos y avisos", async (t
       owner.cookie = old;
       assert.equal((await owner.call("/session")).status, 401);
     });
+    await t.test(
+      "perfil, archivo de hogares y baja segura de cuenta",
+      async () => {
+        assert.equal(
+          (
+            await owner.call("/auth/login", "POST", {
+              email: emails[0],
+              password: "OtraPrueba2026!",
+            })
+          ).status,
+          200,
+        );
+        assert.equal(
+          (
+            await owner.call("/auth/profile", "PATCH", {
+              name: "Prueba actualizada",
+            })
+          ).status,
+          200,
+        );
+        assert.equal(
+          (await owner.call("/session")).json.data.user.name,
+          "Prueba actualizada",
+        );
+        assert.equal(
+          (
+            await owner.call("/auth/account", "DELETE", {
+              current: "incorrecta",
+            })
+          ).status,
+          400,
+        );
+        assert.equal(
+          (
+            await owner.call("/auth/account", "DELETE", {
+              current: "OtraPrueba2026!",
+            })
+          ).status,
+          409,
+        );
+        for (const home of homeIds) {
+          assert.equal(
+            (await outsider.call(`/homes/${home}`, "DELETE")).status,
+            403,
+          );
+          assert.equal(
+            (await owner.call(`/homes/${home}`, "DELETE")).status,
+            200,
+          );
+          assert.equal((await owner.call(`/homes/${home}`)).status, 403);
+        }
+        assert.equal((await owner.call("/session")).json.data.homes.length, 0);
+        assert.equal(
+          (
+            await owner.call("/auth/account", "DELETE", {
+              current: "OtraPrueba2026!",
+            })
+          ).status,
+          200,
+        );
+        assert.equal((await owner.call("/session")).status, 401);
+        const row = (
+          await pool.query("SELECT active,name,email FROM users WHERE id=$1", [
+            ids[0],
+          ])
+        ).rows[0];
+        assert.equal(row.active, false);
+        assert.equal(row.name, "Cuenta cerrada");
+        assert(!row.email.includes(emails[0]));
+        assert.equal(
+          (
+            await owner.call("/auth/login", "POST", {
+              email: emails[0],
+              password: "OtraPrueba2026!",
+            })
+          ).status,
+          401,
+        );
+      },
+    );
   } finally {
     await transaction(async (db) => {
       for (const home of homeIds) {
@@ -404,6 +543,7 @@ test("Base completa: acceso, hogares, invitaciones, permisos y avisos", async (t
         await db.query("DELETE FROM memberships WHERE home_id=$1", [home]);
         await db.query("DELETE FROM homes WHERE id=$1", [home]);
       }
+      await db.query("DELETE FROM users WHERE id=ANY($1::uuid[])", [ids]);
       for (const email of emails) {
         await db.query("DELETE FROM users WHERE email=$1", [email]);
         await db.query("DELETE FROM login_attempts WHERE email=$1", [email]);

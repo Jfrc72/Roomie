@@ -39,7 +39,7 @@ export async function currentUser(): Promise<
   if (!value) return null;
   const rows = await query<User & { active_home_id: string | null }>(
     `SELECT u.id,u.name,u.email,s.active_home_id FROM users u JOIN sessions s ON s.user_id=u.id
-     WHERE s.token_hash=$1 AND s.expires_at>now()`,
+     WHERE s.token_hash=$1 AND s.expires_at>now() AND u.active`,
     [hashToken(value)],
   );
   return rows[0] ? { ...rows[0], sessionHash: hashToken(value) } : null;
@@ -53,7 +53,7 @@ export async function createSession(userId: string) {
   const value = token();
   await query(
     `INSERT INTO sessions(token_hash,user_id,expires_at,active_home_id)
-    VALUES($1,$2,now()+interval '7 days',(SELECT home_id FROM memberships WHERE user_id=$2 AND active LIMIT 1))`,
+    VALUES($1,$2,now()+interval '7 days',(SELECT m.home_id FROM memberships m JOIN homes h ON h.id=m.home_id WHERE m.user_id=$2 AND m.active AND h.archived_at IS NULL LIMIT 1))`,
     [hashToken(value), userId],
   );
   (await cookies()).set(COOKIE, value, {

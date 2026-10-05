@@ -62,16 +62,16 @@ Alternativa a `npm run dev` que no necesita Node.js: levanta PostgreSQL, aplica 
 
 La primera construcción tarda unos minutos. Comandos útiles:
 
-| Para | Comando |
-| --- | --- |
-| Ver el estado (`web` pasa a `healthy` cuando responde) | `docker compose ps` |
-| Ver los registros | `docker compose logs -f web worker` |
-| Crear las cuentas de prueba (requiere `DEMO_PASSWORD` en `.env`) | `docker compose run --rm migrate node --import tsx scripts/seed.ts` |
-| Aplicar cambios después de `git pull` (las migraciones nuevas se aplican solas) | `docker compose up --build -d` |
-| Detener conservando los datos | `docker compose down` |
-| Detener y borrar la base de datos | `docker compose down -v` |
+| Para                                                                            | Comando                                                             |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Ver el estado (`web` pasa a `healthy` cuando responde)                          | `docker compose ps`                                                 |
+| Ver los registros                                                               | `docker compose logs -f web worker`                                 |
+| Crear las cuentas de prueba (requiere `DEMO_PASSWORD` en `.env`)                | `docker compose run --rm migrate node --import tsx scripts/seed.ts` |
+| Aplicar cambios después de `git pull` (las migraciones nuevas se aplican solas) | `docker compose up --build -d`                                      |
+| Detener conservando los datos                                                   | `docker compose down`                                               |
+| Detener y borrar la base de datos                                               | `docker compose down -v`                                            |
 
-La base de Docker es independiente de la de `npm run dev` (`.roomie-data/`): las cuentas y los datos no se comparten. PostgreSQL no publica su puerto fuera de Docker, así que `npm test` se ejecuta contra `npm run dev`, no contra Docker. No cambies `POSTGRES_PASSWORD` después del primer arranque: la base ya creada conserva la contraseña original; para empezar de cero usa `docker compose down -v`. HTTPS, correo y push en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
+La base de Docker es independiente de la de `npm run dev` (`.roomie-data/`): las cuentas y los datos no se comparten. PostgreSQL no publica su puerto fuera de Docker, así que `npm run test:integration` se ejecuta contra `npm run dev`, no contra Docker. Las unitarias no necesitan base de datos. No cambies `POSTGRES_PASSWORD` después del primer arranque: la base ya creada conserva la contraseña original; para empezar de cero usa `docker compose down -v`. HTTPS, correo y push en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 
 ## Comprobaciones
 
@@ -79,21 +79,26 @@ La base de Docker es independiente de la de `npm run dev` (`.roomie-data/`): las
 npm run lint
 npm run typecheck
 npm run build
-# Pruebas unitarias: no necesitan servidor ni base de datos.
-npm run test:unit
-# Todas las pruebas (integración y unitarias), con npm run dev abierto en otra terminal:
+# Unitarias: no requieren servidor ni base de datos.
 npm test
+# También disponible: npm run test:unit
+# Con npm run dev abierto en otra terminal:
+npm run test:integration
+npm run test:e2e
 ```
 
-Las pruebas de integración recorren la API real: sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, gastos y pagos, compras, mantenimiento, tareas, reservas, votaciones y acuerdos. Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo. Las unitarias (`tests/unit/`) prueban la lógica pura: estados de tareas, cálculo de resultados de votaciones, fechas del calendario y el asistente de IA simulada.
+Vitest ejecuta las unitarias de componentes, hooks y lógica de todo el equipo. Las pruebas de integración usan `node:test` y recorren todos los módulos contra la API y PostgreSQL. Playwright comprueba recorridos, idiomas, accesibilidad y eliminación con deshacer en el navegador. Estas últimas dos suites crean datos temporales y los eliminan al terminar: ejecutarlas únicamente en desarrollo.
 
-Las pruebas llevan en el nombre el identificador de la historia de usuario que cubren (por ejemplo `HU3.1.2`). Las historias de todas las funcionalidades, con sus criterios de aceptación y sus pruebas, están en [docs/HISTORIAS.md](docs/HISTORIAS.md) y en la [wiki del repositorio](https://github.com/Jfrc72/Roomie/wiki/Historias-de-usuario).
+Las pruebas de navegador usan Google Chrome instalado. Alternativa: `npx playwright install chromium` y `PLAYWRIGHT_CHANNEL=chromium npm run test:e2e`.
+
+Las historias, sus criterios y sus pruebas están en [docs/HISTORIAS.md](docs/HISTORIAS.md). El equipo debe mantener sincronizada la [wiki](https://github.com/Jfrc72/Roomie/wiki/Historias-de-usuario) al integrar cambios. El estado de la combinación está en [docs/REVISION-CICLO-1.md](docs/REVISION-CICLO-1.md).
 
 ## Justificaciones técnicas
 
 **Next.js (App Router), React y TypeScript en un solo proyecto.** La interfaz y la API viven juntas: la API es un único manejador (`src/app/api/[...path]/route.ts`) que centraliza el formato JSON, los errores y la comprobación de origen, y delega en un módulo por funcionalidad (`src/server/*-api.ts`). Así no hay CORS que configurar, frontend y backend comparten tipos (`src/types`) y se despliega una sola aplicación.
 
 **PostgreSQL.** Los datos son relacionales (hogares, integrantes, cuotas de gastos, votos, aceptaciones) y varias reglas se garantizan en la propia base, no solo en el navegador:
+
 - Claves foráneas y `CHECK` para estados y valores válidos.
 - `UNIQUE` para impedir votos o aceptaciones duplicadas.
 - Restricción `EXCLUDE` (extensión `btree_gist`) que impide reservas cruzadas del mismo recurso, incluso si llegan a la vez.
@@ -102,6 +107,7 @@ Las pruebas llevan en el nombre el identificador de la historia de usuario que c
 **SQL parametrizado con `pg`, sin ORM.** Permite controlar transacciones y bloqueos de filas (`FOR UPDATE` / `FOR SHARE`) donde hay concurrencia: altas de integrantes, numeración de versiones del reglamento, cierre de votaciones. Los parámetros `$1, $2…` evitan inyección SQL. Las migraciones son archivos SQL numerados (`db/`), aplicados en orden y una sola vez con un bloqueo consultivo.
 
 **Seguridad.**
+
 - Sesiones propias en la base de datos con cookie `HttpOnly` (sin tokens en `localStorage`), revocables al cerrar sesión o cambiar la contraseña.
 - Contraseñas con `scrypt` y límite de intentos de login.
 - Las escrituras exigen un `Origin` igual a `APP_URL` (protección CSRF).
@@ -112,7 +118,8 @@ Las pruebas llevan en el nombre el identificador de la historia de usuario que c
 
 **Estado en el cliente y hooks.** Un Context (`RoomieContext`) guarda solo la sesión, el hogar activo y los avisos temporales. Cada módulo tiene hooks propios en `src/hooks/` (`useGastos`, `useTasks`, `useReservations`, `usePolls`, `useRules`, `useRuleAssistant`…) que concentran la carga de datos, los filtros, las acciones contra la API y los estados de carga. Los componentes se ocupan solo de la presentación. `useUrlState` guarda en la URL los filtros y la semana del calendario: se conservan al recargar y al compartir el enlace, y "Atrás" vuelve a la semana anterior. Al cambiar de hogar se reinicia el estado de las páginas para no mostrar datos del anterior.
 
-**Interfaz y accesibilidad.** CSS propio con variables (`src/app/globals.css`) y componentes reutilizables (`src/components/ui.tsx`), sin framework de UI, para mantener un diseño coherente y liviano. Incluye:
+**Interfaz, idiomas y accesibilidad.** CSS propio con variables (`src/app/globals.css`) y componentes reutilizables (`src/components/ui.tsx`), sin framework de UI, para mantener un diseño coherente y liviano. El selector ES/EN conserva el idioma en una cookie; los módulos comparten el diccionario `src/locales/en.json` y formatos según el idioma. Los datos escritos por personas se conservan. Incluye:
+
 - Etiquetas en todos los campos y regiones `aria-live` para avisos y estados de carga.
 - Foco visible, enlace "Saltar al contenido" y botones de al menos 44 px.
 - Estados que no dependen solo del color y respeto de `prefers-reduced-motion`.
@@ -122,7 +129,7 @@ Las pruebas llevan en el nombre el identificador de la historia de usuario que c
 
 **Docker.** Imagen en varias etapas con la salida `standalone` de Next.js, y Compose con servicios separados: base de datos, migraciones (se ejecutan antes de arrancar), web (con comprobación de salud) y worker.
 
-**Pruebas.** `node:test` con pruebas de integración que recorren la API real contra PostgreSQL: permisos, validaciones y concurrencia. Cada prueba crea sus propios datos y los borra al terminar.
+**Pruebas.** Vitest para unitarias de componentes y lógica; Playwright para recorridos de navegador. `node:test` para pruebas de integración que recorren la API real contra PostgreSQL: permisos, validaciones y concurrencia. Cada prueba crea sus propios datos y los borra al terminar.
 
 ## Continuar en equipo
 

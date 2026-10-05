@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRoomie } from "@/context/RoomieContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
 import { useData } from "@/lib/use-data";
 import {
@@ -46,6 +47,7 @@ export function useTasks(homeId: string) {
 
 // Botones de estado de una tarea: opciones que la persona puede usar, envío y estado ocupado.
 export function useTaskMoves(task: Task, onMoved: () => void) {
+  const { t } = useLanguage();
   const { toast } = useRoomie();
   const [busy, setBusy] = useState(false);
   const options = statusMoves[task.status].filter(
@@ -55,7 +57,11 @@ export function useTaskMoves(task: Task, onMoved: () => void) {
     setBusy(true);
     try {
       await api(`/tasks/${task.id}`, "PATCH", { status });
-      toast(`Tarea marcada como ${statusLabels[status].toLowerCase()}.`);
+      toast(
+        t("Tarea marcada como {status}.", {
+          status: t(statusLabels[status]).toLowerCase(),
+        }),
+      );
       onMoved();
     } catch (e) {
       toast((e as Error).message);

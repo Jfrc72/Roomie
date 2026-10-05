@@ -1,5 +1,5 @@
 // Pruebas unitarias de la lógica de tareas (sin servidor ni base de datos).
-import test from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { canAdvance, isOverdue, statusMoves } from "../../src/lib/tasks";
 

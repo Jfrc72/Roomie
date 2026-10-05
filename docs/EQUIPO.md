@@ -2,15 +2,15 @@
 
 ## Lo que ya está implementado
 
-- Registro, login/logout, perfil y cambio de contraseña.
+- Registro, login/logout, perfil, cambio de contraseña y cierre de cuenta.
 - Sesiones con cookie HttpOnly y vencimiento; contraseñas con scrypt.
-- Crear y editar apartamentos; pertenecer a varios y seleccionar uno activo.
+- Crear, editar y archivar apartamentos; pertenecer a varios y seleccionar uno activo.
 - Roles administrador/integrante validados por el backend.
 - Invitaciones por enlace, correo asociado, vencimiento y cancelación.
 - Límite de ocho integrantes; baja lógica que conserva referencias históricas.
 - Protección del último administrador.
 - Menú, layout, Inicio, ayuda, componentes de formularios y confirmaciones.
-- Actividad real del hogar y bandeja de notificaciones, leído/no leído y preferencias.
+- Actividad real del hogar y bandeja de notificaciones, leído/no leído, eliminación y preferencias.
 - Servicio de recordatorios y adaptadores de email/push configurables.
 - Base de datos local, migraciones, seed y configuración Docker.
 - Tareas: tablero por estados operable con botones, filtros, detalle en `/tareas/ID`, historial, avisos, recordatorios y resumen en Inicio.
@@ -22,11 +22,11 @@ No hay una API separada que iniciar manualmente: `src/app/api` expone el backend
 
 ## Responsabilidades
 
-| Integrante | Páginas | Backend y base de datos |
-| --- | --- | --- |
-| Juan | Inicio, apartamento, perfil, login, registro, ayuda y notificaciones | Usuarios, sesiones, hogares, integrantes, invitaciones, permisos, actividad y servicio común de avisos |
-| Miguel | `/gastos`, `/compras`, `/mantenimiento` | Gastos/participantes/pagos, listas/productos, tickets; cálculos y conexión financiera |
-| Tomás | `/tareas`, `/reservas`, `/votaciones`, `/reglamento` | Tareas/historial, recursos/reservas, votaciones/votos y acuerdos/aceptaciones; asistente simulado |
+| Integrante | Páginas                                                              | Backend y base de datos                                                                                |
+| ---------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Juan       | Inicio, apartamento, perfil, login, registro, ayuda y notificaciones | Usuarios, sesiones, hogares, integrantes, invitaciones, permisos, actividad y servicio común de avisos |
+| Miguel     | `/gastos`, `/compras`, `/mantenimiento`                              | Gastos/participantes/pagos, listas/productos, tickets; cálculos y conexión financiera                  |
+| Tomás      | `/tareas`, `/reservas`, `/votaciones`, `/reglamento`                 | Tareas/historial, recursos/reservas, votaciones/votos y acuerdos/aceptaciones; asistente simulado      |
 
 Cada compañero implementa las pantallas y operaciones de su área, sus migraciones y sus pruebas. No necesita reescribir autenticación o crear otro Context de usuario.
 
@@ -62,7 +62,7 @@ El contenido del layout tiene una `key` basada en el hogar. Cambiar de apartamen
 - `src/app/globals.css`: paleta lavanda, paneles, campos, botones y adaptación móvil.
 - `HomeManager.tsx` sirve como ejemplo de formulario real, permisos y confirmaciones.
 
-No copiar los totales de las capturas: calcularlos desde los datos. Todos los filtros, botones y estados incluidos deben tener comportamiento real. Tareas debe poder operarse sin arrastrar; gastos necesita validación y confirmación al eliminar. Mantener textos en español y estados que no dependan solo del color.
+No copiar los totales de las capturas: calcularlos desde los datos. Todos los filtros, botones y estados incluidos deben tener comportamiento real. Tareas debe poder operarse sin arrastrar; gastos necesita validación y confirmación al eliminar. Añadir los textos en español e inglés y mantener estados que no dependan solo del color.
 
 ## Conectar Inicio
 
@@ -102,9 +102,21 @@ Los envíos externos requieren configuración. No crear funciones de correo inde
 
 ## Integración y entrega
 
-- Las rutas de los módulos están reservadas con pantallas de preparación. Reemplazar su contenido.
+- Los módulos ya están implementados. Conservar sus formularios, acciones y hooks al integrar ajustes comunes.
 - No modificar `db/001_base.sql` una vez compartida: añadir una migración nueva.
-- Numeración propuesta: Miguel empieza en `010_finanzas.sql`; Tomás en `020_tareas.sql` (reservas usa `021_reservas.sql`, votaciones `022_votaciones.sql` y reglamento `023_reglamento.sql`). Acordar nuevos números cuando hagan cambios adicionales.
+- Las migraciones del equipo llegan a `027_incumplimientos.sql`. Conservar las existentes y acordar un número nuevo para los cambios adicionales.
 - Mantener cambios de `package.json`/lockfile, layout, estilos globales y router API pequeños y coordinados.
 - Los tres ejecutan lint, tipos, build y pruebas; cada uno revisa un módulo ajeno.
 - Docker y despliegue se verifican juntos en un equipo con Docker antes de presentar esa parte.
+
+## Idiomas y pruebas del ciclo 1
+
+Usar `const { t, locale } = useLanguage()` desde `LanguageContext` y mostrar etiquetas con `t("Texto en español")`. Añadir esa clave y su traducción a `src/locales/en.json`; las claves son los textos en español para evitar otro diccionario repetido. Fechas y moneda usan `locale`. No traducir nombres o descripciones escritos por personas.
+
+El idioma persiste en `roomie_language`; los errores conocidos de API también usan el diccionario. Añadir allí los errores nuevos de sus módulos. Para mensajes con valores usar `t("Mensaje con {name}", {name})` y conservar los datos originales.
+
+`npm test` ejecuta las unitarias sin servidor. Mantener un grupo con el identificador de cada historia y al menos tres casos útiles por HU. `npm run test:integration` requiere la app local y PostgreSQL; `npm run test:e2e` usa la app y Chrome. Las historias de todo el equipo están en `HISTORIAS.md`; los pendientes de la rúbrica están en `REVISION-CICLO-1.md`.
+
+Mantener un único estilo en Figma y comprobar que el prototipo cubra los recorridos implementados antes de entregar.
+
+El selector ES/EN se comparte con `useLanguage`. Usar `t` para los textos del sistema y `locale` para las fechas y monedas. Las opciones traducidas mantienen su `value` original: el idioma no debe cambiar los datos enviados a la API. `ConfirmButton` conserva `success` y `undo`; `toast` admite la acción de deshacer.

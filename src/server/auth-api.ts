@@ -48,7 +48,7 @@ export async function authApi(request: Request, path: string[]) {
         "Demasiados intentos. Espera 15 minutos y vuelve a intentarlo.",
       );
     const [user] = await query(
-      "SELECT id,password_hash FROM users WHERE email=$1",
+      "SELECT id,password_hash FROM users WHERE email=$1 AND active",
       [data.email],
     );
     if (!user || !(await verifyPassword(data.password, user.password_hash)))
@@ -58,6 +58,62 @@ export async function authApi(request: Request, path: string[]) {
     return { message: "Sesión iniciada." };
   }
   const user = await requireUser();
+  if (request.method === "DELETE" && action === "account") {
+    const data = z
+      .object({ current: z.string().min(1).max(128) })
+      .parse(await request.json());
+    await transaction(async (db) => {
+      const { rows } = await db.query(
+        "SELECT password_hash FROM users WHERE id=$1 FOR UPDATE",
+        [user.id],
+      );
+      if (!(await verifyPassword(data.current, rows[0].password_hash)))
+        throw new ApiError(400, "La contraseña actual no coincide.");
+      // El mismo orden de bloqueo evita conflictos entre dos administradores.
+      await db.query(
+        `SELECT h.id FROM homes h JOIN memberships m ON m.home_id=h.id
+        WHERE m.user_id=$1 AND m.active AND h.archived_at IS NULL ORDER BY h.id FOR UPDATE OF h`,
+        [user.id],
+      );
+      const soleAdmin = await db.query(
+        `SELECT m.id FROM memberships m JOIN homes h ON h.id=m.home_id
+        WHERE m.user_id=$1 AND m.active AND m.role='admin' AND h.archived_at IS NULL
+        AND NOT EXISTS(SELECT 1 FROM memberships other WHERE other.home_id=m.home_id AND other.user_id<>$1 AND other.active AND other.role='admin')`,
+        [user.id],
+      );
+      if (soleAdmin.rowCount)
+        throw new ApiError(
+          409,
+          "Asigna otro administrador o archiva tus apartamentos antes de cerrar la cuenta.",
+        );
+      await db.query("UPDATE memberships SET active=false WHERE user_id=$1", [
+        user.id,
+      ]);
+      await db.query("DELETE FROM sessions WHERE user_id=$1", [user.id]);
+      await db.query("DELETE FROM push_subscriptions WHERE user_id=$1", [
+        user.id,
+      ]);
+      await db.query("DELETE FROM reminders WHERE user_id=$1", [user.id]);
+      await db.query(
+        "DELETE FROM deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE user_id=$1)",
+        [user.id],
+      );
+      await db.query(
+        "UPDATE invitations SET status='revoked' WHERE created_by=$1 AND status='pending'",
+        [user.id],
+      );
+      await db.query(
+        "UPDATE notification_preferences SET email_enabled=false,push_enabled=false WHERE user_id=$1",
+        [user.id],
+      );
+      await db.query(
+        "UPDATE users SET active=false,name='Cuenta cerrada',email=$2,password_hash='' WHERE id=$1",
+        [user.id, `${user.id}@closed.roomie.invalid`],
+      );
+    });
+    (await cookies()).delete(COOKIE);
+    return { message: "Cuenta cerrada." };
+  }
   if (request.method === "POST" && action === "logout") {
     await query("DELETE FROM sessions WHERE token_hash=$1", [user.sessionHash]);
     (await cookies()).delete(COOKIE);

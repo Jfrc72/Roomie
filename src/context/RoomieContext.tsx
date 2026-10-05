@@ -1,10 +1,12 @@
 "use client";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   createContext,
   useContext,
   useState,
   useCallback,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import type { Session } from "@/types";
@@ -21,10 +23,13 @@ interface ToastAction {
 }
 const Context = createContext<RoomieState | null>(null);
 export function RoomieProvider({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const [session, setSession] = useState<Session | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [toastAction, setToastAction] = useState<ToastAction | null>(null);
+  const [undoBusy, setUndoBusy] = useState(false);
+  const undoRunning = useRef(false);
   const toast = useCallback((nextMessage: string, action?: ToastAction) => {
     setMessage(nextMessage);
     setToastAction(action ?? null);
@@ -48,13 +53,31 @@ export function RoomieProvider({ children }: { children: ReactNode }) {
     };
   }, []);
   useEffect(() => {
-    if (!message) return;
+    if (!message || undoBusy) return;
     const timer = setTimeout(() => {
       setMessage("");
       setToastAction(null);
     }, 5000);
     return () => clearTimeout(timer);
-  }, [message, toastAction]);
+  }, [message, toastAction, undoBusy]);
+  async function undo() {
+    if (!toastAction || undoRunning.current) return;
+    undoRunning.current = true;
+    setUndoBusy(true);
+    try {
+      await toastAction.onClick();
+      toast("Acción deshecha.");
+    } catch (reason) {
+      toast(
+        reason instanceof Error
+          ? reason.message
+          : "No se pudo deshacer la acción.",
+      );
+    } finally {
+      undoRunning.current = false;
+      setUndoBusy(false);
+    }
+  }
   async function selectHome(id: string) {
     await api(`/homes/${id}/select`, "POST", {});
     await refresh();
@@ -62,42 +85,33 @@ export function RoomieProvider({ children }: { children: ReactNode }) {
   if (error)
     return (
       <main className="standalone">
-        <h1>No pudimos abrir tu hogar</h1>
-        <p role="alert">{error}</p>
+        <h1>{t("No pudimos abrir tu hogar")}</h1>
+        <p role="alert">{t(error)}</p>
         <button onClick={() => refresh().catch((e) => setError(e.message))}>
-          Reintentar
+          {t("Reintentar")}
         </button>
-        <a href="/login">Iniciar sesión</a>
+        <a href="/login">{t("Iniciar sesión")}</a>
       </main>
     );
   if (!session)
     return (
       <p className="standalone" role="status">
-        Cargando tu hogar…
+        {t("Cargando tu hogar…")}
       </p>
     );
   return (
-    <Context.Provider
-      value={{ session, refresh, selectHome, toast }}
-    >
+    <Context.Provider value={{ session, refresh, selectHome, toast }}>
       {children}
       <div className="toast" role="status" aria-live="polite">
-        {message && <span>{message}</span>}
+        {message && <span>{t(message)}</span>}
         {message && toastAction && (
           <button
             className="secondary"
             type="button"
-            onClick={() => {
-              const action = toastAction;
-              setToastAction(null);
-              void Promise.resolve(action.onClick())
-                .then(() => setMessage("Acción deshecha."))
-                .catch((reason: unknown) =>
-                  setMessage(reason instanceof Error ? reason.message : "No se pudo deshacer la acción."),
-                );
-            }}
+            disabled={undoBusy}
+            onClick={undo}
           >
-            {toastAction.label}
+            {t(undoBusy ? "Procesando…" : toastAction.label)}
           </button>
         )}
       </div>

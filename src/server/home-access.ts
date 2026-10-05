@@ -10,7 +10,7 @@ export async function requireHome(
 ) {
   idSchema.parse(homeId);
   const sql =
-    "SELECT role FROM memberships WHERE home_id=$1 AND user_id=$2 AND active";
+    "SELECT m.role FROM memberships m JOIN homes h ON h.id=m.home_id WHERE m.home_id=$1 AND m.user_id=$2 AND m.active AND h.archived_at IS NULL";
   const rows = db
     ? (await db.query(sql, [homeId, userId])).rows
     : await query(sql, [homeId, userId]);

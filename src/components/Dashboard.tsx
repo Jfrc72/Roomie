@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import {
   Wallet,
@@ -14,28 +15,32 @@ import { useData } from "@/lib/use-data";
 import { Empty, LoadingError, PageTitle } from "./ui";
 import type { Activity, DashboardSummary } from "@/types";
 export default function Dashboard() {
+  const { t } = useLanguage();
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
       <>
         <PageTitle
-          title={`¡Hola, ${session.user.name.split(" ")[0]}!`}
-          description="El primer paso para convivir mejor empieza aquí."
+          title={t("¡Hola, {name}!", { name: session.user.name.split(" ")[0] })}
+          description={t("El primer paso para convivir mejor empieza aquí.")}
         />
         <div className="welcome panel">
           <div className="welcome-icon">
             <Users size={38} />
           </div>
-          <h2>Un nuevo hogar, un buen comienzo.</h2>
+          <h2>{t("Un nuevo hogar, un buen comienzo.")}</h2>
           <p>
-            Crea tu apartamento e invita a tus roommates para tener un espacio
-            compartido.
+            {t(
+              "Crea tu apartamento e invita a tus roommates para tener un espacio compartido.",
+            )}
           </p>
           <Link href="/apartamento" className="button">
-            Crear mi apartamento
+            {t("Crear mi apartamento")}
           </Link>
           <small>
-            ¿Te invitaron? Abre el enlace que te compartió el administrador.
+            {t(
+              "¿Te invitaron? Abre el enlace que te compartió el administrador.",
+            )}
           </small>
         </div>
       </>
@@ -43,6 +48,7 @@ export default function Dashboard() {
   return <HomeDashboard homeId={session.activeHomeId} />;
 }
 function HomeDashboard({ homeId }: { homeId: string }) {
+  const { t, locale } = useLanguage();
   const { session } = useRoomie();
   const { data, error, reload } = useData<{
     summary: DashboardSummary;
@@ -56,7 +62,7 @@ function HomeDashboard({ homeId }: { homeId: string }) {
       value:
         s.balance === null
           ? "—"
-          : new Intl.NumberFormat("es-CO", {
+          : new Intl.NumberFormat(locale, {
               style: "currency",
               currency: "COP",
               maximumFractionDigits: 0,
@@ -113,11 +119,11 @@ function HomeDashboard({ homeId }: { homeId: string }) {
   return (
     <>
       <PageTitle
-        title={`¡Hola, ${session.user.name.split(" ")[0]}!`}
-        description="Esto es lo que está pasando en tu hogar."
+        title={t("¡Hola, {name}!", { name: session.user.name.split(" ")[0] })}
+        description={t("Esto es lo que está pasando en tu hogar.")}
         action={
           <span className="date-label">
-            {new Intl.DateTimeFormat("es-CO", {
+            {new Intl.DateTimeFormat(locale, {
               weekday: "long",
               day: "numeric",
               month: "long",
@@ -134,9 +140,9 @@ function HomeDashboard({ homeId }: { homeId: string }) {
               </span>
               <ArrowUpRight size={17} />
             </div>
-            <p>{title}</p>
+            <p>{t(title)}</p>
             <strong>{value}</strong>
-            <small>{hint}</small>
+            <small>{t(hint)}</small>
           </Link>
         ))}
       </div>
@@ -144,9 +150,9 @@ function HomeDashboard({ homeId }: { homeId: string }) {
         <div className="dashboard-main">
           <section className="panel">
             <div className="section-title">
-              <h2>Tus tareas</h2>
+              <h2>{t("Tus tareas")}</h2>
               <Link href="/tareas">
-                Ver todas <ArrowUpRight size={14} />
+                {t("Ver todas")} <ArrowUpRight size={14} />
               </Link>
             </div>
             {s.tasks.length ? (
@@ -157,16 +163,16 @@ function HomeDashboard({ homeId }: { homeId: string }) {
                 </Link>
               ))
             ) : (
-              <Empty title="Todo listo para organizarse">
-                Aquí aparecerán las responsabilidades que te asignen.
+              <Empty title={t("Todo listo para organizarse")}>
+                {t("Aquí aparecerán las responsabilidades que te asignen.")}
               </Empty>
             )}
           </section>
           <section className="panel">
             <div className="section-title">
-              <h2>Gastos recientes</h2>
+              <h2>{t("Gastos recientes")}</h2>
               <Link href="/gastos">
-                Ver historial <ArrowUpRight size={14} />
+                {t("Ver historial")} <ArrowUpRight size={14} />
               </Link>
             </div>
             {s.expenses.length ? (
@@ -174,7 +180,7 @@ function HomeDashboard({ homeId }: { homeId: string }) {
                 <Link className="summary-row" href={e.href} key={e.id}>
                   <span>{e.title}</span>
                   <strong>
-                    {new Intl.NumberFormat("es-CO", {
+                    {new Intl.NumberFormat(locale, {
                       style: "currency",
                       currency: "COP",
                     }).format(e.amount)}
@@ -182,8 +188,8 @@ function HomeDashboard({ homeId }: { homeId: string }) {
                 </Link>
               ))
             ) : (
-              <Empty title="Las cuentas, en un mismo lugar">
-                Los gastos del hogar aparecerán aquí cuando se registren.
+              <Empty title={t("Las cuentas, en un mismo lugar")}>
+                {t("Los gastos del hogar aparecerán aquí cuando se registren.")}
               </Empty>
             )}
           </section>
@@ -191,7 +197,7 @@ function HomeDashboard({ homeId }: { homeId: string }) {
         <aside>
           <section className="panel activity-panel">
             <div className="section-title">
-              <h2>Actividad reciente</h2>
+              <h2>{t("Actividad reciente")}</h2>
               <span className="tiny-dot" />
             </div>
             {data.activities.length ? (
@@ -203,10 +209,10 @@ function HomeDashboard({ homeId }: { homeId: string }) {
                     </span>
                     <div>
                       <p>
-                        <strong>{a.actor || "Roomie"}</strong> {a.message}
+                        <strong>{a.actor || t("Roomie")}</strong> {t(a.message)}
                       </p>
                       <time>
-                        {new Date(a.created_at).toLocaleString("es-CO", {
+                        {new Date(a.created_at).toLocaleString(locale, {
                           day: "numeric",
                           month: "short",
                           hour: "2-digit",
@@ -218,16 +224,20 @@ function HomeDashboard({ homeId }: { homeId: string }) {
                 ))}
               </ol>
             ) : (
-              <Empty title="Una nueva historia">
-                Las novedades de tu apartamento aparecerán aquí.
+              <Empty title={t("Una nueva historia")}>
+                {t("Las novedades de tu apartamento aparecerán aquí.")}
               </Empty>
             )}
           </section>
           <section className="tip-card">
             <Sparkles size={21} />
-            <h3>Compartir también es acordar</h3>
-            <p>Invita a tus roommates y construyan juntos una mejor rutina.</p>
-            <Link href="/apartamento">Conocer mi hogar →</Link>
+            <h3>{t("Compartir también es acordar")}</h3>
+            <p>
+              {t(
+                "Invita a tus roommates y construyan juntos una mejor rutina.",
+              )}
+            </p>
+            <Link href="/apartamento">{t("Conocer mi hogar →")}</Link>
           </section>
         </aside>
       </div>

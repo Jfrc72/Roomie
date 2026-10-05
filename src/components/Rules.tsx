@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/context/LanguageContext";
 import { Fragment, useState } from "react";
 import {
   BookOpen,
@@ -38,20 +39,23 @@ function RuleText({ text }: { text: string }) {
   );
 }
 export default function Rules() {
+  const { t } = useLanguage();
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
       <NoHome
-        title="Acuerdos del hogar"
-        description="Pequeños acuerdos para una mejor convivencia."
+        title={t("Acuerdos del hogar")}
+        description={t("Pequeños acuerdos para una mejor convivencia.")}
       >
-        Crea tu apartamento o acepta una invitación para escribir sus acuerdos
-        de convivencia.
+        {t(
+          "Crea tu apartamento o acepta una invitación para escribir sus acuerdos de convivencia.",
+        )}
       </NoHome>
     );
   return <RulesBoard homeId={session.activeHomeId} />;
 }
 function RulesBoard({ homeId }: { homeId: string }) {
+  const { t, locale } = useLanguage();
   const {
     admin,
     rules: data,
@@ -68,8 +72,8 @@ function RulesBoard({ homeId }: { homeId: string }) {
   return (
     <>
       <PageTitle
-        title="Acuerdos del hogar"
-        description="Pequeños acuerdos para una mejor convivencia."
+        title={t("Acuerdos del hogar")}
+        description={t("Pequeños acuerdos para una mejor convivencia.")}
         action={
           admin &&
           data && (
@@ -79,17 +83,17 @@ function RulesBoard({ homeId }: { homeId: string }) {
             >
               {editing ? <X size={17} /> : <PenLine size={17} />}
               {editing
-                ? "Cancelar"
+                ? t("Cancelar")
                 : data.current
-                  ? "Nueva versión"
-                  : "Redactar reglamento"}
+                  ? t("Nueva versión")
+                  : t("Redactar reglamento")}
             </button>
           )
         }
       />
       <div className="dashboard-main">
         {!data ? (
-          <LoadingError error={error} retry={reload} />
+          <LoadingError error={t(error)} retry={reload} />
         ) : (
           <>
             {editing && (
@@ -104,10 +108,12 @@ function RulesBoard({ homeId }: { homeId: string }) {
             )}
             {!data.current ? (
               <section className="panel">
-                <Empty title="Aún no hay reglamento">
+                <Empty title={t("Aún no hay reglamento")}>
                   {admin
-                    ? "Redacta la primera versión; el asistente puede sugerirte acuerdos."
-                    : "Un administrador publicará la primera versión."}
+                    ? t(
+                        "Redacta la primera versión; el asistente puede sugerirte acuerdos.",
+                      )
+                    : t("Un administrador publicará la primera versión.")}
                 </Empty>
               </section>
             ) : (
@@ -120,11 +126,11 @@ function RulesBoard({ homeId }: { homeId: string }) {
                 <section className="panel">
                   <div className="section-title">
                     <h2>
-                      <Users size={20} /> Aceptaciones
+                      <Users size={20} /> {t("Aceptaciones")}
                     </h2>
                     <span className="badge">
-                      {data.acceptances.filter((a) => a.accepted_at).length} de{" "}
-                      {data.acceptances.length}
+                      {data.acceptances.filter((a) => a.accepted_at).length}{" "}
+                      {t("de")} {data.acceptances.length}
                     </span>
                   </div>
                   {data.acceptances.map((a) => (
@@ -133,8 +139,10 @@ function RulesBoard({ homeId }: { homeId: string }) {
                         <strong>{a.name}</strong>
                         <small>
                           {a.accepted_at
-                            ? `Aceptó el ${formatDate(a.accepted_at)}`
-                            : "Pendiente"}
+                            ? t("Aceptó el {value1}", {
+                                value1: formatDate(a.accepted_at, locale),
+                              })
+                            : t("Pendiente")}
                         </small>
                       </div>
                     </div>
@@ -142,8 +150,9 @@ function RulesBoard({ homeId }: { homeId: string }) {
                   <div className="info-note">
                     <ShieldCheck size={20} />
                     <p>
-                      Aceptar es un registro de que leíste esta versión; no es
-                      una firma electrónica certificada.
+                      {t(
+                        "Aceptar es un registro de que leíste esta versión; no es una firma electrónica certificada.",
+                      )}
                     </p>
                   </div>
                 </section>
@@ -161,14 +170,19 @@ function RulesBoard({ homeId }: { homeId: string }) {
             )}
             {!!data.history.length && (
               <section className="panel help">
-                <h2>Versiones anteriores</h2>
+                <h2>{t("Versiones anteriores")}</h2>
                 {data.history.map((v) => (
                   <details key={v.id}>
                     <summary>
-                      Versión {v.version} · {formatDate(v.created_at)} ·{" "}
-                      {v.author}
+                      {" "}
+                      {t("Versión")} {v.version} {t("·")}{" "}
+                      {formatDate(v.created_at, locale)} {t("·")} {v.author}
                     </summary>
-                    {v.notes && <p>Cambios: {v.notes}</p>}
+                    {v.notes && (
+                      <p>
+                        {t("Cambios:")} {v.notes}
+                      </p>
+                    )}
                     <RuleText text={v.content} />
                   </details>
                 ))}
@@ -189,33 +203,36 @@ function CurrentRules({
   current: RuleVersion;
   onAccept: () => Promise<void>;
 }) {
+  const { t, locale } = useLanguage();
   return (
     <section className="panel">
       <div className="section-title">
         <h2>
-          <BookOpen size={20} /> Versión {current.version}
+          <BookOpen size={20} /> {t("Versión")} {current.version}
         </h2>
-        <span className="badge">Vigente</span>
+        <span className="badge">{t("Vigente")}</span>
       </div>
       <p>
-        Publicada por {current.author} el {formatDate(current.created_at)}.
-        {current.notes && ` Cambios: ${current.notes}`}
+        {t("Publicada por")} {current.author} {t("el")}{" "}
+        {formatDate(current.created_at, locale)}
+        {t(".")}
+        {current.notes && t(" Cambios: {value1}", { value1: current.notes })}
       </p>
       <RuleText text={current.content} />
       {rules.accepted_by_me ? (
         <div className="info-note">
           <CircleCheck size={20} />
-          <p>Ya aceptaste esta versión.</p>
+          <p>{t("Ya aceptaste esta versión.")}</p>
         </div>
       ) : (
         <Form
-          label="Aceptar reglamento"
-          success="Aceptaste el reglamento."
+          label={t("Aceptar reglamento")}
+          success={t("Aceptaste el reglamento.")}
           onSave={onAccept}
         >
           <label className="check-label">
             <input type="checkbox" required />
-            Leí y acepto la versión {current.version}
+            {t("Leí y acepto la versión")} {current.version}
           </label>
         </Form>
       )}
@@ -231,6 +248,7 @@ function RuleEditor({
   current: RuleVersion | null;
   onPublish: (form: FormData) => Promise<void>;
 }) {
+  const { t } = useLanguage();
   const [draft, setDraft] = useState(current?.content ?? "");
   // Con los nombres reales, el asistente propone repartos concretos.
   const { members } = useHomeMembers(homeId);
@@ -238,37 +256,44 @@ function RuleEditor({
     <div className="settings-grid">
       <section className="panel">
         <h2>
-          {current ? `Versión ${current.version + 1}` : "Primera versión"}
+          {current
+            ? t("Versión {value1}", { value1: current.version + 1 })
+            : t("Primera versión")}
         </h2>
         <p>
-          Al publicarla, cada integrante deberá aceptarla
-          {current ? " de nuevo" : ""}.
+          {t("Al publicarla, cada integrante deberá aceptarla")}
+          {current ? t(" de nuevo") : ""}
+          {t(".")}
         </p>
         <Form
-          label="Publicar versión"
-          success="Versión publicada."
+          label={t("Publicar versión")}
+          success={t("Versión publicada.")}
           onSave={onPublish}
         >
           <label>
-            Texto del reglamento
+            {t("Texto del reglamento")}
             <textarea
               name="content"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Escribe un acuerdo por párrafo. El asistente puede ayudarte."
+              placeholder={t(
+                "Escribe un acuerdo por párrafo. El asistente puede ayudarte.",
+              )}
               required
               minLength={10}
               maxLength={10000}
               rows={14}
             />
           </label>
-          <small>Separa cada acuerdo con una línea en blanco.</small>
+          <small>{t("Separa cada acuerdo con una línea en blanco.")}</small>
           <label>
-            Qué cambió
+            {t("Qué cambió")}
             <input
               name="notes"
               placeholder={
-                current ? "Ej. Se agregan horarios de silencio" : "Opcional"
+                current
+                  ? t("Ej. Se agregan horarios de silencio")
+                  : t("Opcional")
               }
               maxLength={200}
             />
@@ -296,6 +321,7 @@ function RuleAssistant({
   members: string[];
   onAdd: (clause: string) => void;
 }) {
+  const { t } = useLanguage();
   const { prompt, setPrompt, turns, loading, ask } = useRuleAssistant(
     draft,
     members,
@@ -304,13 +330,14 @@ function RuleAssistant({
     <section className="panel">
       <div className="section-title">
         <h2>
-          <Sparkles size={20} /> Asistente de acuerdos
+          <Sparkles size={20} /> {t("Asistente de acuerdos")}
         </h2>
-        <span className="badge">IA simulada</span>
+        <span className="badge">{t("IA simulada")}</span>
       </div>
       <p>
-        Pídele ideas para el reglamento o que revise tu borrador. Las respuestas
-        son de demostración y no provienen de un modelo real.
+        {t(
+          "Pídele ideas para el reglamento o que revise tu borrador. Las respuestas son de demostración y no provienen de un modelo real.",
+        )}
       </p>
       <div aria-live="polite" aria-busy={loading}>
         {turns.map((turn, i) => (
@@ -322,7 +349,7 @@ function RuleAssistant({
             {turn.reply ? (
               <div className="invite-result">
                 <strong className="assistant-thinking">
-                  <Sparkles size={15} /> Asistente
+                  <Sparkles size={15} /> {t("Asistente")}
                 </strong>
                 <p>{turn.reply.text}</p>
                 {turn.reply.clauses.map((clause) => (
@@ -335,8 +362,8 @@ function RuleAssistant({
                       onClick={() => onAdd(clause)}
                     >
                       {draft.includes(clause)
-                        ? "En el borrador"
-                        : "Agregar al borrador"}
+                        ? t("En el borrador")
+                        : t("Agregar al borrador")}
                     </button>
                   </div>
                 ))}
@@ -345,7 +372,7 @@ function RuleAssistant({
               <div className="invite-result" role="status">
                 <span className="assistant-thinking">
                   <span className="spinner" aria-hidden="true" />
-                  El asistente está redactando…
+                  {t("El asistente está redactando…")}
                 </span>
                 <span className="skeleton" aria-hidden="true" />
                 <span className="skeleton" aria-hidden="true" />
@@ -363,11 +390,11 @@ function RuleAssistant({
         }}
       >
         <label>
-          Tu petición
+          {t("Tu petición")}
           <input
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Ej. Necesitamos reglas para las visitas"
+            placeholder={t("Ej. Necesitamos reglas para las visitas")}
             maxLength={300}
             disabled={loading}
           />
@@ -379,14 +406,14 @@ function RuleAssistant({
               type="button"
               className="text-button"
               disabled={loading}
-              onClick={() => ask(example)}
+              onClick={() => ask(t(example))}
             >
-              {example}
+              {t(example)}
             </button>
           ))}
         </div>
         <button type="submit" disabled={loading || !prompt.trim()}>
-          {loading ? "Generando…" : "Pedir sugerencias"}
+          {loading ? t("Generando…") : t("Pedir sugerencias")}
         </button>
       </form>
     </section>
@@ -408,6 +435,7 @@ function RuleReports({
   onResolve: (reportId: string) => Promise<void>;
   resolving: string;
 }) {
+  const { t, locale } = useLanguage();
   const { session } = useRoomie();
   const [formKey, setFormKey] = useState(0);
   const pending = rules.reports.filter((r) => !r.resolved_at).length;
@@ -416,25 +444,26 @@ function RuleReports({
       <section className="panel">
         <div className="section-title">
           <h2>
-            <Flag size={20} /> Reportar incumplimiento
+            <Flag size={20} /> {t("Reportar incumplimiento")}
           </h2>
         </div>
         <p>
-          Avisa a los administradores y, si la indicas, a la persona que no
-          cumplió el acuerdo. El reporte muestra tu nombre.
+          {t(
+            "Avisa a los administradores y, si la indicas, a la persona que no cumplió el acuerdo. El reporte muestra tu nombre.",
+          )}
         </p>
         {/* La key nueva limpia el formulario después de enviar. */}
         <Form
           key={formKey}
-          label="Enviar reporte"
-          success="Reporte enviado."
+          label={t("Enviar reporte")}
+          success={t("Reporte enviado.")}
           onSave={async (form) => {
             await onReport(form);
             setFormKey((v) => v + 1);
           }}
         >
           <label>
-            Acuerdo incumplido
+            {t("Acuerdo incumplido")}
             <select name="clause" required>
               {clauses.map((clause) => (
                 <option key={clause} value={clause.slice(0, 300)}>
@@ -444,9 +473,9 @@ function RuleReports({
             </select>
           </label>
           <label>
-            Quién no lo cumplió (opcional)
+            {t("Quién no lo cumplió (opcional)")}
             <select name="reported" defaultValue="">
-              <option value="">Sin señalar a nadie</option>
+              <option value="">{t("Sin señalar a nadie")}</option>
               {rules.acceptances
                 .filter((m) => m.user_id !== session.user.id)
                 .map((m) => (
@@ -457,10 +486,10 @@ function RuleReports({
             </select>
           </label>
           <label>
-            Qué pasó
+            {t("Qué pasó")}
             <textarea
               name="description"
-              placeholder="Ej. La loza quedó sucia toda la noche"
+              placeholder={t("Ej. La loza quedó sucia toda la noche")}
               maxLength={500}
               rows={3}
             />
@@ -469,9 +498,9 @@ function RuleReports({
       </section>
       <section className="panel">
         <div className="section-title">
-          <h2>Reportes</h2>
+          <h2>{t("Reportes")}</h2>
           <span className="badge">
-            {pending} {pending === 1 ? "pendiente" : "pendientes"}
+            {pending} {pending === 1 ? t("pendiente") : t("pendientes")}
           </span>
         </div>
         {rules.reports.length ? (
@@ -481,14 +510,17 @@ function RuleReports({
                 <strong>{r.clause}</strong>
                 {r.description && <small>{r.description}</small>}
                 <small>
-                  Reportó {r.reporter}
-                  {r.reported && ` · Señalado: ${r.reported}`} ·{" "}
-                  {formatDate(r.created_at)}
+                  {t("Reportó")} {r.reporter}
+                  {r.reported &&
+                    t(" · Señalado: {value1}", { value1: r.reported })}{" "}
+                  {t("·")} {formatDate(r.created_at, locale)}
                 </small>
                 <small>
                   {r.resolved_at
-                    ? `Resuelto el ${formatDate(r.resolved_at)}`
-                    : "Pendiente"}
+                    ? t("Resuelto el {value1}", {
+                        value1: formatDate(r.resolved_at, locale),
+                      })
+                    : t("Pendiente")}
                 </small>
               </div>
               {admin && !r.resolved_at && (
@@ -497,13 +529,13 @@ function RuleReports({
                   disabled={resolving === r.id}
                   onClick={() => onResolve(r.id)}
                 >
-                  Marcar resuelto
+                  {t("Marcar resuelto")}
                 </button>
               )}
             </div>
           ))
         ) : (
-          <p>No hay incumplimientos reportados.</p>
+          <p>{t("No hay incumplimientos reportados.")}</p>
         )}
       </section>
     </div>
