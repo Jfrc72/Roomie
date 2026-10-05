@@ -50,12 +50,28 @@ Las escrituras reciben JSON. La sesión usa cookie HttpOnly; no se guarda un tok
 | GET | `/rules?homeId=...` | Versión vigente, `accepted_by_me`, aceptaciones de los integrantes activos e historial |
 | POST | `/rules?homeId=...` | `{content, notes}`; publica la versión siguiente; solo administrador |
 | POST | `/rules/:id/accept` | `{}`; acepta la versión vigente (409 si hay una más reciente) |
+| GET | `/expenses?homeId=...` | Gastos, cuotas, resumen mensual, balances bilaterales y pagos recientes |
+| POST | `/expenses?homeId=...` | `{title, category, paid_by_id, total_amount, expense_date, participant_ids}`; divide exactamente hasta centavos |
+| PATCH | `/expenses/:id` | Actualiza el gasto y regenera su división |
+| DELETE | `/expenses/:id` | Baja reversible por quien lo registró o administrador |
+| POST | `/expenses/:id/restore` | Restaura un gasto eliminado |
+| POST | `/payments?homeId=...` | `{receiver_id, amount}`; el pago propio no puede superar el saldo bilateral |
+| GET | `/shopping?homeId=...` | Lista de compras pendientes y compradas |
+| POST | `/shopping?homeId=...` | `{title, category, quantity, estimated_price, assigned_membership_id}` |
+| PATCH | `/shopping/:id` | Edita el producto o actualiza `{status}`; al comprar registra quién lo hizo |
+| DELETE | `/shopping/:id` | Baja reversible por quien lo agregó o administrador |
+| POST | `/shopping/:id/restore` | Restaura un producto eliminado |
+| GET | `/maintenance?homeId=...&status=...&priority=...&category=...` | Reportes filtrables y contadores por estado |
+| POST | `/maintenance?homeId=...` | `{title, description, category, estimated_cost, priority, assigned_membership_id}` |
+| PATCH | `/maintenance/:id` | Edita reporte, estado o asignación; creador, responsable o administrador |
+| DELETE | `/maintenance/:id` | Baja reversible por quien reportó o administrador |
+| POST | `/maintenance/:id/restore` | Restaura un reporte eliminado |
 
 401: sin sesión; 403: sin permiso/origen incorrecto; 404: registro ausente; 409: conflicto; 400: validación; 429: demasiados intentos de login.
 
 ## Añadir un módulo
 
-1. Crear `src/server/expenses-api.ts` (ejemplo de nombre).
+1. Crear un manejador en `src/server/`.
 2. Importar la función en `src/app/api/[...path]/route.ts` y añadir la rama correspondiente. El router ya centraliza errores, JSON y comprobación de origen.
 3. En el manejador verificar la sesión y el hogar. No tomar un `userId` del formulario como identidad del autor.
 

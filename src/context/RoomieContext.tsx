@@ -13,13 +13,22 @@ interface RoomieState {
   session: Session;
   refresh: () => Promise<void>;
   selectHome: (id: string) => Promise<void>;
-  toast: (message: string) => void;
+  toast: (message: string, action?: ToastAction) => void;
+}
+interface ToastAction {
+  label: string;
+  onClick: () => void | Promise<void>;
 }
 const Context = createContext<RoomieState | null>(null);
 export function RoomieProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [toastAction, setToastAction] = useState<ToastAction | null>(null);
+  const toast = useCallback((nextMessage: string, action?: ToastAction) => {
+    setMessage(nextMessage);
+    setToastAction(action ?? null);
+  }, []);
   const refresh = useCallback(async () => {
     const result = await api<Session>("/session");
     setSession(result);
@@ -40,9 +49,12 @@ export function RoomieProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     if (!message) return;
-    const timer = setTimeout(() => setMessage(""), 5000);
+    const timer = setTimeout(() => {
+      setMessage("");
+      setToastAction(null);
+    }, 5000);
     return () => clearTimeout(timer);
-  }, [message]);
+  }, [message, toastAction]);
   async function selectHome(id: string) {
     await api(`/homes/${id}/select`, "POST", {});
     await refresh();
@@ -66,11 +78,28 @@ export function RoomieProvider({ children }: { children: ReactNode }) {
     );
   return (
     <Context.Provider
-      value={{ session, refresh, selectHome, toast: setMessage }}
+      value={{ session, refresh, selectHome, toast }}
     >
       {children}
       <div className="toast" role="status" aria-live="polite">
         {message && <span>{message}</span>}
+        {message && toastAction && (
+          <button
+            className="secondary"
+            type="button"
+            onClick={() => {
+              const action = toastAction;
+              setToastAction(null);
+              void Promise.resolve(action.onClick())
+                .then(() => setMessage("Acción deshecha."))
+                .catch((reason: unknown) =>
+                  setMessage(reason instanceof Error ? reason.message : "No se pudo deshacer la acción."),
+                );
+            }}
+          >
+            {toastAction.label}
+          </button>
+        )}
       </div>
     </Context.Provider>
   );

@@ -6,6 +6,9 @@ import { tasksApi } from "@/server/tasks-api";
 import { reservationsApi, resourcesApi } from "@/server/reservations-api";
 import { pollsApi } from "@/server/polls-api";
 import { rulesApi } from "@/server/rules-api";
+import { expensesApi } from "@/server/expenses-api";
+import { shoppingApi } from "@/server/shopping-api";
+import { maintenanceApi } from "@/server/maintenance-api";
 import { ApiError, checkOrigin, requireUser } from "@/server/security";
 import { query } from "@/server/db";
 export const runtime = "nodejs";
@@ -33,6 +36,11 @@ async function handle(
       result = await reservationsApi(request, path);
     else if (path[0] === "polls") result = await pollsApi(request, path);
     else if (path[0] === "rules") result = await rulesApi(request, path);
+    else if (path[0] === "expenses" || path[0] === "payments")
+      result = await expensesApi(request, path);
+    else if (path[0] === "shopping") result = await shoppingApi(request, path);
+    else if (path[0] === "maintenance")
+      result = await maintenanceApi(request, path);
     else if (path[0] === "invitations" && request.method === "POST")
       result = await acceptInvitation(request);
     else if (path[0] === "session" && request.method === "GET") {

@@ -121,10 +121,10 @@ export interface Rules {
   history: RuleVersion[];
 }
 export interface DashboardSummary {
-  // null significa módulo aún no conectado; 0 significa dato real igual a cero.
-  balance: number | null;
+  balance: number;
   pendingTasks: number | null;
-  shoppingItems: number | null;
+  shoppingItems: number;
+  urgentMaintenance: number;
   nextReservation: string | null;
   tasks: { id: string; title: string; due: string; href: string }[];
   expenses: { id: string; title: string; amount: number; href: string }[];
