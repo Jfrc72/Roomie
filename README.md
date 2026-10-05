@@ -85,7 +85,7 @@ npm test
 
 Las pruebas de integración recorren la API real: sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, gastos y pagos, compras, mantenimiento, tareas, reservas, votaciones y acuerdos. Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo. Las unitarias (`tests/unit/`) prueban la lógica pura: estados de tareas, cálculo de resultados de votaciones, fechas del calendario y el asistente de IA simulada.
 
-Las pruebas llevan en el nombre el identificador de la historia de usuario que cubren (por ejemplo `HU3.1.2`), con al menos tres por historia. Las historias de tareas, reservas, votaciones y acuerdos, con sus criterios de aceptación, están en [docs/HISTORIAS.md](docs/HISTORIAS.md).
+Las pruebas llevan en el nombre el identificador de la historia de usuario que cubren (por ejemplo `HU3.1.2`). Las historias de todas las funcionalidades, con sus criterios de aceptación y sus pruebas, están en [docs/HISTORIAS.md](docs/HISTORIAS.md) y en la [wiki del repositorio](https://github.com/Jfrc72/Roomie/wiki/Historias-de-usuario).
 
 ## Justificaciones técnicas
 
