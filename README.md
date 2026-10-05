@@ -77,11 +77,15 @@ La base de Docker es independiente de la de `npm run dev` (`.roomie-data/`): las
 npm run lint
 npm run typecheck
 npm run build
-# Con npm run dev abierto en otra terminal:
+# Pruebas unitarias: no necesitan servidor ni base de datos.
+npm run test:unit
+# Todas las pruebas (integración y unitarias), con npm run dev abierto en otra terminal:
 npm test
 ```
 
-Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, tareas (permisos, estados, historial, recordatorios y resumen de Inicio), reservas (recursos, cruces simultáneos, cancelación y avisos), gastos/pagos, compras y mantenimiento, votaciones (permisos, anonimato, cambio de voto, recuento y cierre automático) y acuerdos (versiones, aceptaciones, publicaciones simultáneas y respuestas del asistente). Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo.
+Las pruebas de integración recorren la API real: sesiones, permisos, invitaciones, el límite de integrantes, notificaciones, gastos y pagos, compras, mantenimiento, tareas, reservas, votaciones y acuerdos. Crean datos temporales y los eliminan al terminar; ejecutarlas únicamente en desarrollo. Las unitarias (`tests/unit/`) prueban la lógica pura: estados de tareas, cálculo de resultados de votaciones, fechas del calendario y el asistente de IA simulada.
+
+Las pruebas llevan en el nombre el identificador de la historia de usuario que cubren (por ejemplo `HU3.1.2`), con al menos tres por historia. Las historias de tareas, reservas, votaciones y acuerdos, con sus criterios de aceptación, están en [docs/HISTORIAS.md](docs/HISTORIAS.md).
 
 ## Justificaciones técnicas
 

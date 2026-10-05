@@ -1,215 +1,253 @@
+// Pruebas de integración de Acuerdos (F9), organizadas por historia de usuario. Ver docs/HISTORIAS.md.
+// La HU9.5 (asistente con IA simulada) se prueba en tests/unit/acuerdos.test.ts.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import { pool, transaction } from "../src/server/db";
-import { askAssistant } from "../src/lib/assistant";
-const origin = process.env.APP_URL || "http://localhost:3000";
-class BrowserSession {
-  cookie = "";
-  async call(path: string, method = "GET", body?: unknown) {
-    const response = await fetch(`${origin}/api${path}`, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Origin: origin,
-        Cookie: this.cookie,
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    const cookie = response.headers.get("set-cookie");
-    if (cookie) this.cookie = cookie.split(";")[0];
-    return { status: response.status, json: await response.json() };
-  }
+import {
+  cleanup,
+  createHome,
+  memberships,
+  notices,
+  register,
+  type BrowserSession,
+} from "./helpers";
+
+interface Version {
+  id: string;
+  version: number;
+  notes: string;
+  author: string;
 }
-interface Acceptance {
-  user_id: string;
-  accepted_at: string | null;
+interface Rules {
+  current: Version | null;
+  accepted_by_me: boolean;
+  acceptances: { user_id: string; accepted_at: string | null }[];
+  history: Version[];
+  reports: {
+    reporter: string;
+    reported: string | null;
+    resolved_at: string | null;
+  }[];
 }
-test("Acuerdos: versiones, aceptaciones y asistente simulado", async (t) => {
-  const suffix = randomUUID().slice(0, 8);
-  const emails: string[] = [];
-  const homeIds: string[] = [];
-  const ids: string[] = [];
-  const owner = new BrowserSession(),
-    member = new BrowserSession(),
-    outsider = new BrowserSession();
-  const password = "PruebaRoomie2026!";
-  let homeId = "";
-  const rules = async (client: BrowserSession) =>
-    (await client.call(`/rules?homeId=${homeId}`)).json.data;
-  const publish = (client: BrowserSession, content: string) =>
-    client.call(`/rules?homeId=${homeId}`, "POST", { content, notes: "" });
-  const accepted = (data: { acceptances: Acceptance[] }, userId: string) =>
-    Boolean(data.acceptances.find((a) => a.user_id === userId)?.accepted_at);
+test("Acuerdos: historias HU9.1 a HU9.4", async (t) => {
+  const people = await register("rules", [
+    "owner",
+    "member",
+    "beto",
+    "outside",
+  ]);
+  const { owner, member, beto, outside } = people;
+  const homeId = await createHome(owner, "Acuerdos de prueba", [member, beto]);
+  const homeIds = [homeId];
+  const membership = await memberships(owner, homeId);
+  const url = `/rules?homeId=${homeId}`;
+  const reports = `/rules/reports?homeId=${homeId}`;
+  const rules = async (person: BrowserSession) =>
+    (await person.call(url)).json.data as Rules;
+  const publish = (person: BrowserSession, content: string, notes = "") =>
+    person.call(url, "POST", { content, notes });
+  const accept = (person: BrowserSession, id: string) =>
+    person.call(`/rules/${id}/accept`, "POST", {});
+  const accepted = (data: Rules, person: BrowserSession) =>
+    Boolean(data.acceptances.find((a) => a.user_id === person.id)?.accepted_at);
+  const content =
+    "Silencio desde las 10 p. m.\n\nCada persona lava su loza\nel mismo día.";
+  const clause = "Cada persona lava su loza el mismo día.";
+  let first = "";
   try {
-    for (const [client, label] of [
-      [owner, "owner"],
-      [member, "member"],
-      [outsider, "outside"],
-    ] as const) {
-      const email = `test-${suffix}-rules-${label}@roomie.test`;
-      emails.push(email);
-      const response = await client.call("/auth/register", "POST", {
-        name: `Prueba ${label}`,
-        email,
-        password,
-      });
-      assert.equal(response.status, 200);
-      ids.push((await client.call("/session")).json.data.user.id);
-    }
-    homeId = (
-      await owner.call("/homes", "POST", {
-        name: "Acuerdos de prueba",
-        address: "",
-        description: "",
-      })
-    ).json.data.id;
-    homeIds.push(homeId);
-    const invitation = await owner.call(
-      `/homes/${homeId}/invitations`,
-      "POST",
-      {
-        email: emails[1],
+    await t.test(
+      "HU9.1.1 Solo los administradores publican versiones del reglamento",
+      async () => {
+        assert.equal((await rules(member)).current, null);
+        assert.equal(
+          (await publish(member, "Acuerdo de un integrante")).status,
+          403,
+        );
+        const created = await publish(owner, "Silencio desde las 10 p. m.");
+        assert.equal(created.status, 200);
+        assert.equal(created.json.data.version, 1);
+        first = created.json.data.id;
       },
     );
-    assert.equal(
-      (
-        await member.call("/invitations", "POST", {
-          token: new URL(invitation.json.data.url).searchParams.get("token"),
-        })
-      ).status,
-      200,
-    );
-    await t.test("solo los administradores publican versiones", async () => {
-      assert.equal((await rules(member)).current, null);
-      assert.equal(
-        (await outsider.call(`/rules?homeId=${homeId}`)).status,
-        403,
-      );
-      assert.equal(
-        (await publish(member, "Acuerdo de un integrante")).status,
-        403,
-      );
-      assert.equal((await publish(owner, "Corto")).status, 400);
-      const created = await publish(owner, "Silencio desde las 10 p. m.");
-      assert.equal(created.status, 200);
-      assert.equal(created.json.data.version, 1);
-      assert.equal(
-        (await publish(owner, "Silencio desde las 10 p. m.")).status,
-        409,
-      );
-      const data = await rules(member);
-      assert.equal(data.current.version, 1);
-      assert.equal(data.accepted_by_me, false);
-      assert.equal(accepted(data, ids[0]), true);
-      assert.equal(accepted(data, ids[1]), false);
-      assert(
-        (await member.call(`/notifications?homeId=${homeId}`)).json.data.some(
-          (n: { title: string }) => n.title === "Nuevo reglamento",
-        ),
-      );
-    });
-    await t.test("aceptar la versión vigente una sola vez", async () => {
-      const first = (await rules(member)).current.id;
-      assert.equal(
-        (await outsider.call(`/rules/${first}/accept`, "POST", {})).status,
-        403,
-      );
-      const accept = await member.call(`/rules/${first}/accept`, "POST", {});
-      assert.equal(accept.status, 200);
-      assert.equal(accept.json.data.message, "Aceptaste el reglamento.");
-      assert.equal(
-        (await member.call(`/rules/${first}/accept`, "POST", {})).json.data
-          .message,
-        "Ya habías aceptado esta versión.",
-      );
-      assert.equal((await rules(member)).accepted_by_me, true);
-      assert.equal(
-        (
-          await publish(
-            owner,
-            "Silencio desde las 10 p. m.\n\nVisitas avisadas.",
-          )
-        ).status,
-        200,
-      );
-      const data = await rules(member);
-      assert.equal(data.current.version, 2);
-      assert.equal(data.history.length, 1);
-      assert.equal(data.accepted_by_me, false);
-      assert.equal(
-        (await member.call(`/rules/${first}/accept`, "POST", {})).status,
-        409,
-      );
-      assert.equal(
-        (await member.call(`/rules/${data.current.id}/accept`, "POST", {}))
-          .status,
-        200,
-      );
-    });
-    await t.test("publicaciones simultáneas no repiten versión", async () => {
-      const details = (await owner.call(`/homes/${homeId}`)).json.data;
-      const memberMembership = details.members.find(
-        (m: { id: string }) => m.id === ids[1],
-      ).membership_id;
-      await owner.call(
-        `/homes/${homeId}/members/${memberMembership}`,
-        "PATCH",
-        {
-          role: "admin",
-        },
-      );
-      const results = await Promise.all([
-        publish(owner, "Versión simultánea del administrador original."),
-        publish(member, "Versión simultánea del nuevo administrador."),
-      ]);
-      assert.deepEqual(
-        results.map((r) => r.status),
-        [200, 200],
-      );
-      assert.deepEqual(results.map((r) => r.json.data.version).sort(), [3, 4]);
-    });
     await t.test(
-      "el asistente simulado responde según la petición",
+      "HU9.1.2 El texto debe tener al menos 10 caracteres y ser distinto del vigente",
       async () => {
-        const visits = await askAssistant("Reglas para las visitas", "");
-        assert.match(visits.text, /visitas/);
-        assert(visits.clauses.some((c) => c.includes("visita")));
-        const review = await askAssistant(
-          "Revisa mi borrador",
-          "La basura se saca los lunes. Silencio después de las 10.",
+        assert.equal((await publish(owner, "Corto")).status, 400);
+        assert.equal(
+          (await publish(owner, "Silencio desde las 10 p. m.")).status,
+          409,
         );
-        assert.match(review.text, /^Revisé tu borrador/);
-        assert(!review.text.includes("limpieza"));
+      },
+    );
+    await t.test(
+      "HU9.1.3 Las versiones se numeran sin repetirse, también si se publican a la vez",
+      async () => {
+        await owner.call(
+          `/homes/${homeId}/members/${membership(member)}`,
+          "PATCH",
+          {
+            role: "admin",
+          },
+        );
+        const results = await Promise.all([
+          publish(owner, "Versión simultánea del administrador original."),
+          publish(member, "Versión simultánea del nuevo administrador."),
+        ]);
+        assert.deepEqual(
+          results.map((r) => r.status),
+          [200, 200],
+        );
+        assert.deepEqual(
+          results.map((r) => r.json.data.version).sort(),
+          [2, 3],
+        );
+      },
+    );
+    await t.test(
+      "HU9.2.1 Cada integrante acepta la versión vigente una sola vez",
+      async () => {
+        const current = (await rules(beto)).current!;
+        const response = await accept(beto, current.id);
+        assert.equal(response.json.data.message, "Aceptaste el reglamento.");
+        assert.equal(
+          (await accept(beto, current.id)).json.data.message,
+          "Ya habías aceptado esta versión.",
+        );
+        assert.equal((await rules(beto)).accepted_by_me, true);
+      },
+    );
+    await t.test(
+      "HU9.2.2 Una versión nueva exige aceptar de nuevo y las antiguas no se aceptan",
+      async () => {
+        const previous = (await rules(beto)).current!;
+        assert.equal(
+          (await publish(owner, content, "Agrega la loza")).status,
+          200,
+        );
+        const data = await rules(beto);
+        assert.equal(data.accepted_by_me, false);
+        assert.equal((await accept(beto, previous.id)).status, 409);
+        assert.equal((await accept(beto, first)).status, 409);
+        assert.equal((await accept(beto, data.current!.id)).status, 200);
+      },
+    );
+    await t.test(
+      "HU9.2.3 Todos ven quién aceptó; quien publica acepta y los demás reciben aviso",
+      async () => {
+        const data = await rules(member);
+        assert.equal(accepted(data, owner), true);
+        assert.equal(accepted(data, beto), true);
+        assert.equal(accepted(data, member), false);
+        assert(
+          (await notices(beto, homeId)).some(
+            (n) => n.title === "Nuevo reglamento",
+          ),
+        );
+      },
+    );
+    await t.test(
+      "HU9.3.1 El historial guarda las versiones anteriores con autor y cambios",
+      async () => {
+        const data = await rules(beto);
+        assert.equal(data.current!.notes, "Agrega la loza");
+        assert.equal(data.current!.author, "Prueba owner");
+        assert.equal(data.history.length, 3);
+        assert(data.history.every((v) => v.author.startsWith("Prueba ")));
+      },
+    );
+    await t.test(
+      "HU9.3.2 La versión vigente es siempre la más reciente",
+      async () => {
+        const data = await rules(beto);
+        assert.equal(data.current!.version, 4);
+        assert.deepEqual(
+          data.history.map((v) => v.version),
+          [3, 2, 1],
+        );
+      },
+    );
+    await t.test(
+      "HU9.3.3 Las personas de fuera no ven ni aceptan el reglamento",
+      async () => {
+        assert.equal((await outside.call(url)).status, 403);
+        assert.equal(
+          (await accept(outside, (await rules(beto)).current!.id)).status,
+          403,
+        );
+      },
+    );
+    await t.test(
+      "HU9.4.1 Reportar un incumplimiento avisa a los administradores y a la persona señalada",
+      async () => {
+        const response = await beto.call(reports, "POST", {
+          clause,
+          description: "La loza quedó sucia toda la noche",
+          reported_membership_id: membership(member),
+        });
+        assert.equal(response.status, 200);
+        const message = (person: BrowserSession) =>
+          notices(person, homeId).then(
+            (list) =>
+              list.find((n) => n.title === "Incumplimiento reportado")?.message,
+          );
+        assert.equal(
+          await message(owner),
+          `Prueba beto reportó un incumplimiento de Prueba member: "${clause}"`,
+        );
+        assert.equal(
+          await message(member),
+          `Prueba beto reportó que no cumpliste: "${clause}"`,
+        );
+      },
+    );
+    await t.test(
+      "HU9.4.2 Rechazar acuerdos inexistentes, autorreportes y hogares sin reglamento",
+      async () => {
+        const report = (body: object, path = reports) =>
+          beto.call(path, "POST", {
+            clause,
+            description: "",
+            reported_membership_id: null,
+            ...body,
+          });
+        assert.equal(
+          (await report({ clause: "Nadie paga el arriendo" })).status,
+          400,
+        );
+        assert.equal(
+          (await report({ reported_membership_id: membership(beto) })).status,
+          400,
+        );
+        const empty = await createHome(beto, "Sin reglamento");
+        homeIds.push(empty);
+        assert.equal(
+          (await report({}, `/rules/reports?homeId=${empty}`)).status,
+          409,
+        );
+      },
+    );
+    await t.test(
+      "HU9.4.3 Solo un administrador resuelve el reporte y se avisa a quien lo hizo",
+      async () => {
+        const [pending] = (await beto.call(url)).json.data.reports as {
+          id: string;
+        }[];
+        const resolve = (person: BrowserSession) =>
+          person.call(`/rules/reports/${pending.id}/resolve`, "POST", {});
+        assert.equal((await resolve(beto)).status, 403);
+        assert.equal((await resolve(owner)).status, 200);
+        assert.equal((await resolve(owner)).status, 409);
+        const [resolved] = (await rules(beto)).reports;
+        assert(resolved.resolved_at);
+        assert.equal(resolved.reporter, "Prueba beto");
+        assert.equal(resolved.reported, "Prueba member");
+        assert(
+          (await notices(beto, homeId)).some(
+            (n) => n.title === "Incumplimiento resuelto",
+          ),
+        );
       },
     );
   } finally {
-    await transaction(async (db) => {
-      for (const home of homeIds) {
-        await db.query("DELETE FROM rule_versions WHERE home_id=$1", [home]);
-        await db.query(
-          "DELETE FROM deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE home_id=$1)",
-          [home],
-        );
-        for (const table of [
-          "notifications",
-          "reminders",
-          "activities",
-          "invitations",
-        ])
-          await db.query(`DELETE FROM ${table} WHERE home_id=$1`, [home]);
-        await db.query(
-          "UPDATE sessions SET active_home_id=null WHERE active_home_id=$1",
-          [home],
-        );
-        await db.query("DELETE FROM memberships WHERE home_id=$1", [home]);
-        await db.query("DELETE FROM homes WHERE id=$1", [home]);
-      }
-      for (const email of emails) {
-        await db.query("DELETE FROM users WHERE email=$1", [email]);
-        await db.query("DELETE FROM login_attempts WHERE email=$1", [email]);
-      }
-    });
-    await pool.end();
+    await cleanup(Object.values(people), homeIds);
   }
 });

@@ -172,6 +172,7 @@ function distribution(asked: string, members: string[]): AssistantReply {
     ],
   };
 }
+// Punto de conexión: la interfaz llama a esta función como llamaría a un modelo real.
 export async function askAssistant(
   prompt: string,
   draft: string,
@@ -181,6 +182,14 @@ export async function askAssistant(
   await new Promise((resolve) =>
     setTimeout(resolve, 900 + Math.random() * 900),
   );
+  return assistantReply(prompt, draft, members);
+}
+// Respuesta simulada, sin la espera: lógica pura que también usan las pruebas unitarias.
+export function assistantReply(
+  prompt: string,
+  draft: string,
+  members: string[] = [],
+): AssistantReply {
   const asked = normalize(prompt);
   const written = normalize(draft);
   if (distributionWords.some((word) => asked.includes(word)))
