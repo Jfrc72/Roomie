@@ -14,10 +14,10 @@ Para una base externa: `LOCAL_DATABASE=false` y una URL PostgreSQL propia. No ca
 
 ## Docker
 
-Requiere Docker con Compose. No se ejecutó Docker en el equipo de desarrollo porque no estaba instalado.
+Requiere Docker con Compose. Probado con Docker Desktop 28.4 (Compose 2.39) en Windows: construcción, migraciones, aplicación, worker (incluido el cierre automático de votaciones), cuentas de prueba y reinicio conservando los datos. Los pasos rápidos están en el README ("Usar con Docker").
 
 1. Copiar `.env.example` a `.env` si aún no existe.
-2. Añadir `POSTGRES_PASSWORD` con una contraseña alfanumérica larga y propia; esta configuración usa el mismo valor en PostgreSQL y en su URL de conexión, por lo que no admite caracteres reservados de URL.
+2. Completar `POSTGRES_PASSWORD` con una contraseña alfanumérica larga y propia; esta configuración usa el mismo valor en PostgreSQL y en su URL de conexión, por lo que no admite caracteres reservados de URL. Solo se aplica al crear el volumen: cambiarla después exige `docker compose down -v`.
 3. Ajustar `APP_URL` a la dirección real de acceso. Con HTTPS las cookies pasan a ser Secure.
 4. Ejecutar:
 
@@ -25,14 +25,14 @@ Requiere Docker con Compose. No se ejecutó Docker en el equipo de desarrollo po
 docker compose up --build -d
 ```
 
-Servicios: `db` guarda datos en un volumen; `migrate` aplica SQL antes de iniciar; `web` sirve la aplicación; `worker` procesa avisos. PostgreSQL no publica su puerto hacia fuera del conjunto de contenedores.
+Servicios: `db` guarda datos en un volumen; `migrate` aplica SQL antes de iniciar y termina; `web` sirve la aplicación; `worker` procesa avisos y cierra votaciones vencidas. `db`, `web` y `worker` se reinician solos (`restart: unless-stopped`); `web` tiene una comprobación de salud sobre `/api/health`. `web` y `worker` usan `init: true` para detenerse limpiamente con `docker compose stop`. PostgreSQL no publica su puerto hacia fuera del conjunto de contenedores.
 
 ```bash
 docker compose logs -f web worker
 docker compose down
 ```
 
-No usar `down -v` si se quieren conservar los datos. El seed no se ejecuta automáticamente en Docker. Para una demostración deliberada, configurar `DEMO_PASSWORD` y ejecutar `docker compose run --rm migrate npx tsx scripts/seed.ts`.
+No usar `down -v` si se quieren conservar los datos. El seed no se ejecuta automáticamente en Docker. Para una demostración deliberada, configurar `DEMO_PASSWORD` y ejecutar `docker compose run --rm migrate node --import tsx scripts/seed.ts`.
 
 El despliegue público no está realizado. El contenedor web necesita un proxy con HTTPS y el dominio final configurado en `APP_URL`.
 
