@@ -30,6 +30,45 @@ Reiniciar `npm run dev`. Cuentas: `juan@roomie.test` (administrador), `miguel@ro
 
 También puedes registrar una cuenta nueva desde la aplicación.
 
+## Usar con Docker
+
+Alternativa a `npm run dev` que no necesita Node.js: levanta PostgreSQL, aplica las migraciones y arranca la aplicación y el worker en contenedores. Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/) abierto (o Docker Engine con Compose).
+
+1. Crear `.env` desde la plantilla, si aún no existe:
+
+   ```bash
+   cp .env.example .env
+   # En PowerShell: Copy-Item .env.example .env
+   ```
+
+2. En `.env`, definir la contraseña de la base de Docker (solo letras y números) y dejar la dirección de acceso:
+
+   ```dotenv
+   POSTGRES_PASSWORD=UnaClaveLargaSoloLetrasYNumeros
+   APP_URL=http://localhost:3000
+   ```
+
+3. Cerrar `npm run dev` si está abierto (los dos usan el puerto 3000) y arrancar:
+
+   ```bash
+   docker compose up --build -d
+   ```
+
+4. Abrir http://localhost:3000. Usar `localhost`, no `127.0.0.1`: la API rechaza peticiones de un origen distinto de `APP_URL`.
+
+La primera construcción tarda unos minutos. Comandos útiles:
+
+| Para | Comando |
+| --- | --- |
+| Ver el estado (`web` pasa a `healthy` cuando responde) | `docker compose ps` |
+| Ver los registros | `docker compose logs -f web worker` |
+| Crear las cuentas de prueba (requiere `DEMO_PASSWORD` en `.env`) | `docker compose run --rm migrate node --import tsx scripts/seed.ts` |
+| Aplicar cambios después de `git pull` (las migraciones nuevas se aplican solas) | `docker compose up --build -d` |
+| Detener conservando los datos | `docker compose down` |
+| Detener y borrar la base de datos | `docker compose down -v` |
+
+La base de Docker es independiente de la de `npm run dev` (`.roomie-data/`): las cuentas y los datos no se comparten. PostgreSQL no publica su puerto fuera de Docker, así que `npm test` se ejecuta contra `npm run dev`, no contra Docker. No cambies `POSTGRES_PASSWORD` después del primer arranque: la base ya creada conserva la contraseña original; para empezar de cero usa `docker compose down -v`. HTTPS, correo y push en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
+
 ## Comprobaciones
 
 ```bash
