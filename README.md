@@ -41,12 +41,14 @@ Alternativa a `npm run dev` que no necesita Node.js: levanta PostgreSQL, aplica 
    # En PowerShell: Copy-Item .env.example .env
    ```
 
-2. En `.env`, definir la contraseña de la base de Docker (solo letras y números) y dejar la dirección de acceso:
+2. En `.env`, lo único obligatorio para Docker es completar `POSTGRES_PASSWORD` (solo letras y números). `APP_URL` se deja como está:
 
    ```dotenv
-   POSTGRES_PASSWORD=UnaClaveLargaSoloLetrasYNumeros
    APP_URL=http://localhost:3000
+   POSTGRES_PASSWORD=UnaClaveLargaSoloLetrasYNumeros
    ```
+
+   **No cambies `LOCAL_DATABASE` ni `DATABASE_URL`.** Docker los ignora y usa su propia base; son de `npm run dev`. Con `LOCAL_DATABASE=false`, `npm run dev` deja de iniciar su base y la app no puede conectarse. El resto de variables son opcionales.
 
 3. Cerrar `npm run dev` si está abierto (los dos usan el puerto 3000) y arrancar:
 

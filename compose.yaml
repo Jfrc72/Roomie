@@ -1,4 +1,6 @@
 # Instrucciones en el README ("Usar con Docker"). Requiere POSTGRES_PASSWORD en .env.
+# DATABASE_URL y LOCAL_DATABASE del .env son de npm run dev: aquí se reemplazan para
+# que todos los servicios usen la base del contenedor db.
 services:
   db:
     image: postgres:17
