@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { Fragment, useState } from "react";
 import {
   BookOpen,
@@ -13,16 +12,14 @@ import {
   X,
 } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
-import { api } from "@/lib/api";
-import {
-  askAssistant,
-  assistantExamples,
-  type AssistantReply,
-} from "@/lib/assistant";
+import { useHomeMembers } from "@/hooks/useHomeMembers";
+import { useRuleAssistant } from "@/hooks/useRuleAssistant";
+import { useRules } from "@/hooks/useRules";
+import { assistantExamples } from "@/lib/assistant";
 import { formatDate } from "@/lib/dates";
-import { useData } from "@/lib/use-data";
+import NoHome from "./NoHome";
 import { Empty, Form, LoadingError, PageTitle } from "./ui";
-import type { Home, Member, Rules as RulesData, RuleVersion } from "@/types";
+import type { Rules as RulesData, RuleVersion } from "@/types";
 // Un párrafo por bloque separado con línea en blanco; los saltos simples se conservan.
 function RuleText({ text }: { text: string }) {
   return (
@@ -44,29 +41,29 @@ export default function Rules() {
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
-      <>
-        <PageTitle
-          title="Acuerdos del hogar"
-          description="Pequeños acuerdos para una mejor convivencia."
-        />
-        <section className="panel">
-          <Empty title="Primero, un hogar">
-            Crea tu apartamento o acepta una invitación para escribir sus
-            acuerdos de convivencia.
-          </Empty>
-          <Link className="button" href="/apartamento">
-            Crear mi apartamento
-          </Link>
-        </section>
-      </>
+      <NoHome
+        title="Acuerdos del hogar"
+        description="Pequeños acuerdos para una mejor convivencia."
+      >
+        Crea tu apartamento o acepta una invitación para escribir sus acuerdos
+        de convivencia.
+      </NoHome>
     );
   return <RulesBoard homeId={session.activeHomeId} />;
 }
 function RulesBoard({ homeId }: { homeId: string }) {
-  const { session } = useRoomie();
-  const admin = session.homes.find((h) => h.id === homeId)?.role === "admin";
-  const rules = useData<RulesData>(`/rules?homeId=${homeId}`);
-  const data = rules.data;
+  const {
+    admin,
+    rules: data,
+    error,
+    reload,
+    clauses,
+    publish,
+    accept,
+    report,
+    resolve,
+    resolving,
+  } = useRules(homeId);
   const [editing, setEditing] = useState(false);
   return (
     <>
@@ -92,16 +89,16 @@ function RulesBoard({ homeId }: { homeId: string }) {
       />
       <div className="dashboard-main">
         {!data ? (
-          <LoadingError error={rules.error} retry={rules.reload} />
+          <LoadingError error={error} retry={reload} />
         ) : (
           <>
             {editing && (
               <RuleEditor
                 homeId={homeId}
                 current={data.current}
-                onPublished={() => {
+                onPublish={async (form) => {
+                  await publish(form);
                   setEditing(false);
-                  rules.reload();
                 }}
               />
             )}
@@ -118,7 +115,7 @@ function RulesBoard({ homeId }: { homeId: string }) {
                 <CurrentRules
                   rules={data}
                   current={data.current}
-                  onChanged={rules.reload}
+                  onAccept={() => accept(data.current!.id)}
                 />
                 <section className="panel">
                   <div className="section-title">
@@ -154,11 +151,12 @@ function RulesBoard({ homeId }: { homeId: string }) {
             )}
             {data.current && (
               <RuleReports
-                homeId={homeId}
                 rules={data}
-                current={data.current}
+                clauses={clauses}
                 admin={admin}
-                onChanged={rules.reload}
+                onReport={report}
+                onResolve={resolve}
+                resolving={resolving}
               />
             )}
             {!!data.history.length && (
@@ -185,11 +183,11 @@ function RulesBoard({ homeId }: { homeId: string }) {
 function CurrentRules({
   rules,
   current,
-  onChanged,
+  onAccept,
 }: {
   rules: RulesData;
   current: RuleVersion;
-  onChanged: () => void;
+  onAccept: () => Promise<void>;
 }) {
   return (
     <section className="panel">
@@ -213,10 +211,7 @@ function CurrentRules({
         <Form
           label="Aceptar reglamento"
           success="Aceptaste el reglamento."
-          onSave={async () => {
-            await api(`/rules/${current.id}/accept`, "POST", {});
-            onChanged();
-          }}
+          onSave={onAccept}
         >
           <label className="check-label">
             <input type="checkbox" required />
@@ -230,15 +225,15 @@ function CurrentRules({
 function RuleEditor({
   homeId,
   current,
-  onPublished,
+  onPublish,
 }: {
   homeId: string;
   current: RuleVersion | null;
-  onPublished: () => void;
+  onPublish: (form: FormData) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(current?.content ?? "");
   // Con los nombres reales, el asistente propone repartos concretos.
-  const home = useData<Home & { members: Member[] }>(`/homes/${homeId}`);
+  const { members } = useHomeMembers(homeId);
   return (
     <div className="settings-grid">
       <section className="panel">
@@ -252,13 +247,7 @@ function RuleEditor({
         <Form
           label="Publicar versión"
           success="Versión publicada."
-          onSave={async (form) => {
-            await api(`/rules?homeId=${homeId}`, "POST", {
-              content: form.get("content"),
-              notes: form.get("notes"),
-            });
-            onPublished();
-          }}
+          onSave={onPublish}
         >
           <label>
             Texto del reglamento
@@ -288,7 +277,7 @@ function RuleEditor({
       </section>
       <RuleAssistant
         draft={draft}
-        members={home.data?.members.map((m) => m.name) ?? []}
+        members={members?.map((m) => m.name) ?? []}
         onAdd={(clause) =>
           setDraft((d) => (d.trim() ? `${d.trimEnd()}\n\n${clause}` : clause))
         }
@@ -307,21 +296,10 @@ function RuleAssistant({
   members: string[];
   onAdd: (clause: string) => void;
 }) {
-  const [prompt, setPrompt] = useState("");
-  const [turns, setTurns] = useState<
-    { prompt: string; reply: AssistantReply | null }[]
-  >([]);
-  const loading = turns.length > 0 && !turns[turns.length - 1].reply;
-  async function ask(text: string) {
-    const question = text.trim();
-    if (!question || loading) return;
-    setPrompt("");
-    setTurns((t) => [...t, { prompt: question, reply: null }]);
-    const reply = await askAssistant(question, draft, members);
-    setTurns((t) =>
-      t.map((turn, i) => (i === t.length - 1 ? { ...turn, reply } : turn)),
-    );
-  }
+  const { prompt, setPrompt, turns, loading, ask } = useRuleAssistant(
+    draft,
+    members,
+  );
   return (
     <section className="panel">
       <div className="section-title">
@@ -416,39 +394,23 @@ function RuleAssistant({
 }
 // Reportar que no se cumplió un acuerdo del reglamento vigente y seguir su resolución.
 function RuleReports({
-  homeId,
   rules,
-  current,
+  clauses,
   admin,
-  onChanged,
+  onReport,
+  onResolve,
+  resolving,
 }: {
-  homeId: string;
   rules: RulesData;
-  current: RuleVersion;
+  clauses: string[];
   admin: boolean;
-  onChanged: () => void;
+  onReport: (form: FormData) => Promise<void>;
+  onResolve: (reportId: string) => Promise<void>;
+  resolving: string;
 }) {
-  const { session, toast } = useRoomie();
+  const { session } = useRoomie();
   const [formKey, setFormKey] = useState(0);
-  const [busy, setBusy] = useState("");
-  // Cada párrafo del reglamento es un acuerdo que se puede elegir.
-  const clauses = current.content
-    .split(/\n\s*\n/)
-    .map((block) => block.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
   const pending = rules.reports.filter((r) => !r.resolved_at).length;
-  async function resolve(id: string) {
-    setBusy(id);
-    try {
-      await api(`/rules/reports/${id}/resolve`, "POST", {});
-      toast("Reporte resuelto.");
-      onChanged();
-    } catch (e) {
-      toast((e as Error).message);
-    } finally {
-      setBusy("");
-    }
-  }
   return (
     <div className="settings-grid">
       <section className="panel">
@@ -467,13 +429,8 @@ function RuleReports({
           label="Enviar reporte"
           success="Reporte enviado."
           onSave={async (form) => {
-            await api(`/rules/reports?homeId=${homeId}`, "POST", {
-              clause: form.get("clause"),
-              description: form.get("description"),
-              reported_membership_id: form.get("reported") || null,
-            });
+            await onReport(form);
             setFormKey((v) => v + 1);
-            onChanged();
           }}
         >
           <label>
@@ -537,8 +494,8 @@ function RuleReports({
               {admin && !r.resolved_at && (
                 <button
                   className="text-button"
-                  disabled={busy === r.id}
-                  onClick={() => resolve(r.id)}
+                  disabled={resolving === r.id}
+                  onClick={() => onResolve(r.id)}
                 >
                   Marcar resuelto
                 </button>

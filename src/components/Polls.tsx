@@ -1,12 +1,11 @@
 "use client";
-import Link from "next/link";
 import { useState } from "react";
 import { Lock, Plus, X } from "lucide-react";
 import { useRoomie } from "@/context/RoomieContext";
-import { api } from "@/lib/api";
-import { formatDate, fromDateInput, toDateInput } from "@/lib/dates";
+import { usePolls } from "@/hooks/usePolls";
+import { formatDate, toDateInput } from "@/lib/dates";
 import { pollResult, pollRules, ruleLabels } from "@/lib/polls";
-import { useData } from "@/lib/use-data";
+import NoHome from "./NoHome";
 import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Poll } from "@/types";
 const groups = [
@@ -21,27 +20,26 @@ export default function Polls() {
   const { session } = useRoomie();
   if (!session.activeHomeId)
     return (
-      <>
-        <PageTitle
-          title="Votaciones"
-          description="Las decisiones del hogar se toman en equipo."
-        />
-        <section className="panel">
-          <Empty title="Primero, un hogar">
-            Crea tu apartamento o acepta una invitación para decidir en equipo
-            con tus roommates.
-          </Empty>
-          <Link className="button" href="/apartamento">
-            Crear mi apartamento
-          </Link>
-        </section>
-      </>
+      <NoHome
+        title="Votaciones"
+        description="Las decisiones del hogar se toman en equipo."
+      >
+        Crea tu apartamento o acepta una invitación para decidir en equipo con
+        tus roommates.
+      </NoHome>
     );
   return <PollBoard homeId={session.activeHomeId} />;
 }
 function PollBoard({ homeId }: { homeId: string }) {
-  const polls = useData<Poll[]>(`/polls?homeId=${homeId}`);
-  const list = polls.data;
+  const {
+    polls,
+    groups: lists,
+    error,
+    reload,
+    createPoll,
+    vote,
+    closePoll,
+  } = usePolls(homeId);
   const [creating, setCreating] = useState(false);
   return (
     <>
@@ -66,19 +64,8 @@ function PollBoard({ homeId }: { homeId: string }) {
               label="Abrir votación"
               success="Votación abierta."
               onSave={async (form) => {
-                await api(`/polls?homeId=${homeId}`, "POST", {
-                  title: form.get("title"),
-                  description: form.get("description"),
-                  rule: form.get("rule"),
-                  anonymous: form.get("anonymous") === "on",
-                  closes_at: fromDateInput(form.get("closes_at")),
-                  options: String(form.get("options"))
-                    .split("\n")
-                    .map((o) => o.trim())
-                    .filter(Boolean),
-                });
+                await createPoll(form);
                 setCreating(false);
-                polls.reload();
               }}
             >
               <label>
@@ -149,9 +136,9 @@ function PollBoard({ homeId }: { homeId: string }) {
             </Form>
           </section>
         )}
-        {!list ? (
-          <LoadingError error={polls.error} retry={polls.reload} />
-        ) : !list.length ? (
+        {!polls || !lists ? (
+          <LoadingError error={error} retry={reload} />
+        ) : !polls.length ? (
           <section className="panel">
             <Empty title="Decidir juntos empieza aquí">
               Propón una votación para que todos opinen antes de decidir.
@@ -159,7 +146,7 @@ function PollBoard({ homeId }: { homeId: string }) {
           </section>
         ) : (
           groups.map((g) => {
-            const items = list.filter((p) => p.status === g.status);
+            const items = lists[g.status];
             return (
               <section
                 key={g.status}
@@ -172,7 +159,12 @@ function PollBoard({ homeId }: { homeId: string }) {
                 {items.length ? (
                   <div className="settings-grid">
                     {items.map((p) => (
-                      <PollCard key={p.id} poll={p} onChanged={polls.reload} />
+                      <PollCard
+                        key={p.id}
+                        poll={p}
+                        onVote={(form) => vote(p.id, form)}
+                        onClose={() => closePoll(p.id)}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -188,10 +180,12 @@ function PollBoard({ homeId }: { homeId: string }) {
 }
 function PollCard({
   poll: p,
-  onChanged,
+  onVote,
+  onClose,
 }: {
   poll: Poll;
-  onChanged: () => void;
+  onVote: (form: FormData) => Promise<void>;
+  onClose: () => Promise<void>;
 }) {
   return (
     <article className="panel">
@@ -219,12 +213,7 @@ function PollCard({
           <Form
             label={p.my_option_id ? "Cambiar mi voto" : "Votar"}
             success="Voto guardado."
-            onSave={async (form) => {
-              await api(`/polls/${p.id}/votes`, "POST", {
-                option_id: form.get("option_id"),
-              });
-              onChanged();
-            }}
+            onSave={onVote}
           >
             <legend className="sr-only">Opciones de {p.title}</legend>
             {p.options.map((o) => (
@@ -252,10 +241,7 @@ function PollCard({
               <ConfirmButton
                 label="Cerrar votación"
                 description="¿Cerrar ahora? Ya no se podrá votar y se publicará el resultado."
-                onConfirm={async () => {
-                  await api(`/polls/${p.id}/close`, "POST", {});
-                  onChanged();
-                }}
+                onConfirm={onClose}
               />
             </div>
           )}

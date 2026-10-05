@@ -104,7 +104,7 @@ Las pruebas revisan sesiones, permisos, invitaciones, el límite de integrantes,
 
 **Worker separado.** Recordatorios, envíos por correo o push y el cierre automático de votaciones corren en `scripts/worker.ts`, fuera de las peticiones web. Los avisos se encolan en la base (`deliveries`) con reintentos, y cada uno tiene una clave única que evita duplicados.
 
-**Estado en el cliente.** Un Context (`RoomieContext`) guarda solo la sesión, el hogar activo y los avisos temporales. Los datos de cada módulo se cargan con hooks (`src/lib/use-data.ts`, `src/hooks/`) y se recargan tras cada cambio; al cambiar de hogar se reinicia el estado de las páginas para no mostrar datos del anterior.
+**Estado en el cliente y hooks.** Un Context (`RoomieContext`) guarda solo la sesión, el hogar activo y los avisos temporales. Cada módulo tiene hooks propios en `src/hooks/` (`useGastos`, `useTasks`, `useReservations`, `usePolls`, `useRules`, `useRuleAssistant`…) que concentran la carga de datos, los filtros, las acciones contra la API y los estados de carga. Los componentes se ocupan solo de la presentación. `useUrlState` guarda en la URL los filtros y la semana del calendario: se conservan al recargar y al compartir el enlace, y "Atrás" vuelve a la semana anterior. Al cambiar de hogar se reinicia el estado de las páginas para no mostrar datos del anterior.
 
 **Interfaz y accesibilidad.** CSS propio con variables (`src/app/globals.css`) y componentes reutilizables (`src/components/ui.tsx`), sin framework de UI, para mantener un diseño coherente y liviano. Incluye:
 - Etiquetas en todos los campos y regiones `aria-live` para avisos y estados de carga.
