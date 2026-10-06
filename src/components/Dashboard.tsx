@@ -1,4 +1,6 @@
 "use client";
+import { formatCurrency } from "@/lib/money";
+import { formatDate, formatDay } from "@/lib/dates";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import {
@@ -59,14 +61,7 @@ function HomeDashboard({ homeId }: { homeId: string }) {
   const cards = [
     {
       title: "Tu balance",
-      value:
-        s.balance === null
-          ? "—"
-          : new Intl.NumberFormat(locale, {
-              style: "currency",
-              currency: "COP",
-              maximumFractionDigits: 0,
-            }).format(s.balance),
+      value: s.balance === null ? "—" : formatCurrency(s.balance, locale),
       hint:
         s.balance === null
           ? "Aún no hay información financiera"
@@ -123,11 +118,11 @@ function HomeDashboard({ homeId }: { homeId: string }) {
         description={t("Esto es lo que está pasando en tu hogar.")}
         action={
           <span className="date-label">
-            {new Intl.DateTimeFormat(locale, {
+            {formatDay(new Date(), locale, {
               weekday: "long",
               day: "numeric",
               month: "long",
-            }).format(new Date())}
+            })}
           </span>
         }
       />
@@ -179,12 +174,7 @@ function HomeDashboard({ homeId }: { homeId: string }) {
               s.expenses.map((e) => (
                 <Link className="summary-row" href={e.href} key={e.id}>
                   <span>{e.title}</span>
-                  <strong>
-                    {new Intl.NumberFormat(locale, {
-                      style: "currency",
-                      currency: "COP",
-                    }).format(e.amount)}
-                  </strong>
+                  <strong>{formatCurrency(e.amount, locale)}</strong>
                 </Link>
               ))
             ) : (
@@ -209,16 +199,9 @@ function HomeDashboard({ homeId }: { homeId: string }) {
                     </span>
                     <div>
                       <p>
-                        <strong>{a.actor || t("Roomie")}</strong> {t(a.message)}
+                        <strong>{a.actor || "Roomie"}</strong> {t(a.message)}
                       </p>
-                      <time>
-                        {new Date(a.created_at).toLocaleString(locale, {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </time>
+                      <time>{formatDate(a.created_at, locale)}</time>
                     </div>
                   </li>
                 ))}

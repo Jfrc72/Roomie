@@ -205,8 +205,8 @@ function PollCard({
       </div>
       {p.description && <p>{p.description}</p>}
       <p>
-        {t("Propuesta por")} {p.creator} {t("·")} {t(ruleLabels[p.rule])}{" "}
-        {t("·")}{" "}
+        {t("Propuesta por")} {p.creator} {"·"} {t(ruleLabels[p.rule])}{" "}
+        {"·"}{" "}
         {p.closed_at
           ? t("Cerrada {value1}", { value1: formatDate(p.closed_at, locale) })
           : p.closes_at

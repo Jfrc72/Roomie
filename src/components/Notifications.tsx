@@ -1,4 +1,5 @@
 "use client";
+import { formatDate } from "@/lib/dates";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import { useState } from "react";
@@ -61,7 +62,7 @@ export default function Notifications() {
                   <div>
                     <h3>{t(n.title)}</h3>
                     <p>{t(n.message)}</p>
-                    <time>{new Date(n.created_at).toLocaleString(locale)}</time>
+                    <time>{formatDate(n.created_at, locale)}</time>
                   </div>
                   <div className="actions">
                     <Link href={n.href}>{t("Ver detalle →")}</Link>

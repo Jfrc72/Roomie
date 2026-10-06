@@ -1,7 +1,8 @@
 "use client";
 import { LanguageSelector, useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useRoomieNavigation } from "@/lib/use-roomie-navigation";
 import { useState, useEffect } from "react";
 import {
   House,
@@ -37,7 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();
   const { session, selectHome, toast } = useRoomie();
   const pathname = usePathname();
-  const router = useRouter();
+  const navigation = useRoomieNavigation();
   const [menu, setMenu] = useState(false);
   const [unread, setUnread] = useState(0);
   const home = session.homes.find((h) => h.id === session.activeHomeId);
@@ -179,8 +180,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onClick={async () => {
                 try {
                   await api("/auth/logout", "POST", {});
-                  router.push("/login");
-                  router.refresh();
+                  navigation.go("/login");
+                  navigation.refresh();
                 } catch (e) {
                   toast((e as Error).message);
                 }

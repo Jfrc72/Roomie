@@ -338,7 +338,7 @@ Como persona quiero editar mi nombre y cambiar mi contraseña para mantener mi c
 
 ## Pruebas por historia
 
-`npm run test:hu` ejecuta las unitarias y comprueba que cada historia tenga al menos tres aprobadas. Hay 157 casos: 136 asociados a historias y 21 adicionales de hooks, accesibilidad y compatibilidad.
+`npm run test:hu` ejecuta las unitarias y comprueba que cada historia tenga al menos tres aprobadas. El comando muestra los casos asociados a cada historia y las pruebas adicionales de hooks, formatos, idiomas y accesibilidad.
 
 Los archivos están en `tests/unit/`. Las pruebas de servidor usan consultas y sesiones simuladas, pero ejecutan las reglas reales. No necesitan una base de datos ni la aplicación abierta.
 

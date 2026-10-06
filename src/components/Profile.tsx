@@ -3,11 +3,11 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useRoomie } from "@/context/RoomieContext";
 import { api } from "@/lib/api";
 import { Form, PageTitle } from "./ui";
-import { useRouter } from "next/navigation";
+import { useRoomieNavigation } from "@/lib/use-roomie-navigation";
 export default function Profile() {
   const { t } = useLanguage();
   const { session, refresh } = useRoomie();
-  const router = useRouter();
+  const navigation = useRoomieNavigation();
   return (
     <>
       <PageTitle
@@ -63,8 +63,8 @@ export default function Profile() {
               await api("/auth/account", "DELETE", {
                 current: form.get("current"),
               });
-              router.push("/login");
-              router.refresh();
+              navigation.go("/login");
+              navigation.refresh();
             }}
           >
             <label>

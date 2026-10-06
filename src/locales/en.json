@@ -881,5 +881,6 @@
   "PENDIENTE": "Pending",
   "PAGADO": "Paid",
   "COMPRADO": "Purchased",
-  "Inicio de la reserva": "Reservation start"
+  "Inicio de la reserva": "Reservation start",
+  "No incluida": "Not included"
 }

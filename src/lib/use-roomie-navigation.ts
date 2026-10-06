@@ -20,5 +20,6 @@ export function useRoomieNavigation() {
       );
     },
     go: router.push,
+    refresh: router.refresh,
   };
 }

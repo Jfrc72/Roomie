@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "./api";
-export function useData<T>(path: string) {
+export function useData<T>(path: string | null) {
   const [result, setResult] = useState<{
     path: string;
     version: number;
@@ -10,6 +10,7 @@ export function useData<T>(path: string) {
   } | null>(null);
   const [version, setVersion] = useState(0);
   useEffect(() => {
+    if (!path) return;
     let active = true;
     api<T>(path)
       .then((value) => {
@@ -31,5 +32,5 @@ export function useData<T>(path: string) {
   const current = result?.path === path && result.version === version;
   const data = current ? result.data : null;
   const error = current ? result.error : "";
-  return { data, error, reload };
+  return { data, error, reload, loading: !!path && !current };
 }

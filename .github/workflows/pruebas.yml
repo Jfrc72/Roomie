@@ -1,0 +1,49 @@
+name: Pruebas
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: roomie
+          POSTGRES_PASSWORD: pruebas_locales
+          POSTGRES_DB: roomie_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U roomie -d roomie_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      LOCAL_DATABASE: "false"
+      DATABASE_URL: postgresql://roomie:pruebas_locales@127.0.0.1:5432/roomie_test
+      APP_URL: http://localhost:3000
+      SEED_DEMO: "false"
+      PLAYWRIGHT_CHANNEL: chromium
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: cp .env.example .env
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:hu
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resultados-navegador
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

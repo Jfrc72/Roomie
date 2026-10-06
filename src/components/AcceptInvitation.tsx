@@ -1,14 +1,14 @@
 "use client";
 import { useLanguage } from "@/context/LanguageContext";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRoomieNavigation } from "@/lib/use-roomie-navigation";
 import { useRoomie } from "@/context/RoomieContext";
 import { api } from "@/lib/api";
 import { Form, PageTitle } from "./ui";
 export default function AcceptInvitation({ token }: { token: string }) {
   const { t } = useLanguage();
   const { session, refresh } = useRoomie();
-  const router = useRouter();
+  const navigation = useRoomieNavigation();
   const [accepted, setAccepted] = useState(false);
   return (
     <>
@@ -23,7 +23,9 @@ export default function AcceptInvitation({ token }: { token: string }) {
           {t(". Debe coincidir con el correo de la invitación.")}
         </p>
         {accepted ? (
-          <button onClick={() => router.push("/")}>{t("Ir a mi hogar")}</button>
+          <button onClick={() => navigation.go("/")}>
+            {t("Ir a mi hogar")}
+          </button>
         ) : (
           <Form
             label={t("Aceptar invitación")}
@@ -32,7 +34,7 @@ export default function AcceptInvitation({ token }: { token: string }) {
               await api("/invitations", "POST", { token });
               await refresh();
               setAccepted(true);
-              router.push("/");
+              navigation.go("/");
             }}
           >
             <p>

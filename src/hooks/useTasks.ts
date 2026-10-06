@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRoomieNavigation } from "@/lib/use-roomie-navigation";
 import { useRoomie } from "@/context/RoomieContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
@@ -75,7 +75,7 @@ export function useTaskMoves(task: Task, onMoved: () => void) {
 // Detalle: la tarea con su historial, edición, eliminación y vuelta al tablero.
 export function useTaskDetail(id: string) {
   const { session } = useRoomie();
-  const router = useRouter();
+  const navigation = useRoomieNavigation();
   const { data, error, reload } = useData<
     Task & { history: TaskHistoryEntry[] }
   >(`/tasks/${id}`);
@@ -90,7 +90,7 @@ export function useTaskDetail(id: string) {
   }
   async function remove() {
     await api(`/tasks/${id}`, "DELETE");
-    router.push("/tareas");
+    navigation.go("/tareas");
   }
   return {
     task,

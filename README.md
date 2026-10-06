@@ -60,16 +60,21 @@ npm run build
 npm run test:hu
 ```
 
-`test:hu` ejecuta las 157 unitarias y revisa que cada una de las 39 historias tenga al menos tres aprobadas. No necesita servidor. También se pueden ejecutar con `npm test`.
+`test:hu` ejecuta las 175 unitarias y revisa que cada una de las 39 historias tenga al menos tres aprobadas. No necesita servidor. También se pueden ejecutar con `npm test`.
 
-Con `npm run dev` abierto en otra terminal:
+Para las pruebas de la API, dejar `npm run dev` abierto y ejecutar `npm run test:integration` en otra terminal.
+
+Para los recorridos de navegador:
 
 ```bash
-npm run test:integration
 npm run test:e2e
 ```
 
-Estas pruebas usan datos temporales y los borran al terminar; se ejecutan en desarrollo. Las E2E necesitan Google Chrome. Si no está instalado: `npx playwright install chromium` y `PLAYWRIGHT_CHANNEL=chromium npm run test:e2e`.
+Este comando inicia y detiene la aplicación si no está abierta. Al terminar, `npx playwright show-report` abre el informe.
+
+Las pruebas de API y navegador usan datos temporales y los borran al terminar; se ejecutan en desarrollo. Las E2E necesitan Google Chrome. Si no está instalado: `npx playwright install chromium` y `PLAYWRIGHT_CHANNEL=chromium npm run test:e2e`.
+
+Al subir cambios o abrir un pull request, GitHub Actions revisa lint, tipos, unitarias, compilación y E2E con una base de datos temporal.
 
 ## Decisiones técnicas
 

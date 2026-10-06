@@ -46,3 +46,23 @@ export function addDays(value: Date, days: number) {
   date.setDate(date.getDate() + days);
   return date;
 }
+
+export function formatDay(
+  value: string | Date,
+  locale = "es-CO",
+  options: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  },
+) {
+  // Una fecha sin hora representa un día del calendario, no medianoche UTC.
+  const date =
+    typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(`${value}T12:00:00`)
+      : new Date(value);
+  return new Intl.DateTimeFormat(locale, options).format(date);
+}
+export function localToday() {
+  return toDateInput(new Date().toISOString()).slice(0, 10);
+}

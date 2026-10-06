@@ -27,7 +27,7 @@ p {
   margin-top: 0;
 }
 h1 {
-  font-size: 30px;
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
   line-height: 1.2;
   letter-spacing: -1px;
   margin-bottom: 9px;
@@ -167,7 +167,7 @@ summary:focus-visible {
   margin-left: -9px;
 }
 .nav-caption {
-  font-size: 9px;
+  font-size: 0.75rem;
   letter-spacing: 1.6px;
   font-weight: 700;
   color: var(--muted);
@@ -203,13 +203,13 @@ summary:focus-visible {
 .home-note {
   padding: 16px 13px 8px;
   border-top: 1px solid var(--line);
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .home-note p {
   font-weight: 400;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.75rem;
   margin: 6px 0 16px 13px;
 }
 .tiny-dot {
@@ -261,7 +261,7 @@ summary:focus-visible {
   border-left: 1px solid var(--line);
   padding-left: 14px;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .top-actions {
@@ -270,7 +270,7 @@ summary:focus-visible {
   gap: 14px;
 }
 .invite-top {
-  font-size: 11px;
+  font-size: 0.75rem;
   min-height: 34px;
   padding: 6px 12px;
   border-radius: 7px;
@@ -284,7 +284,7 @@ summary:focus-visible {
   border-radius: 50%;
   background: var(--purple);
   color: white;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -301,7 +301,7 @@ summary:focus-visible {
   position: absolute;
   right: 0;
   top: 0;
-  font-size: 9px;
+  font-size: 0.75rem;
   min-width: 17px;
   height: 17px;
   border-radius: 10px;
@@ -334,12 +334,12 @@ summary:focus-visible {
   color: var(--purple-dark);
 }
 .eyebrow {
-  font-size: 10px !important;
+  font-size: 0.75rem !important;
   letter-spacing: 1.6px;
   font-weight: 700;
 }
 .date-label {
-  font-size: 11px;
+  font-size: 0.75rem;
   color: var(--muted);
   text-transform: capitalize;
 }
@@ -405,13 +405,14 @@ summary:focus-visible {
   overflow-wrap: anywhere;
 }
 .stat-card small {
-  font-size: 10px;
+  font-size: 0.75rem;
   color: var(--muted);
   display: block;
   margin-top: 7px;
 }
 .dashboard-grid {
   display: grid;
+  align-items: start;
   grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
   gap: 24px;
 }
@@ -444,7 +445,7 @@ summary:focus-visible {
   gap: 9px;
 }
 .section-title > a {
-  font-size: 11px;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -504,7 +505,7 @@ summary:focus-visible {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: 0.75rem;
 }
 .activity-list p {
   font-size: 12px;
@@ -516,7 +517,7 @@ summary:focus-visible {
   font-weight: 600;
 }
 .activity-list time {
-  font-size: 10px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .tip-card {
@@ -535,7 +536,7 @@ summary:focus-visible {
   color: #70658e;
 }
 .tip-card a {
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .summary-row {
@@ -548,7 +549,7 @@ footer {
   margin: 0 35px;
   padding: 19px 0;
   border-top: 1px solid var(--line);
-  font-size: 10px;
+  font-size: 0.75rem;
   color: var(--muted);
   display: flex;
   justify-content: space-between;
@@ -608,7 +609,7 @@ footer {
   color: #8c8599;
 }
 .form small {
-  font-size: 11px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .form .check-label,
@@ -618,6 +619,9 @@ footer {
   align-items: center;
   gap: 9px;
   font-size: 12px;
+}
+.check-label {
+  min-height: 44px;
 }
 .check-label input {
   width: 17px;
@@ -632,7 +636,7 @@ footer {
   border-radius: 20px;
   background: var(--lavender);
   color: var(--purple-dark);
-  font-size: 10px;
+  font-size: 0.75rem;
   padding: 4px 9px;
   white-space: nowrap;
 }
@@ -650,7 +654,7 @@ footer {
   flex-shrink: 0;
 }
 .info-note p {
-  font-size: 11px;
+  font-size: 0.75rem;
   margin: 0;
 }
 .member-row {
@@ -672,11 +676,11 @@ footer {
 }
 .member-info small {
   display: block;
-  font-size: 11px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .role-text {
-  font-size: 10px;
+  font-size: 0.75rem;
   color: var(--purple-dark);
 }
 .member-actions {
@@ -686,7 +690,7 @@ footer {
   max-width: 100%;
 }
 .member-actions .text-button {
-  font-size: 10px;
+  font-size: 0.75rem;
   min-height: 30px;
 }
 .confirmation {
@@ -706,7 +710,7 @@ footer {
   flex-wrap: wrap;
 }
 .confirmation button {
-  font-size: 11px;
+  font-size: 0.75rem;
   min-height: 36px;
   padding: 6px 10px;
 }
@@ -719,7 +723,7 @@ footer {
   gap: 10px;
 }
 .invite-result small {
-  font-size: 11px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .invitation-row {
@@ -735,7 +739,7 @@ footer {
   overflow-wrap: anywhere;
 }
 .invitation-row small {
-  font-size: 11px;
+  font-size: 0.75rem;
   color: var(--muted);
   display: block;
 }
@@ -756,12 +760,12 @@ footer {
   color: var(--muted);
 }
 .notice time {
-  font-size: 10px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .notice .actions {
   margin-top: 10px;
-  font-size: 11px;
+  font-size: 0.75rem;
 }
 .help {
   max-width: 850px;
@@ -891,7 +895,7 @@ footer {
 }
 .auth-story > small {
   color: #62586f;
-  font-size: 11px;
+  font-size: 0.75rem;
 }
 .house-art {
   position: absolute;
@@ -911,7 +915,7 @@ footer {
 }
 .tag {
   display: inline-block;
-  font-size: 9px;
+  font-size: 0.75rem;
   letter-spacing: 1.5px;
   font-weight: 700;
   padding: 6px 10px;
@@ -945,7 +949,7 @@ footer {
 }
 .auth-note {
   text-align: center;
-  font-size: 10px !important;
+  font-size: 0.75rem !important;
   margin-top: 38px !important;
 }
 .skip-link:not(:focus),
@@ -989,6 +993,9 @@ dd {
   }
 }
 @media (max-width: 1150px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .sidebar {
     width: 195px;
     padding-inline: 12px;
@@ -1145,11 +1152,11 @@ dd {
     margin-bottom: 22px;
   }
   .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
   }
   .stat-card small {
-    font-size: 10px;
+    font-size: 0.75rem;
   }
   .stat-card {
     padding: 16px;
@@ -1166,7 +1173,7 @@ dd {
   .topbar .avatar {
     width: 30px;
     height: 30px;
-    font-size: 10px;
+    font-size: 0.75rem;
   }
   .home-selector select {
     max-width: 100%;
@@ -1189,7 +1196,7 @@ dd {
     padding-left: 50px;
   }
   .member-actions .text-button {
-    font-size: 11px;
+    font-size: 0.75rem;
   }
   footer {
     flex-direction: column;
@@ -1221,7 +1228,7 @@ dd {
     padding: 40px 20px;
   }
   .invite-result input {
-    font-size: 11px;
+    font-size: 0.75rem;
   }
   .section-title {
     flex-wrap: wrap;
@@ -1361,13 +1368,13 @@ dd {
   border-left: 3px solid var(--purple);
   border-radius: 6px;
   background: white;
-  font-size: 11px;
+  font-size: 0.75rem;
   overflow-wrap: anywhere;
 }
 .week-day small,
 .week-day p {
   margin: 0;
-  font-size: 11px;
+  font-size: 0.75rem;
   color: #62586f;
 }
 @media (max-width: 1000px) {
@@ -1399,4 +1406,20 @@ dd {
   .top-actions {
     gap: 6px;
   }
+}
+
+.module-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  align-items: end;
+}
+.record-heading {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.record-heading > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

@@ -117,7 +117,7 @@ export default function TaskDetail({ id }: { id: string }) {
                   </span>
                   <div>
                     <p>
-                      <strong>{h.actor || t("Roomie")}</strong>{" "}
+                      <strong>{h.actor || "Roomie"}</strong>{" "}
                       {h.previous_status
                         ? t("cambió el estado de {value1} a {value2}", {
                             value1: t(statusLabels[h.previous_status]),
