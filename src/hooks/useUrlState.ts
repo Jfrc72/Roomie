@@ -18,7 +18,12 @@ export function useUrlState(
       if (next === fallback) query.delete(key);
       else query.set(key, next);
       const search = query.toString();
-      const url = `${window.location.pathname}${search ? `?${search}` : ""}`;
+      const url = `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`;
+      if (
+        url ===
+        window.location.pathname + window.location.search + window.location.hash
+      )
+        return;
       if (mode === "push") window.history.pushState(null, "", url);
       else window.history.replaceState(null, "", url);
     },

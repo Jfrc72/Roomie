@@ -1,6 +1,8 @@
 "use client";
+import { LanguageSelector, useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useRoomieNavigation } from "@/lib/use-roomie-navigation";
 import { useState, useEffect } from "react";
 import {
   House,
@@ -33,9 +35,10 @@ const links = [
   { href: "/reglamento", label: "Acuerdos", icon: BookOpen },
 ];
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage();
   const { session, selectHome, toast } = useRoomie();
   const pathname = usePathname();
-  const router = useRouter();
+  const navigation = useRoomieNavigation();
   const [menu, setMenu] = useState(false);
   const [unread, setUnread] = useState(0);
   const home = session.homes.find((h) => h.id === session.activeHomeId);
@@ -63,7 +66,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#contenido">
-        Saltar al contenido
+        {t("Saltar al contenido")}
       </a>
       <aside className={`sidebar ${menu ? "is-open" : ""}`}>
         <Link href="/" className="brand" onClick={() => setMenu(false)}>
@@ -72,8 +75,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </span>
           roomie<span className="brand-dot">.</span>
         </Link>
-        <p className="nav-caption">TU HOGAR, EN EQUIPO</p>
-        <nav aria-label="Navegación principal">
+        <p className="nav-caption">{t("TU HOGAR, EN EQUIPO")}</p>
+        <nav aria-label={t("Navegación principal")}>
           {links.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
@@ -83,7 +86,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setMenu(false)}
             >
               <Icon size={19} />
-              {label}
+              {t(label)}
               {pathname === href && (
                 <ChevronRight size={14} className="nav-arrow" />
               )}
@@ -93,11 +96,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="sidebar-bottom">
           <div className="home-note">
             <span className="tiny-dot" />
-            Un hogar más organizado
+            {t("Un hogar más organizado")}
             <p>
-              Pequeños acuerdos.
+              {t("Pequeños acuerdos.")}
               <br />
-              Mejor convivencia.
+              {t("Mejor convivencia.")}
             </p>
           </div>
           <Link
@@ -106,7 +109,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => setMenu(false)}
           >
             <Settings size={19} />
-            Mi apartamento
+            {t("Mi apartamento")}
           </Link>
           <Link
             className="nav-link"
@@ -114,7 +117,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => setMenu(false)}
           >
             <CircleHelp size={19} />
-            Ayuda y soporte
+            {t("Ayuda y soporte")}
           </Link>
         </div>
       </aside>
@@ -122,7 +125,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <header className="topbar">
           <button
             className="icon-button mobile-toggle"
-            aria-label={menu ? "Cerrar menú" : "Abrir menú"}
+            aria-label={t(menu ? "Cerrar menú" : "Abrir menú")}
             aria-expanded={menu}
             onClick={() => setMenu(!menu)}
           >
@@ -131,7 +134,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="home-selector">
             <House size={18} />
             <label className="sr-only" htmlFor="home-select">
-              Apartamento activo
+              {t("Apartamento activo")}
             </label>
             <select
               id="home-select"
@@ -140,7 +143,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 selectHome(e.target.value).catch((e) => toast(e.message))
               }
             >
-              {!home && <option value="">Sin apartamento</option>}
+              {!home && <option value="">{t("Sin apartamento")}</option>}
               {session.homes.map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.name}
@@ -148,34 +151,37 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               ))}
             </select>
             <span className="member-pill">
-              {home?.member_count || 0} roommates
+              {home?.member_count || 0} {t("roommates")}
             </span>
           </div>
           <div className="top-actions">
+            <LanguageSelector />
             <Link className="invite-top secondary" href="/apartamento">
-              + Invitar roommate
+              {t("+ Invitar roommate")}
             </Link>
             <Link
               className="notification-link icon-button"
               href="/notificaciones"
-              aria-label={`Notificaciones, ${unread} sin leer`}
+              aria-label={t("Notificaciones, {count} sin leer", {
+                count: unread,
+              })}
             >
               <Bell size={20} />
               {unread > 0 && (
                 <span className="notification-count">{unread}</span>
               )}
             </Link>
-            <Link href="/perfil" className="avatar" aria-label="Mi perfil">
+            <Link href="/perfil" className="avatar" aria-label={t("Mi perfil")}>
               {session.user.name.slice(0, 2).toUpperCase()}
             </Link>
             <button
               className="icon-button logout"
-              aria-label="Cerrar sesión"
+              aria-label={t("Cerrar sesión")}
               onClick={async () => {
                 try {
                   await api("/auth/logout", "POST", {});
-                  router.push("/login");
-                  router.refresh();
+                  navigation.go("/login");
+                  navigation.refresh();
                 } catch (e) {
                   toast((e as Error).message);
                 }
@@ -187,14 +193,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main
           id="contenido"
+          tabIndex={-1}
           className="main-content"
           key={session.activeHomeId || "none"}
         >
           {children}
         </main>
         <footer>
-          Roomie · Un espacio para convivir mejor{" "}
-          <span>Proyecto de Programación con Tecnologías Web</span>
+          {t("Roomie · Un espacio para convivir mejor")}{" "}
+          <span>{t("Proyecto de Programación con Tecnologías Web")}</span>
         </footer>
       </div>
     </div>

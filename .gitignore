@@ -23,6 +23,8 @@ yarn-error.log*
 !.env.example
 .roomie-data/
 .test-output/
+/test-results/
+/playwright-report/
 
 # Instrucciones locales generadas por herramientas de desarrollo
 /AGENTS.md

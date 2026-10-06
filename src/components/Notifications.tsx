@@ -1,10 +1,12 @@
 "use client";
+import { formatDate } from "@/lib/dates";
+import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import { useState } from "react";
 import { useRoomie } from "@/context/RoomieContext";
 import { useData } from "@/lib/use-data";
 import { api } from "@/lib/api";
-import { Empty, Form, LoadingError, PageTitle } from "./ui";
+import { ConfirmButton, Empty, Form, LoadingError, PageTitle } from "./ui";
 import type { Notice } from "@/types";
 interface Preferences {
   email_enabled: boolean;
@@ -14,6 +16,7 @@ interface Preferences {
   pushAvailable: boolean;
 }
 export default function Notifications() {
+  const { t, locale } = useLanguage();
   const { session, toast } = useRoomie();
   const { data, error, reload } = useData<Notice[]>(
     `/notifications?homeId=${session.activeHomeId || ""}`,
@@ -22,27 +25,31 @@ export default function Notifications() {
   return (
     <>
       <PageTitle
-        title="Notificaciones"
-        description="Lo importante de tu hogar, sin perder el hilo."
+        title={t("Notificaciones")}
+        description={t("Lo importante de tu hogar, sin perder el hilo.")}
       />
       <div className="settings-grid">
         <section className="panel">
           <div className="section-title">
-            <h2>Tu bandeja</h2>
+            <h2>{t("Tu bandeja")}</h2>
             <label className="check-label">
               <input
                 type="checkbox"
                 checked={onlyUnread}
                 onChange={(e) => setOnlyUnread(e.target.checked)}
               />
-              Solo sin leer
+              {t("Solo sin leer")}
             </label>
           </div>
-          {!data ? (
+          {!session.activeHomeId ? (
+            <Empty title={t("Sin apartamento")}>
+              <Link href="/apartamento">{t("Crear mi apartamento")}</Link>
+            </Empty>
+          ) : !data ? (
             <LoadingError error={error} retry={reload} />
           ) : !data.filter((n) => !onlyUnread || !n.read_at).length ? (
-            <Empty title="Estás al día">
-              Cuando haya novedades de tu hogar, las encontrarás aquí.
+            <Empty title={t("Estás al día")}>
+              {t("Cuando haya novedades de tu hogar, las encontrarás aquí.")}
             </Empty>
           ) : (
             data
@@ -53,14 +60,12 @@ export default function Notifications() {
                   key={n.id}
                 >
                   <div>
-                    <h3>{n.title}</h3>
-                    <p>{n.message}</p>
-                    <time>
-                      {new Date(n.created_at).toLocaleString("es-CO")}
-                    </time>
+                    <h3>{t(n.title)}</h3>
+                    <p>{t(n.message)}</p>
+                    <time>{formatDate(n.created_at, locale)}</time>
                   </div>
                   <div className="actions">
-                    <Link href={n.href}>Ver detalle →</Link>
+                    <Link href={n.href}>{t("Ver detalle →")}</Link>
                     <button
                       className="text-button"
                       onClick={async () => {
@@ -75,8 +80,17 @@ export default function Notifications() {
                         }
                       }}
                     >
-                      {n.read_at ? "Marcar sin leer" : "Marcar leída"}
+                      {t(n.read_at ? "Marcar sin leer" : "Marcar leída")}
                     </button>
+                    <ConfirmButton
+                      label={t("Eliminar aviso")}
+                      description={t("¿Quitar este aviso de tu bandeja?")}
+                      onConfirm={async () => {
+                        await api(`/notifications/${n.id}`, "DELETE");
+                        reload();
+                        window.dispatchEvent(new Event("roomie:notices"));
+                      }}
+                    />
                   </div>
                 </article>
               ))
@@ -88,6 +102,7 @@ export default function Notifications() {
   );
 }
 function PreferencesPanel() {
+  const { t } = useLanguage();
   const { data, error, reload } = useData<Preferences>(
     "/notifications/preferences",
   );
@@ -114,8 +129,8 @@ function PreferencesPanel() {
   }
   return (
     <section className="panel">
-      <h2>A tu manera</h2>
-      <p>Elige cómo enterarte de las novedades.</p>
+      <h2>{t("A tu manera")}</h2>
+      <p>{t("Elige cómo enterarte de las novedades.")}</p>
       <Form
         onSave={async (form) => {
           await api("/notifications/preferences", "PATCH", {
@@ -128,7 +143,7 @@ function PreferencesPanel() {
       >
         <label className="check-label">
           <input type="checkbox" checked disabled />
-          Dentro de Roomie
+          {t("Dentro de Roomie")}
         </label>
         <label className="check-label">
           <input
@@ -137,10 +152,10 @@ function PreferencesPanel() {
             defaultChecked={data.email_enabled}
             disabled={!data.emailAvailable}
           />
-          Correo electrónico
+          {t("Correo electrónico")}
         </label>
         {!data.emailAvailable && (
-          <small>El envío de correos aún no está habilitado.</small>
+          <small>{t("El envío de correos aún no está habilitado.")}</small>
         )}
         <label className="check-label">
           <input
@@ -149,28 +164,33 @@ function PreferencesPanel() {
             defaultChecked={data.push_enabled}
             disabled={!data.pushAvailable}
           />
-          Notificaciones push
+          {t("Notificaciones push")}
         </label>
         {!data.pushAvailable ? (
-          <small>Las notificaciones push aún no están habilitadas.</small>
+          <small>
+            {t("Las notificaciones push aún no están habilitadas.")}
+          </small>
         ) : (
           <button type="button" className="secondary" onClick={enablePush}>
-            Registrar este dispositivo
+            {t("Registrar este dispositivo")}
           </button>
         )}
         <label>
-          Recordarme antes de un vencimiento
+          {t("Recordarme antes de un vencimiento")}
           <select name="hours" defaultValue={data.reminder_hours}>
             {[0, 1, 6, 12, 24, 48, 72, 168].map((h) => (
               <option value={h} key={h}>
-                {h === 0 ? "Al vencer" : `${h} horas antes`}
+                {h === 0
+                  ? t("Al vencer")
+                  : t("{hours} horas antes", { hours: h })}
               </option>
             ))}
           </select>
         </label>
         <small>
-          Se aplica a los próximos recordatorios de tus tareas, pagos y
-          reservas.
+          {t(
+            "Se aplica a los próximos recordatorios de tus tareas, pagos y reservas.",
+          )}
         </small>
       </Form>
     </section>

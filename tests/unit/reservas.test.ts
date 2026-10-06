@@ -1,5 +1,5 @@
 // Pruebas unitarias de las fechas del calendario de reservas (hora local del equipo).
-import test from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import {
   addDays,

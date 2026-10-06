@@ -1,6 +1,14 @@
 "use client";
-import { useState, type ReactNode, type FormEvent } from "react";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type FormEvent,
+} from "react";
 import { useRoomie } from "@/context/RoomieContext";
+import { useFormAction } from "@/lib/use-form-action";
 export function Empty({
   title,
   children,
@@ -25,16 +33,17 @@ export function LoadingError({
   error: string;
   retry: () => void;
 }) {
+  const { t } = useLanguage();
   return error ? (
     <div className="panel empty">
-      <p role="alert">{error}</p>
+      <p role="alert">{t(error)}</p>
       <button className="secondary" onClick={retry}>
-        Reintentar
+        {t("Reintentar")}
       </button>
     </div>
   ) : (
     <p className="panel" role="status">
-      Cargando información…
+      {t("Cargando información…")}
     </p>
   );
 }
@@ -71,34 +80,25 @@ export function Form({
   label?: string;
   success?: string;
 }) {
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const { t } = useLanguage();
+  const { busy, error, run } = useFormAction();
   const { toast } = useRoomie();
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
-    setBusy(true);
-    setError("");
-    try {
-      await onSave(data);
-      toast(success);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Ocurrió un error.");
-    } finally {
-      setBusy(false);
-    }
+    if (await run(() => onSave(data))) toast(success);
   }
   return (
-    <form onSubmit={submit} className="form">
+    <form onSubmit={submit} className="form" aria-busy={busy}>
       <fieldset disabled={busy}>{children}</fieldset>
       {error && (
         <p className="error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
       <button type="submit" disabled={busy}>
-        {busy ? "Guardando…" : label}
+        {t(busy ? "Guardando…" : label)}
       </button>
     </form>
   );
@@ -116,50 +116,68 @@ export function ConfirmButton({
   success?: string;
   undo?: () => Promise<void>;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const { busy, error, run, clearError } = useFormAction();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const cancel = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open) cancel.current?.focus();
+    else if (wasOpen.current) trigger.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
   const { toast } = useRoomie();
   async function confirm() {
-    setBusy(true);
-    setError("");
-    try {
-      await onConfirm();
+    if (await run(onConfirm)) {
       setOpen(false);
       toast(success, undo ? { label: "Deshacer", onClick: undo } : undefined);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
     }
   }
   return (
     <div>
       {!open ? (
-        <button className="text-button danger" onClick={() => setOpen(true)}>
+        <button
+          type="button"
+          ref={trigger}
+          className="text-button danger"
+          onClick={() => setOpen(true)}
+        >
           {label}
         </button>
       ) : (
-        <div className="confirmation">
+        <div
+          className="confirmation"
+          role="group"
+          aria-label={description}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !busy) {
+              setOpen(false);
+              clearError();
+            }
+          }}
+        >
           <p>{description}</p>
           {error && (
             <p className="error" role="alert">
-              {error}
+              {t(error)}
             </p>
           )}
           <div className="actions">
-            <button disabled={busy} onClick={confirm}>
-              {busy ? "Procesando…" : "Confirmar"}
+            <button type="button" disabled={busy} onClick={confirm}>
+              {t(busy ? "Procesando…" : "Confirmar")}
             </button>
             <button
               className="secondary"
+              type="button"
+              ref={cancel}
               disabled={busy}
               onClick={() => {
                 setOpen(false);
-                setError("");
+                clearError();
               }}
             >
-              Cancelar
+              {t("Cancelar")}
             </button>
           </div>
         </div>

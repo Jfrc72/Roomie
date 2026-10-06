@@ -1,21 +1,25 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "./api";
-export function useData<T>(path: string) {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState("");
+export function useData<T>(path: string | null) {
+  const [result, setResult] = useState<{
+    path: string;
+    version: number;
+    data: T | null;
+    error: string;
+  } | null>(null);
   const [version, setVersion] = useState(0);
   useEffect(() => {
+    if (!path) return;
     let active = true;
     api<T>(path)
       .then((value) => {
         if (active) {
-          setData(value);
-          setError("");
+          setResult({ path, version, data: value, error: "" });
         }
       })
       .catch((e) => {
-        if (active) setError(e.message);
+        if (active) setResult({ path, version, data: null, error: e.message });
       });
     return () => {
       active = false;
@@ -23,7 +27,10 @@ export function useData<T>(path: string) {
   }, [path, version]);
   function reload() {
     setVersion((v) => v + 1);
-    setError("");
   }
-  return { data, error, reload };
+  // Un hogar nuevo no debe mostrar datos del anterior mientras carga.
+  const current = result?.path === path && result.version === version;
+  const data = current ? result.data : null;
+  const error = current ? result.error : "";
+  return { data, error, reload, loading: !!path && !current };
 }

@@ -1,5 +1,5 @@
 // Pruebas unitarias del asistente de acuerdos con IA simulada (bono IA).
-import test from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { askAssistant, assistantReply } from "../../src/lib/assistant";
 

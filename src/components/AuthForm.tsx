@@ -1,36 +1,29 @@
 "use client";
+import { LanguageSelector, useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { type FormEvent } from "react";
 import { House, Check, ArrowRight } from "lucide-react";
 import { api } from "@/lib/api";
-import { isInternalPath } from "@/lib/paths";
+import { useFormAction } from "@/lib/use-form-action";
+import { useRoomieNavigation } from "@/lib/use-roomie-navigation";
 export default function AuthForm({ register = false }: { register?: boolean }) {
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const router = useRouter();
+  const { t } = useLanguage();
+  const { error, busy, run } = useFormAction();
+  const navigation = useRoomieNavigation();
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    setError("");
-    setBusy(true);
-    try {
+    await run(async () => {
       await api(
         `/auth/${register ? "register" : "login"}`,
         "POST",
         Object.fromEntries(data),
       );
-      const next = new URLSearchParams(window.location.search).get("next");
-      router.push(next && isInternalPath(next) ? next : "/");
-      router.refresh();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
+      navigation.goAfterLogin();
+    });
   }
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <section className="auth-story">
         <Link className="brand" href="/login">
           <span className="brand-icon">
@@ -39,79 +32,84 @@ export default function AuthForm({ register = false }: { register?: boolean }) {
           roomie.
         </Link>
         <div className="story-content">
-          <p className="eyebrow">COMPARTIR CASA. SENTIRSE EN CASA.</p>
-          <h1>
-            La convivencia
+          <p className="eyebrow">{t("COMPARTIR CASA. SENTIRSE EN CASA.")}</p>
+          <h2>
+            {t("La convivencia")}
             <br />
-            empieza con
+            {t("empieza con")}
             <br />
-            <em>un buen equipo.</em>
-          </h1>
+            <em>{t("un buen equipo.")}</em>
+          </h2>
           <p>
-            Un solo lugar para organizar tu hogar,
+            {t("Un solo lugar para organizar tu hogar,")}
             <br />
-            hacer acuerdos y compartir responsabilidades.
+            {t("hacer acuerdos y compartir responsabilidades.")}
           </p>
           <div className="story-points">
             <span>
               <Check size={17} />
-              Todos en la misma página
+              {t("Todos en la misma página")}
             </span>
             <span>
               <Check size={17} />
-              Más orden, menos pendientes
+              {t("Más orden, menos pendientes")}
             </span>
             <span>
               <Check size={17} />
-              Un espacio para cada roommate
+              {t("Un espacio para cada roommate")}
             </span>
           </div>
         </div>
-        <small>Tu hogar, un poco más simple.</small>
+        <small>{t("Tu hogar, un poco más simple.")}</small>
         <div className="house-art" aria-hidden="true">
           <House size={190} strokeWidth={0.8} />
         </div>
       </section>
       <section className="auth-form-area">
         <div className="auth-box">
-          <span className="tag">BIENVENIDO A ROOMIE</span>
-          <h2>
-            {register
-              ? "Haz espacio para tu hogar"
-              : "Qué bueno verte de nuevo"}
-          </h2>
+          <LanguageSelector />
+          <span className="tag">{t("BIENVENIDO A ROOMIE")}</span>
+          <h1>
+            {t(
+              register
+                ? "Haz espacio para tu hogar"
+                : "Qué bueno verte de nuevo",
+            )}
+          </h1>
           <p>
-            {register
-              ? "Crea tu cuenta para organizar la vida en equipo."
-              : "Entra y descubre qué está pasando en tu apartamento."}
+            {t(
+              register
+                ? "Crea tu cuenta para organizar la vida en equipo."
+                : "Entra y descubre qué está pasando en tu apartamento.",
+            )}
           </p>
-          <form className="form" onSubmit={submit}>
+          <form className="form" onSubmit={submit} aria-busy={busy}>
             <fieldset disabled={busy}>
               {register && (
                 <label>
-                  Tu nombre
+                  {t("Tu nombre")}
                   <input
                     name="name"
                     autoComplete="name"
                     required
                     minLength={2}
                     maxLength={80}
-                    placeholder="¿Cómo te llamas?"
+                    placeholder={t("¿Cómo te llamas?")}
                   />
                 </label>
               )}
               <label>
-                Correo electrónico
+                {t("Correo electrónico")}
                 <input
                   name="email"
                   type="email"
                   required
                   autoComplete="email"
-                  placeholder="nombre@correo.com"
+                  placeholder={t("nombre@correo.com")}
                 />
               </label>
               <label>
-                Contraseña
+                {t("Contraseña")}
                 <input
                   name="password"
                   type="password"
@@ -119,28 +117,30 @@ export default function AuthForm({ register = false }: { register?: boolean }) {
                   minLength={register ? 10 : 1}
                   maxLength={128}
                   autoComplete={register ? "new-password" : "current-password"}
-                  placeholder={
-                    register ? "Al menos 10 caracteres" : "Tu contraseña"
-                  }
+                  placeholder={t(
+                    register ? "Al menos 10 caracteres" : "Tu contraseña",
+                  )}
                 />
               </label>
             </fieldset>
             {error && (
               <p className="error" role="alert">
-                {error}
+                {t(error)}
               </p>
             )}
             <button disabled={busy}>
-              {busy
-                ? "Un momento…"
-                : register
-                  ? "Crear mi cuenta"
-                  : "Entrar a mi hogar"}
+              {t(
+                busy
+                  ? "Un momento…"
+                  : register
+                    ? "Crear mi cuenta"
+                    : "Entrar a mi hogar",
+              )}
               <ArrowRight size={17} />
             </button>
           </form>
           <p className="auth-switch">
-            {register ? "¿Ya tienes cuenta?" : "¿Es tu primera vez?"}{" "}
+            {t(register ? "¿Ya tienes cuenta?" : "¿Es tu primera vez?")}{" "}
             <Link
               href={register ? "/login" : "/registro"}
               onClick={(e) => {
@@ -149,20 +149,18 @@ export default function AuthForm({ register = false }: { register?: boolean }) {
                 );
                 if (next) {
                   e.preventDefault();
-                  router.push(
-                    `${register ? "/login" : "/registro"}?next=${encodeURIComponent(next)}`,
-                  );
+                  navigation.switchAuth(!register);
                 }
               }}
             >
-              {register ? "Inicia sesión" : "Crea una cuenta"}
+              {t(register ? "Inicia sesión" : "Crea una cuenta")}
             </Link>
           </p>
           <p className="auth-note">
-            Organización para hogares de hasta 8 integrantes.
+            {t("Organización para hogares de hasta 8 integrantes.")}
           </p>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

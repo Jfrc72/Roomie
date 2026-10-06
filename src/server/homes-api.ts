@@ -5,6 +5,7 @@ import { activity, requireHome } from "./home-access";
 import { email, homeSchema, idSchema } from "./validation";
 import { getDashboardSummary } from "./dashboard";
 import { notify } from "./notifications";
+import { canRemoveAdmin, invitationProblem } from "./rules";
 
 export async function homesApi(request: Request, path: string[]) {
   const user = await requireUser();
@@ -66,6 +67,26 @@ export async function homesApi(request: Request, path: string[]) {
   return transaction(async (db) => {
     await db.query("SELECT id FROM homes WHERE id=$1 FOR UPDATE", [homeId]);
     await requireHome(user.id, homeId, true, db);
+    if (request.method === "DELETE" && !action) {
+      await db.query("UPDATE homes SET archived_at=now() WHERE id=$1", [
+        homeId,
+      ]);
+      await db.query(
+        "UPDATE sessions SET active_home_id=null WHERE active_home_id=$1",
+        [homeId],
+      );
+      await db.query(
+        "UPDATE invitations SET status='revoked' WHERE home_id=$1 AND status='pending'",
+        [homeId],
+      );
+      await db.query("DELETE FROM reminders WHERE home_id=$1", [homeId]);
+      await db.query(
+        "DELETE FROM deliveries WHERE notification_id IN (SELECT id FROM notifications WHERE home_id=$1)",
+        [homeId],
+      );
+      await activity(db, homeId, user.id, "archivó el apartamento");
+      return { message: "Apartamento archivado." };
+    }
     if (request.method === "PATCH" && !action) {
       const data = homeSchema.parse(await request.json());
       await db.query(
@@ -139,7 +160,7 @@ export async function homesApi(request: Request, path: string[]) {
           "SELECT count(*)::int AS total FROM memberships WHERE home_id=$1 AND active AND role='admin'",
           [homeId],
         );
-        if (admins.rows[0].total <= 1)
+        if (!canRemoveAdmin(member.role, newRole, admins.rows[0].total))
           throw new ApiError(
             409,
             "Debe quedar al menos un administrador. Asigna otro primero.",
@@ -200,31 +221,42 @@ export async function acceptInvitation(request: Request) {
     await db.query("SELECT id FROM homes WHERE id=$1 FOR UPDATE", [
       invite.home_id,
     ]);
+    const available = await db.query(
+      "SELECT id FROM homes WHERE id=$1 AND archived_at IS NULL",
+      [invite.home_id],
+    );
+    if (!available.rowCount)
+      throw new ApiError(409, "Este apartamento fue archivado.");
     const fresh = await db.query(
       "SELECT status,expires_at FROM invitations WHERE id=$1 FOR UPDATE",
       [invite.id],
     );
-    if (
-      fresh.rows[0].status !== "pending" ||
-      new Date(fresh.rows[0].expires_at) < new Date()
-    )
-      throw new ApiError(409, "Esta invitación venció o ya fue utilizada.");
-    if (invite.email !== user.email)
-      throw new ApiError(
-        403,
-        "Inicia sesión con el correo al que fue enviada la invitación.",
-      );
     const existing = await db.query(
       "SELECT active FROM memberships WHERE home_id=$1 AND user_id=$2",
       [invite.home_id, user.id],
     );
-    if (existing.rows[0]?.active)
-      throw new ApiError(409, "Ya perteneces a este apartamento.");
     const count = await db.query(
       "SELECT count(*)::int AS total FROM memberships WHERE home_id=$1 AND active",
       [invite.home_id],
     );
-    if (count.rows[0].total >= 8)
+    const problem = invitationProblem({
+      status: fresh.rows[0].status,
+      expiresAt: new Date(fresh.rows[0].expires_at),
+      email: invite.email,
+      userEmail: user.email,
+      count: count.rows[0].total,
+      existing: Boolean(existing.rows[0]?.active),
+    });
+    if (problem === "expired")
+      throw new ApiError(409, "Esta invitación venció o ya fue utilizada.");
+    if (problem === "email")
+      throw new ApiError(
+        403,
+        "Inicia sesión con el correo al que fue enviada la invitación.",
+      );
+    if (problem === "member")
+      throw new ApiError(409, "Ya perteneces a este apartamento.");
+    if (problem === "capacity")
       throw new ApiError(
         409,
         "El apartamento llegó al límite de 8 integrantes.",

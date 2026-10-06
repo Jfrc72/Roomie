@@ -16,7 +16,8 @@ export async function notificationsApi(request: Request, path: string[]) {
         emailAvailable: Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM),
         pushAvailable: Boolean(
           process.env.VAPID_PRIVATE_KEY &&
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_SUBJECT,
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
+          process.env.VAPID_SUBJECT,
         ),
       };
     }
@@ -28,12 +29,22 @@ export async function notificationsApi(request: Request, path: string[]) {
           reminder_hours: z.number().int().min(0).max(168),
         })
         .parse(await request.json());
-      if (data.email_enabled && !(process.env.SMTP_HOST && process.env.SMTP_FROM))
+      if (
+        data.email_enabled &&
+        !(process.env.SMTP_HOST && process.env.SMTP_FROM)
+      )
         throw new ApiError(
           400,
           "El correo aún no está configurado en el servidor.",
         );
-      if (data.push_enabled && !(process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_SUBJECT))
+      if (
+        data.push_enabled &&
+        !(
+          process.env.VAPID_PRIVATE_KEY &&
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
+          process.env.VAPID_SUBJECT
+        )
+      )
         throw new ApiError(
           400,
           "Las notificaciones push aún no están configuradas.",
@@ -78,19 +89,27 @@ export async function notificationsApi(request: Request, path: string[]) {
     if (!homeId) return [];
     await requireHome(user.id, homeId);
     return query(
-      "SELECT id,title,message,href,read_at,created_at FROM notifications WHERE user_id=$1 AND home_id=$2 ORDER BY created_at DESC LIMIT 100",
+      "SELECT id,title,message,href,read_at,created_at FROM notifications WHERE user_id=$1 AND home_id=$2 AND dismissed_at IS NULL ORDER BY created_at DESC LIMIT 100",
       [user.id, homeId],
     );
   }
-  if (request.method === "PATCH") {
+  if (["PATCH", "DELETE"].includes(request.method)) {
     idSchema.parse(path[1]);
-    const data = z.object({ read: z.boolean() }).parse(await request.json());
     const [notice] = await query(
-      "SELECT home_id FROM notifications WHERE id=$1 AND user_id=$2",
+      "SELECT home_id FROM notifications WHERE id=$1 AND user_id=$2 AND dismissed_at IS NULL",
       [path[1], user.id],
     );
     if (!notice) throw new ApiError(404, "Notificación no encontrada.");
     await requireHome(user.id, notice.home_id);
+    if (request.method === "DELETE") {
+      await query(
+        "UPDATE notifications SET dismissed_at=now() WHERE id=$1 AND user_id=$2",
+        [path[1], user.id],
+      );
+      await query("DELETE FROM deliveries WHERE notification_id=$1", [path[1]]);
+      return { message: "Notificación eliminada." };
+    }
+    const data = z.object({ read: z.boolean() }).parse(await request.json());
     await query(
       "UPDATE notifications SET read_at=CASE WHEN $1 THEN now() ELSE null END WHERE id=$2 AND user_id=$3",
       [data.read, path[1], user.id],

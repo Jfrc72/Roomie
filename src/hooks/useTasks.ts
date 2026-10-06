@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRoomieNavigation } from "@/lib/use-roomie-navigation";
 import { useRoomie } from "@/context/RoomieContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
 import { useData } from "@/lib/use-data";
 import {
@@ -46,6 +47,7 @@ export function useTasks(homeId: string) {
 
 // Botones de estado de una tarea: opciones que la persona puede usar, envío y estado ocupado.
 export function useTaskMoves(task: Task, onMoved: () => void) {
+  const { t } = useLanguage();
   const { toast } = useRoomie();
   const [busy, setBusy] = useState(false);
   const options = statusMoves[task.status].filter(
@@ -55,7 +57,11 @@ export function useTaskMoves(task: Task, onMoved: () => void) {
     setBusy(true);
     try {
       await api(`/tasks/${task.id}`, "PATCH", { status });
-      toast(`Tarea marcada como ${statusLabels[status].toLowerCase()}.`);
+      toast(
+        t("Tarea marcada como {status}.", {
+          status: t(statusLabels[status]).toLowerCase(),
+        }),
+      );
       onMoved();
     } catch (e) {
       toast((e as Error).message);
@@ -69,7 +75,7 @@ export function useTaskMoves(task: Task, onMoved: () => void) {
 // Detalle: la tarea con su historial, edición, eliminación y vuelta al tablero.
 export function useTaskDetail(id: string) {
   const { session } = useRoomie();
-  const router = useRouter();
+  const navigation = useRoomieNavigation();
   const { data, error, reload } = useData<
     Task & { history: TaskHistoryEntry[] }
   >(`/tasks/${id}`);
@@ -84,7 +90,7 @@ export function useTaskDetail(id: string) {
   }
   async function remove() {
     await api(`/tasks/${id}`, "DELETE");
-    router.push("/tareas");
+    navigation.go("/tareas");
   }
   return {
     task,

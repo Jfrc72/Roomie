@@ -1,5 +1,5 @@
 // Pruebas unitarias del cálculo de resultados (el mismo que usan el aviso de cierre y la interfaz).
-import test from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { pollResult } from "../../src/lib/polls";
 

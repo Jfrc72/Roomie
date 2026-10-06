@@ -9,3 +9,6 @@ node_modules
 AGENTS.md
 CLAUDE.md
 .DS_Store
+test-results
+playwright-report
+coverage
