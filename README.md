@@ -4,7 +4,7 @@ Proyecto para organizar la convivencia en un apartamento: gastos, tareas, compra
 
 Usamos Next.js, React, TypeScript y PostgreSQL.
 
-[Diseño en Figma](https://laud-stem-81553627.figma.site/) · [Historias en la wiki](https://github.com/Jfrc72/Roomie/wiki/Historias-de-usuario)
+[Prototipo en Figma](https://www.figma.com/proto/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=45-11&starting-point-node-id=45%3A11) · [Historias en la wiki](https://github.com/Jfrc72/Roomie/wiki/Historias-de-usuario)
 
 ## Ejecutar en local
 
@@ -30,6 +30,8 @@ Cuentas: `juan@roomie.test`, `miguel@roomie.test`, `tomas@roomie.test` y `visita
 
 Requiere Docker con Compose. Si usas Docker Desktop, debe estar abierto.
 
+En macOS también se puede usar Colima: iniciar `colima start` antes de ejecutar los comandos. Si el equipo usa el comando `docker-compose`, sirve en lugar de `docker compose`.
+
 1. Copiar `.env.example` a `.env` si aún no existe: `cp .env.example .env`.
 2. Completar `POSTGRES_PASSWORD` con una contraseña propia, larga y solo con letras y números. Mantener `APP_URL=http://localhost:3000`. No hace falta cambiar `LOCAL_DATABASE` ni `DATABASE_URL` para Docker.
 3. Cerrar `npm run dev` si está abierto y ejecutar:
@@ -50,6 +52,8 @@ Abrir http://localhost:3000. Usar esa dirección, porque debe coincidir con `APP
 Docker tiene su propia base de datos. No cambies `POSTGRES_PASSWORD` después de crearla. `docker compose down -v` permite empezar de cero, pero **borra los datos de Docker**.
 
 Para crear las cuentas de ejemplo en Docker, completar `DEMO_PASSWORD` y ejecutar `docker compose run --rm migrate node --import tsx scripts/seed.ts`.
+
+Si el puerto 3000 está ocupado, cambiar `APP_PORT=3018` y `APP_URL=http://localhost:3018` en `.env` antes de iniciar Docker.
 
 ## Pruebas
 
@@ -74,7 +78,7 @@ Este comando inicia y detiene la aplicación si no está abierta. Al terminar, `
 
 Las pruebas de API y navegador usan datos temporales y los borran al terminar; se ejecutan en desarrollo. Las E2E necesitan Google Chrome. Si no está instalado: `npx playwright install chromium` y `PLAYWRIGHT_CHANNEL=chromium npm run test:e2e`.
 
-Al subir cambios o abrir un pull request, GitHub Actions revisa lint, tipos, unitarias, compilación y E2E con una base de datos temporal.
+Al subir cambios o abrir un pull request, GitHub Actions revisa lint, tipos, unitarias y compilación. También inicia Docker y ejecuta las pruebas de API y navegador con datos temporales. [Más sobre las pruebas](docs/PRUEBAS.md).
 
 ## Decisiones técnicas
 
@@ -90,6 +94,7 @@ Al subir cambios o abrir un pull request, GitHub Actions revisa lint, tipos, uni
 ## Documentación
 
 - [Historias y pruebas](docs/HISTORIAS.md)
+- [Diseño y prototipos](docs/DISENO.md)
 - [Reparto del trabajo](docs/EQUIPO.md)
 - [Rutas de la API](docs/API.md)
 - [Base de datos](docs/MODELO.md)

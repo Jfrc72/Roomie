@@ -1,0 +1,4 @@
+# Solo para las pruebas automáticas. La base normal no publica su puerto.
+services:
+  db:
+    ports: ["127.0.0.1:${TEST_DB_PORT:-5432}:5432"]

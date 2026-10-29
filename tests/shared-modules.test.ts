@@ -12,6 +12,7 @@ type ExpenseData = {
     title: string;
     paid_by: string;
     total_amount: number;
+    expense_date: string;
     user_status: string | null;
     shares: { user_id: string; amount: number; status: string }[];
   }[];
@@ -125,6 +126,8 @@ test("Gastos, compras y mantenimiento: nueve historias de usuario", async (t) =>
     await t.test("HU2.1.2 Crear las cuotas de todos los participantes", async () => {
       const list = await clients.owner.call<ExpenseData>(`/expenses?homeId=${homeId}`);
       const expense = list.json.data.expenses.find((row) => row.id === expenseId)!;
+      // Una fecha de calendario no debe cambiar con la zona horaria del servidor.
+      assert.equal(expense.expense_date, date);
       assert.equal(expense.shares.length, 2);
       assert.equal(Math.round(expense.shares.reduce((total, share) => total + share.amount, 0) * 100), 10001);
       assert.equal(expense.shares.find((share) => share.user_id === ownerId)?.status, "PAGADO");

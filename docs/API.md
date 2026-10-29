@@ -2,6 +2,8 @@
 
 Todas empiezan por `/api`. La respuesta tiene `{data: ...}` o `{error: "mensaje"}`. Las escrituras envían JSON y usan la sesión del usuario. En scripts de prueba, enviar también `Origin` igual a `APP_URL`.
 
+La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tareas y reservas con horario usan fechas ISO con zona horaria.
+
 | Método | Ruta                                                           | Datos / uso                                                                                                                                       |
 | ------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GET    | `/health`                                                      | Comprueba la conexión con PostgreSQL                                                                                                              |

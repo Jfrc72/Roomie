@@ -3,6 +3,14 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { getLanguage, translate } from "@/lib/i18n";
+import localFont from "next/font/local";
+
+const arimo = localFont({
+  src: "./fonts/Arimo.ttf",
+  variable: "--font-roomie",
+  weight: "400 700",
+  display: "swap",
+});
 export async function generateMetadata(): Promise<Metadata> {
   const language = getLanguage((await cookies()).get("roomie_language")?.value);
   return {
@@ -21,7 +29,7 @@ export default async function Layout({
   const language = getLanguage((await cookies()).get("roomie_language")?.value);
   return (
     <html lang={language}>
-      <body>
+      <body className={arimo.variable}>
         <LanguageProvider initialLanguage={language}>
           {children}
         </LanguageProvider>

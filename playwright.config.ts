@@ -16,7 +16,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  webServer: {
+  webServer: process.env.E2E_EXTERNAL_SERVER === "true" ? undefined : {
     command: "npm run dev",
     gracefulShutdown: { signal: "SIGTERM", timeout: 10000 },
     url: `${baseURL}/login`,

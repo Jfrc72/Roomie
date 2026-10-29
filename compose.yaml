@@ -1,4 +1,4 @@
-# Instrucciones en el README ("Usar con Docker"). Requiere POSTGRES_PASSWORD en .env.
+# Instrucciones en el README. Requiere POSTGRES_PASSWORD en .env.
 # DATABASE_URL y LOCAL_DATABASE del .env son de npm run dev: aquí se reemplazan para
 # que todos los servicios usen la base del contenedor db.
 services:
@@ -20,8 +20,8 @@ services:
   migrate:
     build:
       context: .
-      target: build
-    env_file: .env
+      target: tools
+    env_file: ${ROOMIE_ENV_FILE:-.env}
     environment:
       DATABASE_URL: postgresql://roomie:${POSTGRES_PASSWORD}@db:5432/roomie
     command: ["node", "--import", "tsx", "scripts/migrate.ts"]
@@ -35,11 +35,11 @@ services:
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
     init: true
     restart: unless-stopped
-    env_file: .env
+    env_file: ${ROOMIE_ENV_FILE:-.env}
     environment:
       DATABASE_URL: postgresql://roomie:${POSTGRES_PASSWORD}@db:5432/roomie
       LOCAL_DATABASE: "false"
-    ports: ["3000:3000"]
+    ports: ["${APP_PORT:-3000}:3000"]
     healthcheck:
       test:
         [
@@ -59,10 +59,10 @@ services:
   worker:
     build:
       context: .
-      target: build
+      target: tools
     init: true
     restart: unless-stopped
-    env_file: .env
+    env_file: ${ROOMIE_ENV_FILE:-.env}
     environment:
       DATABASE_URL: postgresql://roomie:${POSTGRES_PASSWORD}@db:5432/roomie
     command: ["node", "--import", "tsx", "scripts/worker.ts"]

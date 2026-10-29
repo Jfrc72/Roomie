@@ -1,8 +1,10 @@
-FROM node:22-bookworm-slim AS build
+FROM node:22-bookworm-slim AS tools
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+
+FROM tools AS build
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 RUN npm run build

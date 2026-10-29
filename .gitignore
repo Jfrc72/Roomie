@@ -25,6 +25,7 @@ yarn-error.log*
 .test-output/
 /test-results/
 /playwright-report/
+/docker-pruebas.log
 
 # Instrucciones locales generadas por herramientas de desarrollo
 /AGENTS.md

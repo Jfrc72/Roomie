@@ -16,7 +16,8 @@ body {
   background: var(--bg);
   color: var(--ink);
   font:
-    14px/1.55 Arial,
+    14px/1.55 var(--font-roomie),
+    Arial,
     Helvetica,
     sans-serif;
 }

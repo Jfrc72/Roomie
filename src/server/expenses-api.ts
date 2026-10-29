@@ -73,7 +73,7 @@ export async function expensesApi(request: Request, path: string[]) {
     if (request.method === "GET") {
       const [expenses, balanceRows, summary, payments] = await Promise.all([
         query(
-          `SELECT e.id,e.title,e.category,e.total_amount,e.expense_date,e.paid_by,
+          `SELECT e.id,e.title,e.category,e.total_amount,e.expense_date::text AS expense_date,e.paid_by,
            payer.name AS paid_by_name,e.created_by,
            (SELECT es.status FROM expense_shares es WHERE es.expense_id=e.id AND es.user_id=$2) AS user_status,
            COALESCE((SELECT json_agg(json_build_object('id',es.id,'user_id',es.user_id,'member',u.name,
