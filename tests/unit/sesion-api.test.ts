@@ -1,26 +1,35 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
-import { mocks, readRows, request } from "./server-fixture";
-import { authApi } from "@/server/auth-api";
-import { COOKIE } from "@/server/security";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { forwardToNest } from "@/server/nest-proxy";
+
+afterEach(() => vi.restoreAllMocks());
+const logout = () => new Request("http://localhost:3000/api/auth/logout", {
+  method: "POST", headers: { Cookie: "roomie_session=sesion-de-prueba", Origin: "http://localhost:3000", "Content-Type": "application/json" }, body: "{}",
+});
 
 describe("HU10.2 · Invalidar sesión", () => {
-  it("borra la sesión actual en el servidor y elimina la cookie", async () => {
-    readRows([]);
-    expect(
-      await authApi(request("auth/logout", "POST", {}), ["auth", "logout"]),
-    ).toEqual({ message: "Sesión cerrada." });
-    expect(mocks.query).toHaveBeenCalledWith(
-      "DELETE FROM sessions WHERE token_hash=$1",
-      ["session-hash"],
-    );
-    expect(mocks.deleteCookie).toHaveBeenCalledWith(COOKIE);
+  it("envía la sesión a Nest y devuelve la cookie que la borra después del cierre", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: { message: "Sesión cerrada." } }), {
+      headers: { "set-cookie": "roomie_session=; Path=/; Max-Age=0", "content-type": "application/json" },
+    }));
+    const response = await forwardToNest(logout(), ["auth", "logout"]);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+    expect((fetch.mock.calls[0][1]?.headers as Headers).get("cookie")).toBe("roomie_session=sesion-de-prueba");
+    expect((await response.json()).data.message).toBe("Sesión cerrada.");
   });
-  it("si el servidor falla no informa un cierre exitoso ni borra solo la cookie", async () => {
-    mocks.query.mockRejectedValueOnce(new Error("Base no disponible"));
-    await expect(
-      authApi(request("auth/logout", "POST", {}), ["auth", "logout"]),
-    ).rejects.toThrow("Base no disponible");
-    expect(mocks.deleteCookie).not.toHaveBeenCalled();
+  it("si Nest falla no informa éxito ni borra la cookie del navegador", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Servidor no disponible"));
+    const response = await forwardToNest(logout(), ["auth", "logout"]);
+    expect(response.status).toBe(503);
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect((await response.json()).error).toBeTruthy();
+  });
+  it("mantiene el error de sesión vencida y no inventa una cookie nueva", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ error: "Inicia sesión para continuar." }, { status: 401 }));
+    const response = await forwardToNest(logout(), ["auth", "logout"]);
+    expect(response.status).toBe(401);
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect((await response.json()).error).toBe("Inicia sesión para continuar.");
   });
 });

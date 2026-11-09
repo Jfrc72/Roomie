@@ -2,6 +2,8 @@
 
 Todas empiezan por `/api`. La respuesta tiene `{data: ...}` o `{error: "mensaje"}`. Las escrituras envían JSON y usan la sesión del usuario. En scripts de prueba, enviar también `Origin` igual a `APP_URL`.
 
+Las rutas de cuentas, sesión, apartamentos, integrantes, invitaciones, inicio y notificaciones ya están en NestJS. Swagger se consulta en `/api/docs/` y su esquema en `/api/docs-json`. Las demás rutas siguen en Next.js hasta que se migren. La colección de `postman/` prueba la parte de Juan.
+
 La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tareas y reservas con horario usan fechas ISO con zona horaria.
 
 | Método | Ruta                                                           | Datos / uso                                                                                                                                       |

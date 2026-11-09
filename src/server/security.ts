@@ -1,29 +1,9 @@
-import {
-  randomBytes,
-  scrypt as scryptCallback,
-  timingSafeEqual,
-  createHash,
-} from "node:crypto";
-import { promisify } from "node:util";
 import { cookies } from "next/headers";
 import { query } from "./db";
 import type { User } from "@/types";
+import { COOKIE, hashToken } from "../../backend/src/auth/passwords";
+export { COOKIE, hashPassword, hashToken, token } from "../../backend/src/auth/passwords";
 
-const scrypt = promisify(scryptCallback);
-export const COOKIE = "roomie_session";
-export const hashToken = (value: string) =>
-  createHash("sha256").update(value).digest("hex");
-export const token = () => randomBytes(32).toString("hex");
-export async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const hash = (await scrypt(password, salt, 64)) as Buffer;
-  return `${salt}:${hash.toString("hex")}`;
-}
-export async function verifyPassword(password: string, stored: string) {
-  const [salt, expected] = stored.split(":");
-  const actual = (await scrypt(password, salt, 64)) as Buffer;
-  return timingSafeEqual(actual, Buffer.from(expected, "hex"));
-}
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -48,21 +28,6 @@ export async function requireUser() {
   const user = await currentUser();
   if (!user) throw new ApiError(401, "Inicia sesión para continuar.");
   return user;
-}
-export async function createSession(userId: string) {
-  const value = token();
-  await query(
-    `INSERT INTO sessions(token_hash,user_id,expires_at,active_home_id)
-    VALUES($1,$2,now()+interval '7 days',(SELECT m.home_id FROM memberships m JOIN homes h ON h.id=m.home_id WHERE m.user_id=$2 AND m.active AND h.archived_at IS NULL LIMIT 1))`,
-    [hashToken(value), userId],
-  );
-  (await cookies()).set(COOKIE, value, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.APP_URL?.startsWith("https://") ?? false,
-    path: "/",
-    maxAge: 604800,
-  });
 }
 export function checkOrigin(request: Request) {
   if (["GET", "HEAD"].includes(request.method)) return;

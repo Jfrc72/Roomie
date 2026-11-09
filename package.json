@@ -2,19 +2,32 @@
   "name": "roomie",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "backend"
+  ],
+  "overrides": {
+    "@nestjs/platform-express": {"multer": "^2.5.0"},
+    "@nestjs/swagger": {"js-yaml": "^5.4.2"}
+  },
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build": "next build",
+    "build": "npm run build:backend && next build",
+    "build:backend": "npm run build --workspace backend",
+    "dev:backend": "npm run start:dev --workspace backend",
+    "test:backend": "npm run test --workspace backend",
+    "test:coverage": "npm run test:coverage --workspace backend",
+    "test:postman": "newman run postman/Roomie-Juan.postman_collection.json --bail",
     "start": "next start",
     "lint": "eslint",
     "dev:app": "next dev",
     "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "worker": "tsx --env-file=.env scripts/worker.ts",
-    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck": "npm run build:backend && next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "tsx --env-file=.env --test --test-concurrency=1 tests/*.test.ts",
+    "pretest:integration": "npm run build:backend",
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test:hu": "node scripts/check-unit-stories.mjs"
@@ -22,7 +35,7 @@
   "dependencies": {
     "async-exit-hook": "^2.0.1",
     "lucide-react": "^1.48.0",
-    "next": "16.3.6",
+    "next": "^16.4.3",
     "nodemailer": "^10.0.12",
     "pg": "^8.23.0",
     "react": "19.2.8",
@@ -44,8 +57,9 @@
     "@types/web-push": "^3.6.4",
     "embedded-postgres": "^17.10.0-beta.17",
     "eslint": "^9",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "^16.4.3",
     "jsdom": "^26.1.0",
+    "newman": "^6.2.1",
     "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^4.1.11"

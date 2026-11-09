@@ -1,0 +1,50 @@
+{
+  "name": "roomie-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start:dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.2.8",
+    "@nestjs/core": "^11.2.8",
+    "@nestjs/platform-express": "^11.2.8",
+    "@nestjs/swagger": "^11.4.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "nodemailer": "^10.0.12",
+    "pg": "^8.23.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.21",
+    "@nestjs/testing": "^11.2.8",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22",
+    "@types/nodemailer": "^7.0.0",
+    "@types/pg": "^8.0.0",
+    "@types/web-push": "^3.6.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.15",
+    "typescript": "^5"
+  },
+  "jest": {
+    "rootDir": ".",
+    "testMatch": ["<rootDir>/test/**/*.spec.ts"],
+    "transform": {"^.+\\.ts$": ["ts-jest", {"tsconfig": "tsconfig.json"}]},
+    "testEnvironment": "node",
+    "clearMocks": true,
+    "collectCoverageFrom": ["src/**/*.service.ts", "src/**/*.rules.ts"],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "html", "json-summary"],
+    "coverageThreshold": {"global": {"statements": 65, "branches": 65, "functions": 65, "lines": 65}}
+  }
+}

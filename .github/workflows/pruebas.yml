@@ -17,7 +17,14 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:hu
+      - run: npm run test:coverage
       - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cobertura-backend
+          path: backend/coverage/
+          retention-days: 7
 
   docker:
     needs: verificar
@@ -41,6 +48,10 @@ jobs:
       - name: Iniciar la aplicación con Docker
         run: docker compose -f compose.yaml -f .github/compose.pruebas.yaml up -d --build --wait
       - run: npm run test:integration
+      - name: Probar los endpoints con Postman
+        run: |
+          mkdir -p .test-output
+          npm run test:postman -- --reporters cli,json --reporter-json-export .test-output/postman-juan.json
       - run: npm run test:e2e
       - name: Guardar los registros de Docker
         if: always()
@@ -49,10 +60,12 @@ jobs:
         if: always()
         with:
           name: resultados-pruebas
+          include-hidden-files: true
           path: |
             playwright-report/
             test-results/
             docker-pruebas.log
+            .test-output/postman-juan.json
           retention-days: 7
       - name: Detener el entorno de pruebas
         if: always()

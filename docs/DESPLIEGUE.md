@@ -6,9 +6,9 @@ Los pasos para iniciar en local o con Docker están en el [README](../README.md)
 
 `npm run dev` inicia una base local en el puerto 54329 y guarda los datos en `.roomie-data/postgres`. Docker usa otra base, guardada en su propio volumen.
 
-En Docker, `db` inicia PostgreSQL, `migrate` aplica los cambios de las tablas, `web` inicia la aplicación y `worker` revisa recordatorios y votaciones cada 15 segundos.
+En Docker, `db` inicia PostgreSQL, `migrate` aplica los cambios de las tablas, `api` inicia NestJS, `web` inicia las pantallas y `worker` revisa recordatorios y votaciones cada 15 segundos. La API usa el puerto interno 3001 y solo se accede a ella desde `web`.
 
-El equipo dejó registrada una prueba de Docker en Windows. Falta volver a comprobar la versión final antes de presentar. En la última revisión local no se pudo ejecutar Docker porque no estaba instalado.
+Se comprobó el arranque completo con Docker y Node.js 22. Las migraciones terminaron correctamente y pasaron las pruebas de integración, Postman y navegador contra esos contenedores.
 
 Para usar una base externa con `npm run dev`, cambiar `LOCAL_DATABASE=false` y poner su dirección en `DATABASE_URL`. Para publicar la aplicación también hace falta configurar HTTPS y poner la dirección final en `APP_URL`.
 

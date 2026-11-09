@@ -22,11 +22,13 @@ Cada historia incluye responsable, prioridad, estimación, estado, criterios, mo
 
 ### HU1.1 Crear y editar el apartamento
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=45-152) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-582).
 
 **Pruebas:** 3 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx).
+
+**Pruebas de NestJS:** [homes.service.spec.ts](../backend/test/homes.service.spec.ts).
 
 Como persona registrada quiero crear un apartamento y editar su información para tener un espacio compartido con mis roommates.
 
@@ -39,11 +41,13 @@ Como persona registrada quiero crear un apartamento y editar su información par
 
 ### HU1.2 Invitar roommates
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=45-185) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-615).
 
 **Pruebas:** 9 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx), [reglas.test.ts](../tests/unit/reglas.test.ts).
+
+**Pruebas de NestJS:** [invitations.service.spec.ts](../backend/test/invitations.service.spec.ts), [homes.rules.spec.ts](../backend/test/homes.rules.spec.ts).
 
 Como administrador quiero invitar a mis roommates con un enlace para que se unan al apartamento.
 
@@ -55,11 +59,13 @@ Como administrador quiero invitar a mis roommates con un enlace para que se unan
 
 ### HU1.3 Retirar integrantes
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=45-170) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-600).
 
 **Pruebas:** 4 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx), [reglas.test.ts](../tests/unit/reglas.test.ts).
+
+**Pruebas de NestJS:** [memberships.service.spec.ts](../backend/test/memberships.service.spec.ts).
 
 Como administrador quiero retirar a un integrante para que deje de tener acceso al apartamento.
 
@@ -71,11 +77,13 @@ Como administrador quiero retirar a un integrante para que deje de tener acceso 
 
 ### HU1.4 Administrar permisos
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=45-170) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-600).
 
 **Pruebas:** 3 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx), [reglas.test.ts](../tests/unit/reglas.test.ts).
+
+**Pruebas de NestJS:** [home-access.service.spec.ts](../backend/test/home-access.service.spec.ts), [memberships.service.spec.ts](../backend/test/memberships.service.spec.ts).
 
 Como administrador quiero cambiar el rol de los integrantes para compartir la administración del hogar.
 
@@ -403,11 +411,13 @@ Como responsable o administrador quiero actualizar el estado de un reporte para 
 
 ### HU7.1 Bandeja de notificaciones
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-730) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1046).
 
 **Pruebas:** 6 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx).
+
+**Pruebas de NestJS:** [notifications.service.spec.ts](../backend/test/notifications.service.spec.ts).
 
 Como integrante quiero ver los avisos de mi hogar en un solo lugar para no perder lo importante.
 
@@ -420,11 +430,13 @@ Como integrante quiero ver los avisos de mi hogar en un solo lugar para no perde
 
 ### HU7.2 Preferencias de notificación
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-746) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1062).
 
 **Pruebas:** 3 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx).
+
+**Pruebas de NestJS:** [notifications.service.spec.ts](../backend/test/notifications.service.spec.ts), [security.spec.ts](../backend/test/security.spec.ts).
 
 Como integrante quiero elegir por qué canal recibo los avisos y con cuánta anticipación para recibirlos a mi manera.
 
@@ -436,11 +448,13 @@ Como integrante quiero elegir por qué canal recibo los avisos y con cuánta ant
 
 ### HU7.3 Recordatorios automáticos por vencimiento
 
-**Responsable:** Juan · **Prioridad:** Media · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Media · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-741) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1057).
 
 **Pruebas:** 5 unitarias en [reglas.test.ts](../tests/unit/reglas.test.ts).
+
+**Pruebas de NestJS:** [jobs.service.spec.ts](../backend/test/jobs.service.spec.ts), [notification-delivery.service.spec.ts](../backend/test/notification-delivery.service.spec.ts).
 
 Como integrante quiero que Roomie me recuerde lo que está por vencer para cumplir a tiempo.
 
@@ -618,11 +632,13 @@ Como administrador quiero pedirle ideas a un asistente para redactar acuerdos m�
 
 ### HU10.1 Registro e inicio de sesión
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-1174) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1302).
 
 **Pruebas:** 5 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx).
+
+**Pruebas de NestJS:** [auth.service.spec.ts](../backend/test/auth.service.spec.ts), [security.spec.ts](../backend/test/security.spec.ts).
 
 Como persona quiero crear una cuenta e iniciar sesión para acceder a mi hogar desde cualquier dispositivo.
 
@@ -634,11 +650,13 @@ Como persona quiero crear una cuenta e iniciar sesión para acceder a mi hogar d
 
 ### HU10.2 Cerrar sesión
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-1035) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1243).
 
-**Pruebas:** 3 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx), [sesion-api.test.ts](../tests/unit/sesion-api.test.ts).
+**Pruebas:** 4 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx), [sesion-api.test.ts](../tests/unit/sesion-api.test.ts).
+
+**Pruebas de NestJS:** [auth.service.spec.ts](../backend/test/auth.service.spec.ts).
 
 Como persona quiero cerrar sesión para proteger mi cuenta en un equipo compartido.
 
@@ -649,11 +667,13 @@ Como persona quiero cerrar sesión para proteger mi cuenta en un equipo comparti
 
 ### HU10.3 Perfil y contraseña
 
-**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Juan · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-1009) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1217).
 
 **Pruebas:** 3 unitarias en [funcionalidades.test.tsx](../tests/unit/funcionalidades.test.tsx).
+
+**Pruebas de NestJS:** [auth.service.spec.ts](../backend/test/auth.service.spec.ts).
 
 Como persona quiero editar mi nombre y cambiar mi contraseña para mantener mi cuenta al día.
 
@@ -663,6 +683,8 @@ Como persona quiero editar mi nombre y cambiar mi contraseña para mantener mi c
 - Cambiar la contraseña exige la contraseña actual.
 - Al cambiar la contraseña se cierran las demás sesiones abiertas.
 - Cerrar la cuenta exige contraseña y confirmación. Si la persona es el único administrador de un hogar disponible, debe asignar otro o archivar ese hogar. La cuenta se desactiva, su nombre y correo se sustituyen y el historial compartido conserva sus referencias.
+
+En el ciclo 2, votaciones pasa a Miguel para equilibrar el trabajo. La tabla anterior conserva los responsables del ciclo 1.
 
 ## Pruebas por historia
 
@@ -711,5 +733,5 @@ Las pruebas de integración necesitan la aplicación abierta. Las E2E la inician
 | HU9.4  |               3 | `acuerdos-api.test.ts`                           |
 | HU9.5  |               7 | `acuerdos.test.ts`, `compatibilidad.test.tsx`    |
 | HU10.1 |               5 | `funcionalidades.test.tsx`                       |
-| HU10.2 |               3 | `funcionalidades.test.tsx`, `sesion-api.test.ts` |
+| HU10.2 |               4 | `funcionalidades.test.tsx`, `sesion-api.test.ts` |
 | HU10.3 |               3 | `funcionalidades.test.tsx`                       |

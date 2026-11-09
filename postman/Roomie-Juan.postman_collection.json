@@ -1,0 +1,2492 @@
+{
+  "info": {
+    "name": "Roomie ciclo 2 - Parte de Juan",
+    "description": "Ejecutar completa y en orden con la aplicación iniciada. Comprueba cuentas, hogares, permisos, avisos y Swagger. Crea cuentas de prueba con correos únicos y al final archiva el hogar y cierra esas cuentas. No activa envíos de correo ni push.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "origin",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "password",
+      "value": "RoomiePrueba2026!"
+    },
+    {
+      "key": "newPassword",
+      "value": "RoomieNueva2026!"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Estado de NestJS y PostgreSQL",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);",
+              "pm.collectionVariables.set(\"suffix\", suffix);",
+              "for (const name of [\"owner\", \"member\", \"outsider\", \"cancel\"]) pm.collectionVariables.set(name + \"Email\", \"postman-\" + suffix + \"-\" + name + \"@roomie.test\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Backend NestJS\", () => pm.expect(json.data.backend).to.equal(\"NestJS\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 La sesión es obligatoria",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 401\", () => pm.response.to.have.status(401));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Rechazar un registro inválido",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"J\",\n  \"email\": \"incorrecto\",\n  \"password\": \"corta\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Registrar administrador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Prueba administrador\",\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Cookie HttpOnly\", () => pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.match(/HttpOnly/i));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Consultar perfil público",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"ownerId\", json.data.user.id);",
+              "pm.test(\"No expone hashes ni contraseñas\", () => { pm.expect(json.data.user).not.to.have.property(\"password_hash\"); pm.expect(json.data.user).not.to.have.property(\"sessionHash\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Crear apartamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Apartamento Postman\",\n  \"address\": \"Bogotá\",\n  \"description\": \"Prueba del ciclo 2\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"homeId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 El creador queda como administrador",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "const owner = json.data.members.find(member => member.id === pm.collectionVariables.get(\"ownerId\"));",
+              "pm.collectionVariables.set(\"ownerMembershipId\", owner.membership_id);",
+              "pm.test(\"Primer administrador\", () => pm.expect(owner.role).to.equal(\"admin\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Editar datos del apartamento",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Apartamento editado\",\n  \"address\": \"Bogotá\",\n  \"description\": \"Cambios desde Postman\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Elegir apartamento activo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/select",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Consultar inicio sin datos inventados",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/dashboard"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Resumen inicial vacío\", () => { pm.expect(json.data.summary.balance).to.equal(0); pm.expect(json.data.summary.pendingTasks).to.equal(0); pm.expect(json.data.activities).to.be.an(\"array\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 No degradar al último administrador",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/members/{{ownerMembershipId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"member\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 No cerrar la cuenta dejando un hogar sin administrador",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/account",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Crear una invitación por correo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{memberEmail}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"oldToken\", json.data.url.split(\"token=\")[1]);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Listar invitaciones sin tokens privados",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/invitations"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"No expone tokens guardados\", () => json.data.forEach(invite => { pm.expect(invite).not.to.have.property(\"token_hash\"); }));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Reenviar invitación y anular la anterior",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{memberEmail}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"inviteToken\", json.data.url.split(\"token=\")[1]);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Cerrar sesión del administrador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 Registrar integrante invitado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Prueba integrante\",\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 Consultar el id del integrante",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"memberId\", json.data.user.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 La invitación reemplazada ya no sirve",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{oldToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 Aceptar invitación vigente",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{inviteToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 Una invitación no se utiliza dos veces",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{inviteToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 Un integrante no edita el apartamento",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Cambio sin permiso\",\n  \"address\": \"\",\n  \"description\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 Un integrante no cambia roles",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/members/{{ownerMembershipId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"member\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "24 Consultar las notificaciones propias",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Bandeja como lista\", () => pm.expect(json.data).to.be.an(\"array\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "25 Consultar preferencias",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/preferences"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Disponibilidad de canales\", () => { pm.expect(json.data.emailAvailable).to.be.a(\"boolean\"); pm.expect(json.data.pushAvailable).to.be.a(\"boolean\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "26 Cambiar anticipación de recordatorios",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/preferences",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email_enabled\": false,\n  \"push_enabled\": false,\n  \"reminder_hours\": 6\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "27 Rechazar una anticipación fuera de rango",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/preferences",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email_enabled\": false,\n  \"push_enabled\": false,\n  \"reminder_hours\": 169\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "28 No aceptar endpoints push de otros sitios",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/subscriptions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"endpoint\": \"https://otro.example/push\",\n  \"keys\": {\n    \"p256dh\": \"clave\",\n    \"auth\": \"autorizacion\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "29 Registrar un dispositivo de prueba sin activar envíos",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/subscriptions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"endpoint\": \"https://fcm.googleapis.com/fcm/send/roomie-prueba-{{suffix}}\",\n  \"expirationTime\": null,\n  \"keys\": {\n    \"p256dh\": \"BMYShHXuNMadCg-4gHUylQwwrP65x1g1HqtuBKFTFrYPq5-HtuNqtjLLn1Dp0Rj3WZWdRODQFxdNAi0_5cLaB64\",\n    \"auth\": \"lwxUPT7SDK_95FKWkjf9Uw\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json.data.message).to.equal(\"Dispositivo registrado.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "30 Cerrar sesión del integrante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "31 Registrar una persona ajena al hogar",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Prueba visitante\",\n  \"email\": \"{{outsiderEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "32 Un visitante no consulta el apartamento",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "33 Un visitante no consulta el inicio",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/dashboard"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "34 Un visitante no consulta sus avisos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "35 Rechazar escrituras desde otro origen",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "https://otro.example"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "36 Cerrar sesión del visitante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "37 Volver a entrar como administrador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "38 Identificar la membresía del integrante",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "const member = json.data.members.find(member => member.id === pm.collectionVariables.get(\"memberId\"));",
+              "pm.collectionVariables.set(\"memberMembershipId\", member.membership_id);",
+              "pm.test(\"Integrante activo\", () => pm.expect(member.role).to.equal(\"member\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "39 Compartir el rol administrador",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/members/{{memberMembershipId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"admin\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "40 Obtener un aviso del administrador",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"La aceptación generó un aviso\", () => pm.expect(json.data.length).to.be.above(0));",
+              "pm.collectionVariables.set(\"ownerNoticeId\", json.data[0].id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "41 Actualizar el perfil propio",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/profile",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Administrador actualizado\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "42 Rechazar campos de perfil no permitidos",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/profile",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Administrador\",\n  \"role\": \"admin\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "43 Exigir la contraseña actual",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/password",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"incorrecta\",\n  \"password\": \"{{newPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "44 Cambiar contraseña e invalidar sesiones anteriores",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/password",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{password}}\",\n  \"password\": \"{{newPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "45 La contraseña anterior ya no funciona",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 401\", () => pm.response.to.have.status(401));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "46 La contraseña nueva permite entrar",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{newPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "47 Crear otra invitación para cancelarla",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{cancelEmail}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "48 Localizar la invitación pendiente",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/invitations"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"cancelId\", json.data.find(invite => invite.email === pm.collectionVariables.get(\"cancelEmail\") && invite.status === \"pending\").id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "49 Cancelar la invitación",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/invitations/{{cancelId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "50 Cerrar sesión para revisar la bandeja del integrante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "51 Entrar como integrante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "52 Recibir el aviso del cambio de rol",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "const notice = json.data.find(notice => notice.title === \"Tu rol cambió\");",
+              "pm.test(\"Aviso de rol\", () => pm.expect(notice).to.exist);",
+              "pm.collectionVariables.set(\"noticeId\", notice.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "53 Marcar aviso leído",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{noticeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"read\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "54 Comprobar que la lectura persiste",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Fecha de lectura guardada\", () => pm.expect(json.data.find(notice => notice.id === pm.collectionVariables.get(\"noticeId\")).read_at).to.be.a(\"string\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "55 Volver a marcar no leído",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{noticeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"read\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "56 Eliminar el aviso propio",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{noticeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "57 El aviso eliminado no vuelve a la bandeja",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Aviso ausente\", () => pm.expect(json.data.some(notice => notice.id === pm.collectionVariables.get(\"noticeId\"))).to.equal(false));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "58 Ni un administrador modifica los avisos de otra cuenta",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/notifications/{{ownerNoticeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"read\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 404\", () => pm.response.to.have.status(404));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "59 Cerrar la cuenta del integrante conservando el historial",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/account",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "60 La cuenta cerrada pierde la sesión",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 401\", () => pm.response.to.have.status(401));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "61 Entrar con la cuenta visitante de prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{outsiderEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "62 Cerrar la cuenta visitante",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/account",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "63 Entrar como administrador para limpiar el hogar de prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{newPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "64 Archivar el apartamento de prueba",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "65 El hogar archivado ya no es accesible",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "66 Cerrar la cuenta administradora de prueba",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/account",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{newPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "67 Confirmar el cierre de sesión",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 401\", () => pm.response.to.have.status(401));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "68 Consultar la documentación OpenAPI",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/docs-json"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Rutas documentadas\", () => { pm.expect(json.paths).to.have.property(\"/api/auth/register\"); pm.expect(json.paths).to.have.property(\"/api/homes/{id}\"); pm.expect(json.paths).to.have.property(\"/api/notifications\"); });",
+              "pm.test(\"Esquema de registro\", () => pm.expect(json.components.schemas.RegisterDto.properties.password.minLength).to.equal(10));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

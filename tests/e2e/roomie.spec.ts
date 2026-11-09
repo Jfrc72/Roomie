@@ -565,7 +565,10 @@ test("reservas: creación, cruce de horarios, calendario y cancelación", async 
   await expect(page).toHaveURL(/semana=/);
   await page.goBack();
   await expect(page).toHaveURL(initial);
-  await page.getByRole("checkbox", { name: "Solo mis reservas" }).check();
+  // El cambio se refleja cuando Next.js sincroniza los filtros con la URL.
+  await page.getByRole("checkbox", { name: "Solo mis reservas" }).click();
+  await expect(page).toHaveURL(/mias=si/);
+  await expect(page.getByRole("checkbox", { name: "Solo mis reservas" })).toBeChecked();
   await page.reload();
   await expect(
     page.getByRole("checkbox", { name: "Solo mis reservas" }),
@@ -580,4 +583,48 @@ test("reservas: creación, cruce de horarios, calendario y cancelación", async 
   await expect(
     page.getByText("Todo libre por ahora", { exact: true }),
   ).toBeVisible();
+});
+
+
+test("apartamento: aceptar una invitación, cambiar rol y recibir el aviso", async ({ page, browser }) => {
+  await register(page);
+  await createHome(page);
+  const memberContext = await browser.newContext();
+  try {
+    const memberPage = await memberContext.newPage();
+    await register(memberPage);
+    const member = (await (await memberPage.request.get("/api/session")).json()).data.user;
+    const owner = (await (await page.request.get("/api/session")).json()).data;
+    await page.getByLabel("Correo de la persona").fill(member.email);
+    await page.getByRole("button", { name: "Crear invitación", exact: true }).click();
+    const link = page.getByLabel("Enlace para compartir");
+    await expect(link).toBeVisible();
+    await memberPage.goto(await link.inputValue());
+    await memberPage.getByRole("button", { name: "Aceptar invitación", exact: true }).click();
+    await expect(memberPage).toHaveURL(new URL("/", process.env.APP_URL || "http://localhost:3000").href);
+    await memberPage.goto("/apartamento");
+    await expect(memberPage.getByRole("heading", { name: "Información del hogar" })).toBeVisible();
+    await expect(memberPage.getByRole("button", { name: "Crear invitación", exact: true })).toHaveCount(0);
+    await page.reload();
+    const memberRow = page.locator(".member-row").filter({ hasText: member.email });
+    await memberRow.getByRole("button", { name: "Hacer administrador", exact: true }).click();
+    await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+    await expect(memberRow.locator(".role-text")).toHaveText("Administrador");
+    await memberPage.goto("/notificaciones");
+    const notice = memberPage.locator("article.notice").filter({ hasText: "Tu rol cambió" });
+    await expect(notice).toBeVisible();
+    await notice.getByRole("button", { name: "Marcar leída", exact: true }).click();
+    await expect(notice.getByRole("button", { name: "Marcar sin leer", exact: true })).toBeVisible();
+    await notice.getByRole("button", { name: "Eliminar aviso", exact: true }).click();
+    await memberPage.getByRole("button", { name: "Confirmar", exact: true }).click();
+    await expect(notice).toHaveCount(0);
+    await memberRow.getByRole("button", { name: "Retirar", exact: true }).click();
+    await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+    await expect(memberRow).toHaveCount(0);
+    expect((await memberPage.request.get(`/api/homes/${owner.activeHomeId}`)).status()).toBe(403);
+    await memberPage.goto("/apartamento");
+    await expect(memberPage.getByRole("heading", { name: "Un espacio para compartir" })).toBeVisible();
+  } finally {
+    await memberContext.close();
+  }
 });

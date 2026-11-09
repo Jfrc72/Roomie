@@ -730,7 +730,7 @@
   "marcó como resuelto un incumplimiento del reglamento": "marked a house rule violation as resolved",
   "Incumplimiento resuelto": "Violation resolved",
   "Reporte resuelto.": "Report resolved.",
-  "Apartamento no encontrado.": "Apartment not found.",
+  "Apartamento no encontrado.": "Home not found.",
   "Selecciona al menos un integrante.": "Select at least one member.",
   "Todos los integrantes deben pertenecer al apartamento.": "All members must belong to the apartment.",
   "El precio admite máximo dos decimales.": "The price can have up to two decimal places.",
@@ -882,5 +882,7 @@
   "PAGADO": "Paid",
   "COMPRADO": "Purchased",
   "Inicio de la reserva": "Reservation start",
-  "No incluida": "Not included"
+  "No incluida": "Not included",
+  "No pudimos conectar con el servidor. Intenta nuevamente.": "We could not connect to the server. Please try again.",
+  "La base de datos no está disponible.": "The database is unavailable."
 }

@@ -8,6 +8,7 @@ export default defineConfig({
   testDir: "./tests/e2e",
   workers: 1,
   timeout: 60000,
+  expect: { timeout: 10000 },
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     ...devices["Desktop Chrome"],

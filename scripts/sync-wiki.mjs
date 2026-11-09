@@ -15,11 +15,12 @@ const pages = {
   "DESPLIEGUE.md": "Despliegue",
   "EQUIPO.md": "Trabajo-en-equipo",
   "REVISION-CICLO-1.md": "Correcciones-ciclo-1",
+  "CICLO-2.md": "Ciclo-2",
 };
 for (const [source, name] of Object.entries(pages)) {
   const text = readFileSync(join("docs", source), "utf8")
-    .replace(/\]\(\.\.\/(tests|src)\/([^\)]+)\)/g, `](${repo}/blob/main/$1/$2)`)
-    .replace(/\]\(([A-Z-]+\.md)\)/g, (_, file) => `](${repo}/wiki/${pages[file] || file})`);
+    .replace(/\]\(\.\.\/(tests|src|backend|postman)\/([^\)]+)\)/g, `](${repo}/blob/main/$1/$2)`)
+    .replace(/\]\(([A-Z0-9-]+\.md)\)/g, (_, file) => `](${repo}/wiki/${pages[file] || file})`);
   writeFileSync(join(target, name + ".md"), text);
 }
 const items = Object.values(pages).map((name) => `- [${name.replaceAll("-", " ")}](${repo}/wiki/${name})`).join("\n");

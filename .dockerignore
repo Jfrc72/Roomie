@@ -12,3 +12,6 @@ CLAUDE.md
 test-results
 playwright-report
 coverage
+backend/node_modules
+backend/dist
+backend/coverage
