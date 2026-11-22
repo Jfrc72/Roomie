@@ -56,6 +56,9 @@ export class RulesRepository {
       WHERE m.id=$1 AND m.home_id=$2 AND m.active FOR SHARE OF m`, [membershipId, homeId], client);
     return row ?? null;
   }
+  async memberNames(homeId: string) {
+    return (await this.db.query<{ name: string }>('SELECT u.name FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.home_id=$1 AND m.active ORDER BY m.joined_at', [homeId])).map(row => row.name);
+  }
   async createReport(data: { homeId: string; versionId: string; clause: string; description: string; userId: string; reportedMembershipId: string | null }, client: PoolClient) {
     const [row] = await this.db.query<{ id: string }>(`INSERT INTO rule_reports(home_id,rule_version_id,clause,description,reported_by,reported_membership_id)
       VALUES($1,$2,$3,$4,$5,$6) RETURNING id`, [data.homeId, data.versionId, data.clause, data.description, data.userId, data.reportedMembershipId], client);

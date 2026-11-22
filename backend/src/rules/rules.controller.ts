@@ -4,9 +4,10 @@ import { CurrentUser } from '../auth/current-user';
 import { SessionUser } from '../auth/auth.entity';
 import { SessionGuard } from '../auth/session.guard';
 import { HomeIdPipe, idPipe } from '../common/validation';
-import { ReportDto, RuleDto } from './rules.dto';
+import { AssistantDto, ReportDto, RuleDto } from './rules.dto';
 import { RulesService } from './rules.service';
 import { RuleReportsService } from './rule-reports.service';
+import { AssistantService } from './assistant.service';
 
 const version = { id: 'UUID', version: 2, content: 'Silencio desde las 10 p. m.', notes: 'Horarios de silencio', created_at: '2026-11-22T15:00:00.000Z', author: 'Tomás' };
 
@@ -18,7 +19,7 @@ const version = { id: 'UUID', version: 2, content: 'Silencio desde las 10 p. m.'
 @UseGuards(SessionGuard)
 @Controller('rules')
 export class RulesController {
-  constructor(private readonly rules: RulesService, private readonly reports: RuleReportsService) {}
+  constructor(private readonly rules: RulesService, private readonly reports: RuleReportsService, private readonly assistant: AssistantService) {}
 
   @Get()
   @ApiOperation({ summary: 'Consultar la versión vigente, quién la aceptó, el historial y los reportes de incumplimiento' })
@@ -53,6 +54,23 @@ export class RulesController {
   @ApiResponse({ status: 404, description: 'El reporte no existe.' })
   @ApiResponse({ status: 409, description: 'El reporte ya estaba resuelto.' })
   resolve(@CurrentUser() user: SessionUser, @Param('id', idPipe) id: string) { return this.reports.resolve(user, id); }
+
+  @Get('assistant')
+  @ApiOperation({ summary: 'Saber si el asistente usa IA real (ANTHROPIC_API_KEY configurada) o respuestas simuladas' })
+  @ApiQuery({ name: 'homeId', format: 'uuid' })
+  @ApiResponse({ status: 200, schema: { example: { data: { mode: 'ai', model: 'claude-opus-5-5' } } } })
+  assistantStatus(@CurrentUser() user: SessionUser, @Query('homeId', HomeIdPipe) homeId: string) { return this.assistant.status(user.id, homeId); }
+
+  @Post('assistant')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Pedir acuerdos al asistente con IA; solo administradores. Envía la petición, el borrador y los nombres de los integrantes a la API de Claude' })
+  @ApiQuery({ name: 'homeId', format: 'uuid' })
+  @ApiResponse({ status: 200, schema: { example: { data: { text: 'Te propongo una rotación semanal para 4 personas.', clauses: ['Rotación semanal de tareas:\nSemana 1: ...'] } } } })
+  @ApiResponse({ status: 422, description: 'El modelo no puede ayudar con esa petición.' })
+  @ApiResponse({ status: 429, description: 'Demasiadas consultas seguidas o el proveedor está ocupado.' })
+  @ApiResponse({ status: 502, description: 'El modelo no devolvió una respuesta válida.' })
+  @ApiResponse({ status: 503, description: 'La IA no está configurada o no responde.' })
+  ask(@CurrentUser() user: SessionUser, @Query('homeId', HomeIdPipe) homeId: string, @Body() data: AssistantDto) { return this.assistant.ask(user.id, homeId, data); }
 
   @Post(':id/accept')
   @HttpCode(200)
