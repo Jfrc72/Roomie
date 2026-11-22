@@ -3,9 +3,13 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 
-// Cuenta casos aprobados por historia, no pruebas de integración ni asserts.
+// Cuenta casos aprobados por historia, no pruebas de integración ni asserts. Suma las
+// unitarias de Vitest (pantallas y API anterior) y las de Jest (servicios de NestJS).
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const backend = join(root, "backend");
+const jest = createRequire(join(backend, "package.json")).resolve("jest/bin/jest");
 const stories = [
   ...readFileSync(join(root, "docs/HISTORIAS.md"), "utf8").matchAll(
     /^### (HU\d+\.\d+)\s+(.+)$/gm,
@@ -14,25 +18,36 @@ const stories = [
 const directory = mkdtempSync(join(tmpdir(), "roomie-unitarias-"));
 try {
   const resultFile = join(directory, "results.json");
-  const run = spawnSync(
-    process.execPath,
-    [
-      join(root, "node_modules/vitest/vitest.mjs"),
-      "run",
-      "--reporter=default",
-      "--reporter=json",
-      `--outputFile.json=${resultFile}`,
-    ],
-    { cwd: root, stdio: "inherit" },
-  );
-  if (run.error) throw run.error;
-  if (run.status !== 0) {
+  const backendFile = join(directory, "backend.json");
+  const runs = [
+    spawnSync(
+      process.execPath,
+      [
+        join(root, "node_modules/vitest/vitest.mjs"),
+        "run",
+        "--reporter=default",
+        "--reporter=json",
+        `--outputFile.json=${resultFile}`,
+      ],
+      { cwd: root, stdio: "inherit" },
+    ),
+    spawnSync(
+      process.execPath,
+      [jest, "--runInBand", "--json", `--outputFile=${backendFile}`],
+      { cwd: backend, stdio: "inherit" },
+    ),
+  ];
+  for (const run of runs) if (run.error) throw run.error;
+  if (runs.some((run) => run.status !== 0)) {
     process.exitCode = 1;
   } else {
-    const report = JSON.parse(readFileSync(resultFile, "utf8"));
+    // Vitest y Jest escriben el mismo formato de resultados.
+    const suites = [resultFile, backendFile].flatMap(
+      (file) => JSON.parse(readFileSync(file, "utf8")).testResults,
+    );
     const problems = [];
     let extra = 0;
-    for (const suite of report.testResults) {
+    for (const suite of suites) {
       for (const test of suite.assertionResults) {
         if (test.status !== "passed") continue;
         const ids = [...new Set(test.fullName.match(/\bHU\d+\.\d+/g) ?? [])];
