@@ -1,8 +1,8 @@
 import { translate, type Language } from "./i18n";
 
-// Asistente de acuerdos con IA simulada (mock). La interfaz se usa como si llamara a un
-// modelo: askAssistant recibe la petición y el borrador y responde después de una espera.
-// Para conectar una IA real basta con reemplazar esta función por una llamada a la API.
+// Asistente de acuerdos simulado. Responde cuando el servidor no tiene configurada la IA real
+// (ANTHROPIC_API_KEY); con la clave, useRuleAssistant consulta a Claude a través de NestJS
+// (backend/src/rules/assistant.service.ts) y recibe la misma forma de respuesta.
 export interface AssistantReply {
   text: string;
   clauses: string[];
@@ -236,7 +236,7 @@ function distribution(
     ],
   };
 }
-// Punto de conexión: la interfaz llama a esta función como llamaría a un modelo real.
+// Misma interfaz que la IA real: recibe la petición y el borrador y responde después de una espera.
 export async function askAssistant(
   prompt: string,
   draft: string,

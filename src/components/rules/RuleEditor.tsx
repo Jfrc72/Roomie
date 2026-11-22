@@ -68,6 +68,7 @@ export default function RuleEditor({
         </Form>
       </section>
       <RuleAssistant
+        homeId={homeId}
         draft={draft}
         members={members?.map((m) => m.name) ?? []}
         onAdd={(clause) =>
