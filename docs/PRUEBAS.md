@@ -2,12 +2,12 @@
 
 ## Unitarias
 
-- `npm run test:hu`: 176 pruebas del ciclo 1. Las 39 historias tienen al menos tres casos aprobados.
-- `npm run test:coverage`: 161 pruebas de NestJS, sin servidor ni base de datos. Se comprueban los servicios, permisos, validaciones, contraseñas y recordatorios con repositorios simulados.
+- `npm run test:hu`: 139 pruebas de Vitest (pantallas, hooks, formatos y la API que sigue en Next.js) y 245 de Jest (servicios de NestJS). Las 39 historias tienen al menos tres casos aprobados.
+- `npm run test:coverage`: las 245 pruebas de NestJS, sin servidor ni base de datos. Se comprueban los servicios, permisos, validaciones, contraseñas, recordatorios y el asistente con repositorios y un cliente de IA simulados.
 
-La medición del backend incluye todos sus servicios y reglas de negocio. Dio 99,71% en sentencias, 100% en líneas, 99,15% en ramas y 98,59% en funciones. El mínimo configurado es 65% en cada medida. El informe se genera en `backend/coverage/index.html`.
+La medición del backend incluye todos sus servicios y reglas de negocio. Dio 99,46% en sentencias, 99,83% en líneas, 97,51% en ramas y 99,25% en funciones. El mínimo configurado es 65% en cada medida. El informe se genera en `backend/coverage/index.html`.
 
-Esta cobertura corresponde a la parte migrada por Juan. Las consultas SQL y la conexión entre módulos se revisan con las pruebas de API; los módulos que migren Miguel y Tomás deben agregar sus propias unitarias.
+Esta cobertura corresponde a las partes migradas por Juan y Tomás. Las consultas SQL y la conexión entre módulos se revisan con las pruebas de API; Miguel debe agregar las unitarias de su módulo al migrarlo. Las pruebas del asistente no llaman a la API de Anthropic ni necesitan clave.
 
 ## API y Postman
 
@@ -16,11 +16,14 @@ Dejar `npm run dev` abierto y ejecutar en otra terminal:
 ```bash
 npm run test:integration
 npm run test:postman
+npm run test:postman:tomas
 ```
 
 Pasaron las 98 pruebas de integración y las 68 solicitudes de Postman, con 150 comprobaciones. Revisan respuestas válidas, entradas incorrectas, permisos, cupo del hogar, último administrador, sesiones, invitaciones y avisos propios.
 
-La colección está en `postman/Roomie-Juan.postman_collection.json`. Al importarla en Postman, las variables `baseUrl` y `origin` apuntan a `http://localhost:3000/api` y `http://localhost:3000`. Si cambia el puerto, cambiar ambas. Ejecutar la colección completa y en orden: crea sus cuentas de prueba, guarda sus datos en variables y cierra esas cuentas al terminar. No habilita correos ni push.
+Después de migrar tareas, reservas y acuerdos volvieron a pasar las 98 pruebas de integración, las dos colecciones de Postman y los 8 recorridos de navegador, contra la versión compilada para producción y una base de pruebas aparte. La colección de Tomás tiene 65 solicitudes y 158 comprobaciones: tareas, recursos, reservas, reglamento, reportes, estado y validaciones del asistente, permisos de integrantes y visitantes, origen de las escrituras, Inicio y Swagger. No envía consultas al modelo. El camino con IA real se probó con un simulador local de la API de Anthropic; falta probarlo con una clave real y repetir todo con Docker.
+
+La colección de Juan está en `postman/Roomie-Juan.postman_collection.json` y la de Tomás en `postman/Roomie-Tomas.postman_collection.json`. Al importarlas en Postman, las variables `baseUrl` y `origin` apuntan a `http://localhost:3000/api` y `http://localhost:3000`. Si cambia el puerto, cambiar ambas. Ejecutar cada colección completa y en orden: crea sus cuentas de prueba, guarda sus datos en variables y cierra esas cuentas al terminar. No habilita correos ni push.
 
 Para guardar un resultado de Newman: `npm run test:postman -- --reporters cli,json --reporter-json-export .test-output/postman-juan.json`.
 

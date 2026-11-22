@@ -147,11 +147,11 @@ Como integrante quiero corregir o eliminar un gasto para mantener el historial c
 
 ### HU3.1 Crear tarea
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-247) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-743).
 
-**Pruebas:** 3 unitarias en [tareas-api.test.ts](../tests/unit/tareas-api.test.ts).
+**Pruebas:** 3 unitarias en [tasks.service.spec.ts](../backend/test/tasks.service.spec.ts).
 
 Como integrante del hogar quiero crear una tarea con título, descripción, prioridad y fecha límite para que todos sepan qué hay que hacer.
 
@@ -163,11 +163,11 @@ Como integrante del hogar quiero crear una tarea con título, descripción, prio
 
 ### HU3.2 Asignar responsable
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-261) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-757).
 
-**Pruebas:** 3 unitarias en [tareas-api.test.ts](../tests/unit/tareas-api.test.ts).
+**Pruebas:** 4 unitarias en [tasks.service.spec.ts](../backend/test/tasks.service.spec.ts).
 
 Como integrante quiero asignar una tarea a un roommate para que quede claro quién se encarga.
 
@@ -179,11 +179,11 @@ Como integrante quiero asignar una tarea a un roommate para que quede claro qui�
 
 ### HU3.3 Fecha límite y recordatorio
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-247) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-743).
 
-**Pruebas:** 3 unitarias en [tareas-api.test.ts](../tests/unit/tareas-api.test.ts), [tareas.test.ts](../tests/unit/tareas.test.ts).
+**Pruebas:** 6 unitarias en [tasks.service.spec.ts](../backend/test/tasks.service.spec.ts), [tasks.rules.spec.ts](../backend/test/tasks.rules.spec.ts), [tareas.test.ts](../tests/unit/tareas.test.ts).
 
 Como responsable quiero recibir un recordatorio antes de la fecha límite para no olvidar la tarea.
 
@@ -195,11 +195,11 @@ Como responsable quiero recibir un recordatorio antes de la fecha límite para n
 
 ### HU3.4 Cambiar estado
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-228) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-724).
 
-**Pruebas:** 3 unitarias en [tareas-api.test.ts](../tests/unit/tareas-api.test.ts), [tareas.test.ts](../tests/unit/tareas.test.ts).
+**Pruebas:** 7 unitarias en [tasks.service.spec.ts](../backend/test/tasks.service.spec.ts), [tasks.rules.spec.ts](../backend/test/tasks.rules.spec.ts), [tareas.test.ts](../tests/unit/tareas.test.ts).
 
 Como integrante quiero mover una tarea entre Pendiente, En progreso y Completada con botones para mostrar su avance sin arrastrar.
 
@@ -211,11 +211,11 @@ Como integrante quiero mover una tarea entre Pendiente, En progreso y Completada
 
 ### HU3.5 Historial de cumplimiento
 
-**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-337) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-797).
 
-**Pruebas:** 3 unitarias en [tareas-api.test.ts](../tests/unit/tareas-api.test.ts).
+**Pruebas:** 6 unitarias en [tasks.service.spec.ts](../backend/test/tasks.service.spec.ts), [dashboard.service.spec.ts](../backend/test/dashboard.service.spec.ts).
 
 Como integrante quiero ver quién cambió el estado de cada tarea y cuándo para saber cómo se cumplen las responsabilidades.
 
@@ -227,11 +227,11 @@ Como integrante quiero ver quién cambió el estado de cada tarea y cuándo para
 
 ### HU3.6 Editar, eliminar y filtrar
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-228) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-724).
 
-**Pruebas:** 3 unitarias en [tareas-api.test.ts](../tests/unit/tareas-api.test.ts).
+**Pruebas:** 5 unitarias en [tasks.service.spec.ts](../backend/test/tasks.service.spec.ts).
 
 Como integrante quiero editar, eliminar y filtrar tareas para mantener el tablero al día.
 
@@ -295,11 +295,11 @@ Como integrante quiero corregir o quitar productos para mantener la lista al dí
 
 ### HU5.1 Gestionar recursos
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-543) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-931).
 
-**Pruebas:** 3 unitarias en [reservas-api.test.ts](../tests/unit/reservas-api.test.ts).
+**Pruebas:** 8 unitarias en [resources.service.spec.ts](../backend/test/resources.service.spec.ts), [reservations.rules.spec.ts](../backend/test/reservations.rules.spec.ts).
 
 Como administrador quiero agregar, editar y retirar los espacios u objetos que se turnan (lavadora, sala…) para que se puedan reservar.
 
@@ -311,11 +311,11 @@ Como administrador quiero agregar, editar y retirar los espacios u objetos que s
 
 ### HU5.2 Reservar sin cruces
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-526) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-914).
 
-**Pruebas:** 4 unitarias en [reservas-api.test.ts](../tests/unit/reservas-api.test.ts).
+**Pruebas:** 8 unitarias en [reservations.service.spec.ts](../backend/test/reservations.service.spec.ts), [reservations.rules.spec.ts](../backend/test/reservations.rules.spec.ts).
 
 Como integrante quiero reservar un recurso para un horario para usarlo sin conflictos.
 
@@ -327,11 +327,11 @@ Como integrante quiero reservar un recurso para un horario para usarlo sin confl
 
 ### HU5.3 Calendario de reservas
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-494) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-882).
 
-**Pruebas:** 3 unitarias en [reservas.test.ts](../tests/unit/reservas.test.ts).
+**Pruebas:** 8 unitarias en [reservations.service.spec.ts](../backend/test/reservations.service.spec.ts), [reservations.rules.spec.ts](../backend/test/reservations.rules.spec.ts), [reservas.test.ts](../tests/unit/reservas.test.ts).
 
 Como integrante quiero ver un calendario semanal para saber qué está ocupado cada día.
 
@@ -343,11 +343,11 @@ Como integrante quiero ver un calendario semanal para saber qué está ocupado c
 
 ### HU5.4 Cancelar reserva
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-560) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-948).
 
-**Pruebas:** 3 unitarias en [reservas-api.test.ts](../tests/unit/reservas-api.test.ts).
+**Pruebas:** 5 unitarias en [reservations.service.spec.ts](../backend/test/reservations.service.spec.ts).
 
 Como integrante quiero cancelar una reserva para liberar el horario.
 
@@ -550,11 +550,11 @@ Como integrante quiero consultar las votaciones cerradas para recordar qué se d
 
 ### HU9.1 Crear y editar el reglamento
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-915) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1159).
 
-**Pruebas:** 3 unitarias en [acuerdos-api.test.ts](../tests/unit/acuerdos-api.test.ts).
+**Pruebas:** 4 unitarias en [rules.service.spec.ts](../backend/test/rules.service.spec.ts).
 
 Como administrador quiero redactar el reglamento y publicar nuevas versiones para dejar por escrito los acuerdos.
 
@@ -566,11 +566,11 @@ Como administrador quiero redactar el reglamento y publicar nuevas versiones par
 
 ### HU9.2 Aceptación por integrante
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-906) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1150).
 
-**Pruebas:** 3 unitarias en [acuerdos-api.test.ts](../tests/unit/acuerdos-api.test.ts).
+**Pruebas:** 5 unitarias en [rules.service.spec.ts](../backend/test/rules.service.spec.ts).
 
 Como integrante quiero aceptar la versión vigente para dejar constancia de que la leí.
 
@@ -582,11 +582,11 @@ Como integrante quiero aceptar la versión vigente para dejar constancia de que 
 
 ### HU9.3 Versiones e historial de modificaciones
 
-**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-939) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1183).
 
-**Pruebas:** 3 unitarias en [acuerdos-api.test.ts](../tests/unit/acuerdos-api.test.ts).
+**Pruebas:** 4 unitarias en [rules.service.spec.ts](../backend/test/rules.service.spec.ts).
 
 Como integrante quiero consultar las versiones anteriores para ver cómo cambiaron los acuerdos.
 
@@ -598,11 +598,11 @@ Como integrante quiero consultar las versiones anteriores para ver cómo cambiar
 
 ### HU9.4 Reportar incumplimientos
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-944) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1188).
 
-**Pruebas:** 3 unitarias en [acuerdos-api.test.ts](../tests/unit/acuerdos-api.test.ts).
+**Pruebas:** 7 unitarias en [rule-reports.service.spec.ts](../backend/test/rule-reports.service.spec.ts).
 
 Como integrante quiero reportar que no se cumplió un acuerdo para que el hogar lo resuelva.
 
@@ -612,13 +612,13 @@ Como integrante quiero reportar que no se cumplió un acuerdo para que el hogar 
 - No se puede reportar un acuerdo que no está en el reglamento, reportarse a sí mismo ni reportar en un hogar sin reglamento.
 - Solo un administrador marca el reporte como resuelto, y quien lo hizo recibe un aviso.
 
-### HU9.5 Asistente de acuerdos con IA simulada
+### HU9.5 Asistente de acuerdos con IA
 
-**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-927) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1171).
 
-**Pruebas:** 7 unitarias en [acuerdos.test.ts](../tests/unit/acuerdos.test.ts), [compatibilidad.test.tsx](../tests/unit/compatibilidad.test.tsx).
+**Pruebas:** 17 unitarias en [assistant.service.spec.ts](../backend/test/assistant.service.spec.ts), [acuerdos.test.ts](../tests/unit/acuerdos.test.ts), [compatibilidad.test.tsx](../tests/unit/compatibilidad.test.tsx).
 
 Como administrador quiero pedirle ideas a un asistente para redactar acuerdos más rápido y repartir mejor las tareas.
 
@@ -626,7 +626,8 @@ Como administrador quiero pedirle ideas a un asistente para redactar acuerdos m�
 
 - Ante "Somos cuatro y nadie cumple las tareas", propone una rotación semanal equitativa. Toma el número de personas del mensaje o, si no lo dice, los integrantes del hogar con sus nombres.
 - Propone cláusulas por tema (limpieza, ruido, visitas…) y, si se le pide, revisa qué temas faltan en el borrador. Las cláusulas se agregan al borrador con un botón.
-- Mientras "genera" muestra un spinner y un skeleton durante una espera simulada. La respuesta es un mock aislado en `src/lib/assistant.ts`, que en el ciclo 2 se reemplazará por un modelo real.
+- Con `ANTHROPIC_API_KEY` en el servidor, NestJS consulta a Claude con la petición, el borrador y los nombres de los integrantes, y revisa la respuesta antes de mostrarla. Sin clave responde el asistente simulado de `src/lib/assistant.ts`. Una etiqueta indica cuál se está usando.
+- Mientras genera muestra un spinner y un skeleton. Solo los administradores consultan, con un límite de 10 consultas cada 10 minutos; si el proveedor falla, se muestra el error y un botón para reintentar.
 
 ## Funcionalidad 10: Cuentas, sesión y perfil
 
@@ -688,50 +689,50 @@ En el ciclo 2, votaciones pasa a Miguel para equilibrar el trabajo. La tabla ant
 
 ## Pruebas por historia
 
-`npm run test:hu` ejecuta las unitarias y comprueba que cada historia tenga al menos tres aprobadas. El comando muestra los casos asociados a cada historia y las pruebas adicionales de hooks, formatos, idiomas y accesibilidad.
+`npm run test:hu` ejecuta las unitarias de Vitest y de Jest y comprueba que cada historia tenga al menos tres aprobadas. El comando muestra los casos asociados a cada historia y las pruebas adicionales de hooks, formatos, idiomas y accesibilidad.
 
-Los archivos están en `tests/unit/`. Las pruebas de servidor usan consultas y sesiones simuladas, pero ejecutan las reglas reales. No necesitan una base de datos ni la aplicación abierta.
+Los archivos `.test.ts` y `.test.tsx` están en `tests/unit/` (pantallas y API que sigue en Next.js) y los `.spec.ts` en `backend/test/` (servicios de NestJS). Las pruebas de servidor usan repositorios, consultas y sesiones simuladas, pero ejecutan las reglas reales. No necesitan una base de datos, la aplicación abierta ni una clave de IA.
 
 Las pruebas de integración necesitan la aplicación abierta. Las E2E la inician si hace falta. Se cuentan aparte de las unitarias. GitHub Actions también ejecuta ambas contra la aplicación en Docker.
 
-| HU     | Casos aprobados | Archivos unitarios                               |
-| ------ | --------------: | ------------------------------------------------ |
-| HU1.1  |               3 | `funcionalidades.test.tsx`                       |
-| HU1.2  |               9 | `funcionalidades.test.tsx`, `reglas.test.ts`     |
-| HU1.3  |               4 | `funcionalidades.test.tsx`, `reglas.test.ts`     |
-| HU1.4  |               3 | `funcionalidades.test.tsx`, `reglas.test.ts`     |
-| HU2.1  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU2.2  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU2.3  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU3.1  |               3 | `tareas-api.test.ts`                             |
-| HU3.2  |               3 | `tareas-api.test.ts`                             |
-| HU3.3  |               3 | `tareas-api.test.ts`, `tareas.test.ts`           |
-| HU3.4  |               3 | `tareas-api.test.ts`, `tareas.test.ts`           |
-| HU3.5  |               3 | `tareas-api.test.ts`                             |
-| HU3.6  |               3 | `tareas-api.test.ts`                             |
-| HU4.1  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU4.2  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU4.3  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU5.1  |               3 | `reservas-api.test.ts`                           |
-| HU5.2  |               4 | `reservas-api.test.ts`                           |
-| HU5.3  |               3 | `reservas.test.ts`                               |
-| HU5.4  |               3 | `reservas-api.test.ts`                           |
-| HU6.1  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU6.2  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU6.3  |               3 | `gastos-compras-mantenimiento.test.ts`           |
-| HU7.1  |               6 | `funcionalidades.test.tsx`                       |
-| HU7.2  |               3 | `funcionalidades.test.tsx`                       |
-| HU7.3  |               5 | `reglas.test.ts`                                 |
-| HU8.1  |               3 | `votaciones-api.test.ts`                         |
-| HU8.2  |               3 | `votaciones.test.ts`                             |
-| HU8.3  |               3 | `votaciones-api.test.ts`                         |
-| HU8.4  |               3 | `votaciones-api.test.ts`                         |
-| HU8.5  |               3 | `votaciones-api.test.ts`                         |
-| HU9.1  |               3 | `acuerdos-api.test.ts`                           |
-| HU9.2  |               3 | `acuerdos-api.test.ts`                           |
-| HU9.3  |               3 | `acuerdos-api.test.ts`                           |
-| HU9.4  |               3 | `acuerdos-api.test.ts`                           |
-| HU9.5  |               7 | `acuerdos.test.ts`, `compatibilidad.test.tsx`    |
-| HU10.1 |               5 | `funcionalidades.test.tsx`                       |
-| HU10.2 |               4 | `funcionalidades.test.tsx`, `sesion-api.test.ts` |
-| HU10.3 |               3 | `funcionalidades.test.tsx`                       |
+| HU     | Casos aprobados | Archivos unitarios                                                                                         |
+| ------ | --------------: | ---------------------------------------------------------------------------------------------------------- |
+| HU1.1  |              14 | `funcionalidades.test.tsx`, `home-access.service.spec.ts`, `homes.service.spec.ts`                         |
+| HU1.2  |              25 | `funcionalidades.test.tsx`, `reglas.test.ts`, `invitations.service.spec.ts`                                |
+| HU1.3  |               9 | `funcionalidades.test.tsx`, `reglas.test.ts`, `memberships.service.spec.ts`                                |
+| HU1.4  |              11 | `funcionalidades.test.tsx`, `reglas.test.ts`, `memberships.service.spec.ts`, `home-access.service.spec.ts` |
+| HU2.1  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU2.2  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU2.3  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU3.1  |               3 | `tasks.service.spec.ts`                                                                                    |
+| HU3.2  |               4 | `tasks.service.spec.ts`                                                                                    |
+| HU3.3  |               6 | `tareas.test.ts`, `tasks.service.spec.ts`, `tasks.rules.spec.ts`                                           |
+| HU3.4  |               7 | `tareas.test.ts`, `tasks.service.spec.ts`, `tasks.rules.spec.ts`                                           |
+| HU3.5  |               6 | `tasks.service.spec.ts`, `dashboard.service.spec.ts`                                                       |
+| HU3.6  |               5 | `tasks.service.spec.ts`                                                                                    |
+| HU4.1  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU4.2  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU4.3  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU5.1  |               8 | `resources.service.spec.ts`, `reservations.rules.spec.ts`                                                  |
+| HU5.2  |               8 | `reservations.service.spec.ts`, `reservations.rules.spec.ts`                                               |
+| HU5.3  |               8 | `reservas.test.ts`, `reservations.service.spec.ts`, `reservations.rules.spec.ts`                           |
+| HU5.4  |               5 | `reservations.service.spec.ts`                                                                             |
+| HU6.1  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU6.2  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU6.3  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU7.1  |              13 | `funcionalidades.test.tsx`, `notifications.service.spec.ts`                                                |
+| HU7.2  |              12 | `funcionalidades.test.tsx`, `notifications.service.spec.ts`                                                |
+| HU7.3  |              29 | `reglas.test.ts`, `jobs.service.spec.ts`, `notifications.service.spec.ts`                                  |
+| HU8.1  |               3 | `votaciones-api.test.ts`                                                                                   |
+| HU8.2  |               3 | `votaciones.test.ts`                                                                                       |
+| HU8.3  |               3 | `votaciones-api.test.ts`                                                                                   |
+| HU8.4  |               3 | `votaciones-api.test.ts`                                                                                   |
+| HU8.5  |               3 | `votaciones-api.test.ts`                                                                                   |
+| HU9.1  |               4 | `rules.service.spec.ts`                                                                                    |
+| HU9.2  |               5 | `rules.service.spec.ts`                                                                                    |
+| HU9.3  |               4 | `rules.service.spec.ts`                                                                                    |
+| HU9.4  |               7 | `rule-reports.service.spec.ts`                                                                             |
+| HU9.5  |              17 | `acuerdos.test.ts`, `compatibilidad.test.tsx`, `assistant.service.spec.ts`                                 |
+| HU10.1 |              14 | `funcionalidades.test.tsx`, `auth.service.spec.ts`                                                         |
+| HU10.2 |               6 | `funcionalidades.test.tsx`, `sesion-api.test.ts`, `auth.service.spec.ts`                                   |
+| HU10.3 |              12 | `funcionalidades.test.tsx`, `auth.service.spec.ts`, `home-access.service.spec.ts`                          |

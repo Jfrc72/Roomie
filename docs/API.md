@@ -2,7 +2,7 @@
 
 Todas empiezan por `/api`. La respuesta tiene `{data: ...}` o `{error: "mensaje"}`. Las escrituras envían JSON y usan la sesión del usuario. En scripts de prueba, enviar también `Origin` igual a `APP_URL`.
 
-Las rutas de cuentas, sesión, apartamentos, integrantes, invitaciones, inicio y notificaciones ya están en NestJS. Swagger se consulta en `/api/docs/` y su esquema en `/api/docs-json`. Las demás rutas siguen en Next.js hasta que se migren. La colección de `postman/` prueba la parte de Juan.
+Las rutas de cuentas, sesión, apartamentos, integrantes, invitaciones, inicio, notificaciones, tareas, recursos, reservas y acuerdos ya están en NestJS. Swagger se consulta en `/api/docs/` y su esquema en `/api/docs-json`. Gastos, pagos, compras, mantenimiento y votaciones siguen en Next.js hasta que se migren. Las colecciones de `postman/` prueban las partes de Juan y Tomás.
 
 La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tareas y reservas con horario usan fechas ISO con zona horaria.
 
@@ -52,6 +52,8 @@ La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tarea
 | POST   | `/rules/:id/accept`                                            | `{}`; acepta la versión vigente (409 si hay una más reciente)                                                                                     |
 | POST   | `/rules/reports?homeId=...`                                    | `{clause, description, reported_membership_id}`; reporta un acuerdo incumplido.                                                                   |
 | POST   | `/rules/reports/:id/resolve`                                   | `{}`; marca el reporte como resuelto y avisa a quien lo hizo; solo administrador                                                                  |
+| GET    | `/rules/assistant?homeId=...`                                  | `{mode: "ai" \| "simulated", model}`; indica si el asistente usa Claude o respuestas simuladas                                                  |
+| POST   | `/rules/assistant?homeId=...`                                  | `{prompt, draft, language}`; devuelve `{text, clauses}`. Solo administrador; 503 sin `ANTHROPIC_API_KEY`, 429 tras 10 consultas en 10 minutos     |
 | GET    | `/expenses?homeId=...`                                         | Gastos, cuotas, resumen mensual, saldos entre integrantes y pagos recientes                                                                       |
 | POST   | `/expenses?homeId=...`                                         | `{title, category, paid_by_id, total_amount, expense_date, participant_ids}`; divide exactamente hasta centavos                                   |
 | PATCH  | `/expenses/:id`                                                | Actualiza el gasto y regenera su división                                                                                                         |
@@ -72,6 +74,6 @@ La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tarea
 | DELETE | `/homes/:id`                                                   | Archiva el hogar; solo administrador.                                                                                                             |
 | DELETE | `/notifications/:id`                                           | Elimina un aviso propio de la bandeja.                                                                                                            |
 
-Los permisos y criterios de cada operación están en [HISTORIAS.md](HISTORIAS.md). El código está en `src/server/` y las rutas se conectan en `src/app/api/[...path]/route.ts`.
+Los permisos y criterios de cada operación están en [HISTORIAS.md](HISTORIAS.md). Las rutas migradas están en `backend/src/`; las que faltan, en `src/server/`. `src/app/api/[...path]/route.ts` envía a NestJS los prefijos de `nestRoutes` y atiende los demás.
 
-Errores comunes: 400 (datos inválidos), 401 (sin sesión), 403 (sin permiso), 404 (no encontrado), 409 (conflicto) y 429 (demasiados intentos de ingreso).
+Errores comunes: 400 (datos inválidos), 401 (sin sesión), 403 (sin permiso), 404 (no encontrado), 409 (conflicto) y 429 (demasiados intentos de ingreso o de consultas al asistente). El asistente también puede responder 422 (el modelo no ayuda con esa petición), 502 (respuesta incompleta) o 503 (IA no configurada o no disponible).

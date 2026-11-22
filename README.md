@@ -4,7 +4,7 @@ Proyecto para organizar la convivencia en un apartamento: gastos, tareas, compra
 
 Usamos Next.js y React para las pantallas, NestJS para el backend del ciclo 2, TypeScript y PostgreSQL.
 
-La parte de Juan ya usa NestJS. Los módulos de Miguel y Tomás conservan su API anterior mientras ellos hacen la migración. [Estado y pasos para continuar](docs/CICLO-2.md).
+Las partes de Juan y Tomás ya usan NestJS. Los módulos de Miguel conservan su API anterior mientras se migran. [Estado y pasos para continuar](docs/CICLO-2.md).
 
 Con las notas de la clase del 9 de noviembre queda pendiente adaptar la autenticación a JWT. La versión actual usa sesiones en PostgreSQL y cookies HttpOnly.
 
@@ -63,6 +63,16 @@ Para crear las cuentas de ejemplo en Docker, completar `DEMO_PASSWORD` y ejecuta
 
 Si el puerto 3000 está ocupado, cambiar `APP_PORT=3018` y `APP_URL=http://localhost:3018` en `.env` antes de iniciar Docker.
 
+## Asistente de acuerdos con IA
+
+Sin configuración, el asistente de Acuerdos responde con ejemplos simulados y lo indica con la etiqueta «IA simulada». Para usar Claude, poner una clave de la API de Anthropic en `.env` y reiniciar (en Docker, `docker compose up -d`):
+
+```dotenv
+ANTHROPIC_API_KEY=clave-propia
+```
+
+La clave solo la lee NestJS; el navegador nunca la recibe. La etiqueta cambia a «IA con Claude». Por defecto se usa `claude-opus-5-5`; `ANTHROPIC_MODEL` permite cambiarlo. Cada consulta envía a Anthropic la petición, el borrador y los nombres de los integrantes del hogar, y tiene costo: solo los administradores pueden consultar y cada persona tiene un límite de 10 consultas cada 10 minutos.
+
 ## Pruebas
 
 ```bash
@@ -73,11 +83,11 @@ npm run test:hu
 npm run test:coverage
 ```
 
-`test:hu` ejecuta las 176 unitarias del ciclo 1 y revisa que cada una de las 39 historias tenga al menos tres aprobadas. `test:coverage` ejecuta las 161 unitarias del backend y exige mínimo 65% de cobertura. Ninguna necesita servidor ni base de datos.
+`test:hu` ejecuta las 139 unitarias de Vitest y las 245 de Jest del backend, y revisa que cada una de las 39 historias tenga al menos tres aprobadas. `test:coverage` ejecuta las 245 unitarias del backend y exige mínimo 65% de cobertura. Ninguna necesita servidor, base de datos ni clave de IA.
 
 Para las pruebas de la API, dejar `npm run dev` abierto y ejecutar `npm run test:integration` en otra terminal.
 
-La colección de Postman está en `postman/Roomie-Juan.postman_collection.json`. Se puede importar en Postman o ejecutar con `npm run test:postman`; prueba las rutas migradas y sus permisos.
+Las colecciones de Postman están en `postman/`. Se pueden importar en Postman o ejecutar con `npm run test:postman` (cuentas, apartamentos y avisos) y `npm run test:postman:tomas` (tareas, reservas, acuerdos y asistente); prueban las rutas migradas y sus permisos.
 
 Para los recorridos de navegador:
 
@@ -100,7 +110,7 @@ Al subir cambios o abrir un pull request, GitHub Actions revisa lint, tipos, uni
 - **Diseño:** CSS compartido, selector español/inglés, campos con etiquetas y navegación con teclado.
 - **Worker:** proceso aparte para recordatorios y cierre de votaciones. Docker inicia la base, las migraciones, la API NestJS, las pantallas y este proceso.
 - **Pruebas:** Jest para los servicios de NestJS, Vitest para la parte anterior, Postman y `node:test` para la API, y Playwright para el navegador.
-- **Asistente de acuerdos:** por ahora responde con ejemplos simulados. Tomás tiene pendiente la conexión con una IA real para el bono.
+- **Asistente de acuerdos:** NestJS consulta a Claude con el SDK oficial de Anthropic y pide la respuesta como JSON con un esquema fijo, para mostrar cada acuerdo con su botón. Sin `ANTHROPIC_API_KEY` responde el asistente simulado, así la aplicación y las pruebas funcionan sin clave.
 
 ## Documentación
 
