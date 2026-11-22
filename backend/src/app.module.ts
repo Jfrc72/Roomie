@@ -10,6 +10,7 @@ import { HomesModule } from './homes/homes.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TasksModule } from './tasks/tasks.module';
+import { ReservationsModule } from './reservations/reservations.module';
 import { OriginGuard } from './common/origin.guard';
 
 @ApiTags('Estado del servidor')
@@ -28,7 +29,7 @@ class HealthController {
 }
 
 @Module({
-  imports: [DatabaseModule, AuthModule, AccessModule, ActivitiesModule, HomesModule, NotificationsModule, DashboardModule, TasksModule],
+  imports: [DatabaseModule, AuthModule, AccessModule, ActivitiesModule, HomesModule, NotificationsModule, DashboardModule, TasksModule, ReservationsModule],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: OriginGuard }],
 })
