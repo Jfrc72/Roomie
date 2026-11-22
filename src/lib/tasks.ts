@@ -29,15 +29,8 @@ export const statusMoves: Record<
   completed: [{ status: "pending", label: "Reabrir" }],
 };
 // Sin responsable, cualquier integrante puede empezarla o completarla, pero no retroceder su estado.
-export function canAdvance(
-  task: Pick<Task, "assigned_membership_id" | "status">,
-  status: TaskStatus,
-) {
-  return (
-    !task.assigned_membership_id &&
-    statuses.indexOf(status) > statuses.indexOf(task.status)
-  );
-}
+// Es la misma regla que aplica NestJS, para que los botones coincidan con los permisos.
+export { canAdvance } from "../../backend/src/tasks/tasks.rules";
 export function isOverdue(task: Pick<Task, "due_at" | "status">) {
   return (
     task.status !== "completed" &&
