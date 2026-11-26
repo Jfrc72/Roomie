@@ -20,7 +20,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const config = new DocumentBuilder().setTitle('Roomie ciclo 2').setVersion('0.1.0')
-    .setDescription('Rutas de Juan: cuentas, apartamentos, integrantes, notificaciones e inicio. Las escrituras requieren JSON y el encabezado Origin igual a APP_URL. Las respuestas usan {data} o {error}.')
+    .setDescription('Cuentas, apartamentos, integrantes, notificaciones e inicio (Juan); gastos y pagos, lista de compras y mantenimiento (Miguel). Las escrituras requieren JSON y el encabezado Origin igual a APP_URL. Las respuestas usan {data} o {error}.')
     .addCookieAuth(COOKIE).build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, { jsonDocumentUrl: 'api/docs-json', swaggerOptions: { withCredentials: true } });
