@@ -17,6 +17,7 @@
     "test:backend": "npm run test --workspace backend",
     "test:coverage": "npm run test:coverage --workspace backend",
     "test:postman": "newman run postman/Roomie-Juan.postman_collection.json --bail",
+    "test:postman:miguel": "newman run postman/Roomie-Miguel.postman_collection.json --bail",
     "start": "next start",
     "lint": "eslint",
     "dev:app": "next dev",
