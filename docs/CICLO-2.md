@@ -13,6 +13,15 @@ Todo está en `backend/src/`. Cada módulo tiene controladores para las rutas, s
 
 El registro crea la cuenta y la sesión en una transacción. Las contraseñas usan scrypt y las sesiones una cookie HttpOnly. Se comprueba el acceso al hogar en el servidor. No se permite retirar al último administrador ni superar ocho integrantes, incluso con invitaciones aceptadas al mismo tiempo.
 
+## Parte de Miguel
+
+- Gastos y pagos, lista de compras, mantenimiento y votaciones, con sus pantallas, sus módulos de NestJS (`backend/src/expenses/`, `shopping/`, `maintenance/` y `polls/`), Swagger y pruebas.
+- Cada módulo separa controlador, DTO, servicio, repository y reglas puras (`*.rules.ts`), e importa `DatabaseModule`, `AuthModule`, `AccessModule` y `ActivitiesModule` (Votaciones también `NotificationsModule`). Todos exportan su servicio: Inicio usa `summary()` de Gastos, Compras y Mantenimiento en vez de consultar sus tablas, y `JobsService` llama a `PollsService.closeExpired()` para cerrar las votaciones vencidas.
+- Se conservaron las rutas, las respuestas, los mensajes de error y las tablas del ciclo 1, así que las pantallas casi no cambiaron. La única adición es `can_manage` en los reportes de mantenimiento, que deshabilita el selector de estado para quien el servidor rechazaría.
+- Los importes se calculan en centavos, las operaciones que cambian saldos bloquean el apartamento y la fila afectada, y eliminar es un borrado lógico que se puede deshacer. Las justificaciones están en el [README](../README.md#decisiones-técnicas).
+- `backend/src/common/` reúne lo compartido: dinero en centavos, permisos de edición, validadores de DTO y utilidades de Swagger.
+- Pruebas: Jest por historia (servicios, reglas, DTO y rutas HTTP con los mismos pipes y filtros de `main.ts`) y la colección `postman/Roomie-Miguel.postman_collection.json`.
+
 ## Para Miguel y Tomás
 
 1. Crear su módulo dentro de `backend/src/` e importarlo en `app.module.ts`.
@@ -25,7 +34,7 @@ El registro crea la cuenta y la sesión en una transacción. Las contraseñas us
 
 `DatabaseService.query(sql, valores, client?)` devuelve las filas. `DatabaseService.transaction(async client => ...)` confirma todo junto o lo revierte si falla. Las consultas siempre llevan parámetros.
 
-Mientras se completa la migración, los módulos anteriores comparten las mismas tablas y cookies. Inicio consulta esas tablas para mostrar sus resúmenes y el worker conserva el cierre de votaciones anterior. Cuando estén los módulos de Miguel y Tomás, Dashboard deberá usar sus servicios de resumen y JobsService deberá llamar a PollsService, como propusimos en el taller. JobsModule se inicia en el worker, separado de AppModule, para poder ejecutarlo como un servicio aparte en Docker.
+Mientras se completa la migración, los módulos anteriores comparten las mismas tablas y cookies. Inicio ya usa los servicios de resumen de Gastos, Compras y Mantenimiento, y JobsService ya llama a PollsService para cerrar las votaciones vencidas, como propusimos en el taller. Cuando Tomás migre tareas y reservas, Dashboard deberá pedir también sus resúmenes a TasksService y ReservationsService, y JobsService no necesitará más cambios. JobsModule se inicia en el worker, separado de AppModule, para poder ejecutarlo como un servicio aparte en Docker.
 
 ## Clase del 9 de noviembre
 
@@ -38,7 +47,7 @@ Mientras se completa la migración, los módulos anteriores comparten las mismas
 
 La aplicación conserva español/inglés, componentes separados, formatos compartidos y pruebas del ciclo 1. Los comandos y resultados del backend están en [PRUEBAS.md](PRUEBAS.md).
 
-Antes de cerrar la parte de Juan hay que revisar los ajustes de autenticación de la clase nueva. Para la entrega del equipo también faltan los módulos de Miguel y Tomás y reunir las retrospectivas y evidencias de los tres en la wiki. Docker ya fue comprobado con la parte actual de Juan; debemos volver a probarlo después de integrar cambios. La IA real está pendiente para el bono. El release `V2.0-Final` se crea al terminar la revisión y autorizar la publicación.
+Antes de cerrar la parte de Juan hay que revisar los ajustes de autenticación de la clase nueva. Para la entrega del equipo también faltan los módulos de Tomás y reunir las retrospectivas y evidencias de los tres en la wiki. Docker ya fue comprobado con la parte actual de Juan; debemos volver a probarlo después de integrar cambios. La IA real está pendiente para el bono. El release `V2.0-Final` se crea al terminar la revisión y autorizar la publicación.
 
 Lo que más debemos cuidar al integrar es mantener los permisos y las respuestas que ya usan las pantallas. Las pruebas de API y navegador ayudan a comprobarlo después de cada migración.
 
