@@ -78,6 +78,8 @@ export interface MaintenanceReport {
   assigned_membership_id: string | null;
   assigned_to: string | null;
   can_edit: boolean;
+  /** Quien reportó, el responsable o un administrador: puede cambiar el estado y reasignar. */
+  can_manage: boolean;
   created_at: string;
   updated_at: string;
 }

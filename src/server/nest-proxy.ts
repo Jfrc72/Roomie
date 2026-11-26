@@ -1,7 +1,7 @@
 import { getLanguage, translate } from '@/lib/i18n';
 
 // Se migra por rutas para que las funcionalidades de los compañeros sigan disponibles.
-export const nestRoutes = new Set(['auth', 'session', 'homes', 'invitations', 'notifications', 'health', 'docs', 'docs-json']);
+export const nestRoutes = new Set(['auth', 'session', 'homes', 'invitations', 'notifications', 'expenses', 'payments', 'shopping', 'maintenance', 'polls', 'health', 'docs', 'docs-json']);
 
 export async function forwardToNest(request: Request, path: string[]) {
   const languageCookie = request.headers.get('cookie')?.split(';').map(value => value.trim()).find(value => value.startsWith('roomie_language='))?.split('=')[1];

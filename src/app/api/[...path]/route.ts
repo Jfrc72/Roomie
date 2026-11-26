@@ -2,11 +2,7 @@ import { ZodError } from "zod";
 import { forwardToNest, nestRoutes } from "@/server/nest-proxy";
 import { tasksApi } from "@/server/tasks-api";
 import { reservationsApi, resourcesApi } from "@/server/reservations-api";
-import { pollsApi } from "@/server/polls-api";
 import { rulesApi } from "@/server/rules-api";
-import { expensesApi } from "@/server/expenses-api";
-import { shoppingApi } from "@/server/shopping-api";
-import { maintenanceApi } from "@/server/maintenance-api";
 import { ApiError, checkOrigin } from "@/server/security";
 import { getLanguage, translate } from "@/lib/i18n";
 export const runtime = "nodejs";
@@ -35,13 +31,7 @@ async function handle(
       result = await resourcesApi(request, path);
     else if (path[0] === "reservations")
       result = await reservationsApi(request, path);
-    else if (path[0] === "polls") result = await pollsApi(request, path);
     else if (path[0] === "rules") result = await rulesApi(request, path);
-    else if (path[0] === "expenses" || path[0] === "payments")
-      result = await expensesApi(request, path);
-    else if (path[0] === "shopping") result = await shoppingApi(request, path);
-    else if (path[0] === "maintenance")
-      result = await maintenanceApi(request, path);
     else throw new ApiError(404, "Ruta no encontrada.");
     return Response.json(
       { data: result },
