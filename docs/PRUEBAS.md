@@ -36,7 +36,7 @@ La colección de Tomás revisa tareas, recursos, reservas, reglamento, reportes,
 
 `npm run test:e2e` revisa las pantallas con Playwright. Inicia la aplicación si no está abierta y necesita Google Chrome. El informe se abre con `npx playwright show-report`.
 
-Con los tres módulos integrados pasaron los 8 recorridos, la integración y las tres colecciones contra la versión compilada para producción, con una base de pruebas aparte. Con Docker se comprobaron las partes de Juan y de Miguel antes de unir la de Tomás; falta repetirlo con todo junto. Los recorridos incluyen cuentas, hogar, perfil, preferencias, invitaciones, roles, avisos, acuerdos, reservas, filtros, español/inglés, teclado y pantallas de 1280, 768 y 320 px. También se comprueba accesibilidad en las pantallas recorridas.
+Con los tres módulos integrados pasaron los 8 recorridos, la integración y las tres colecciones contra la versión compilada para producción, con una base de pruebas aparte. También pasaron con Docker, con los tres módulos juntos: los cinco servicios inician sanos, las migraciones terminan bien y el worker convierte un recordatorio vencido en aviso. Los recorridos incluyen cuentas, hogar, perfil, preferencias, invitaciones, roles, avisos, acuerdos, reservas, filtros, español/inglés, teclado y pantallas de 1280, 768 y 320 px. También se comprueba accesibilidad en las pantallas recorridas.
 
 Integración y E2E crean datos temporales y los borran al terminar. Postman archiva su hogar y cierra sus cuentas de prueba, conservando ese historial. No se deben ejecutar contra una base de datos de uso real. Correo y push se prueban con simulaciones; falta verificarlos con un proveedor configurado.
 

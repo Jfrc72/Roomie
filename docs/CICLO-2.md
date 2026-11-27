@@ -61,7 +61,7 @@ Con los módulos de los tres en NestJS, Inicio reúne el resumen de Gastos, Comp
 
 La aplicación conserva español/inglés, componentes separados, formatos compartidos y pruebas del ciclo 1. Los comandos y resultados del backend están en [PRUEBAS.md](PRUEBAS.md).
 
-Antes de cerrar la parte de Juan hay que revisar los ajustes de autenticación de la clase nueva. Para la entrega del equipo falta reunir las retrospectivas y evidencias de los tres en la wiki. Docker ya fue comprobado con las partes de Juan y de Miguel; debemos volver a probarlo con los tres módulos juntos. El asistente ya puede usar Claude; falta probarlo con una clave real. El release `V2.0-Final` se crea al terminar la revisión y autorizar la publicación.
+Antes de cerrar la parte de Juan hay que revisar los ajustes de autenticación de la clase nueva. Para la entrega del equipo falta reunir las retrospectivas y evidencias de los tres en la wiki. Docker ya se comprobó con los módulos de los tres juntos. El asistente ya puede usar Claude; falta probarlo con una clave real. El release `V2.0-Final` se crea al terminar la revisión y autorizar la publicación.
 
 Lo que más debemos cuidar al integrar es mantener los permisos y las respuestas que ya usan las pantallas. Las pruebas de API y navegador ayudan a comprobarlo después de cada migración.
 
