@@ -18,26 +18,25 @@ Dejar `npm run dev` abierto y ejecutar en otra terminal:
 ```bash
 npm run test:integration
 npm run test:postman
+npm run test:postman:miguel
 npm run test:postman:tomas
 ```
 
-Pasaron las 98 pruebas de integración, las 68 solicitudes de Postman de Juan (150 comprobaciones) y las 217 de la colección de Miguel (565 comprobaciones). Revisan respuestas válidas, entradas incorrectas, permisos, cupo del hogar, último administrador, sesiones, invitaciones, avisos propios, reparto de gastos, abonos, deshacer eliminaciones y votaciones.
+Con los módulos de los tres integrados pasaron las 98 pruebas de integración y las tres colecciones de Postman: la de Juan (68 solicitudes, 150 comprobaciones), la de Miguel (217 solicitudes, 565 comprobaciones) y la de Tomás (65 solicitudes, 158 comprobaciones). Revisan respuestas válidas, entradas incorrectas, permisos, cupo del hogar, último administrador, sesiones, invitaciones, avisos propios, reparto de gastos, abonos, deshacer eliminaciones, votaciones, tareas, reservas, reglamento y asistente.
 
-Después de migrar tareas, reservas y acuerdos volvieron a pasar las 98 pruebas de integración, las dos colecciones de Postman y los 8 recorridos de navegador, contra la versión compilada para producción y una base de pruebas aparte. La colección de Tomás tiene 65 solicitudes y 158 comprobaciones: tareas, recursos, reservas, reglamento, reportes, estado y validaciones del asistente, permisos de integrantes y visitantes, origen de las escrituras, Inicio y Swagger. No envía consultas al modelo. El camino con IA real se probó con un simulador local de la API de Anthropic; falta probarlo con una clave real y repetir todo con Docker.
-
-La colección de Juan está en `postman/Roomie-Juan.postman_collection.json` y la de Tomás en `postman/Roomie-Tomas.postman_collection.json`. Al importarlas en Postman, las variables `baseUrl` y `origin` apuntan a `http://localhost:3000/api` y `http://localhost:3000`. Si cambia el puerto, cambiar ambas. Ejecutar cada colección completa y en orden: crea sus cuentas de prueba, guarda sus datos en variables y cierra esas cuentas al terminar. No habilita correos ni push.
+Las colecciones están en `postman/`. Al importarlas en Postman, las variables `baseUrl` y `origin` apuntan a `http://localhost:3000/api` y `http://localhost:3000`. Si cambia el puerto, cambiar ambas. Ejecutar cada colección completa y en orden: crea sus cuentas de prueba, guarda sus datos en variables y al terminar archiva su hogar y cierra esas cuentas. No hay variable `token` porque la sesión va en una cookie `HttpOnly` que guarda el propio Postman. No habilitan correos ni push.
 
 Para guardar un resultado de Newman: `npm run test:postman -- --reporters cli,json --reporter-json-export .test-output/postman-juan.json`.
 
-La colección de Miguel está en `postman/Roomie-Miguel.postman_collection.json` y se ejecuta con `npm run test:postman:miguel`. Usa las mismas variables `baseUrl` y `origin`; no tiene variable `token` porque la sesión va en una cookie `HttpOnly` que guarda el propio Postman, y `apartmentId` guarda el apartamento de prueba. Ejecutarla completa y en orden. Sus carpetas son: 00 seguridad sin sesión, 01 preparación (tres cuentas y un hogar propios con correos únicos), 02 gastos y pagos, 03 lista de compras, 04 mantenimiento, 05 votaciones, 06 documentación OpenAPI y 07 limpieza (archiva el hogar y cierra las cuentas). Cada solicitud comprueba el código HTTP y la forma `{data}` o `{error}`, y las de lectura verifican los valores (cuotas que suman el total, saldos, contadores, quién compró, recuentos ocultos mientras la votación está abierta, anonimato).
+La colección de Miguel tiene estas carpetas: 00 seguridad sin sesión, 01 preparación (tres cuentas y un hogar propios con correos únicos), 02 gastos y pagos, 03 lista de compras, 04 mantenimiento, 05 votaciones, 06 documentación OpenAPI y 07 limpieza. Cada solicitud comprueba el código HTTP y la forma `{data}` o `{error}`, y las de lectura verifican los valores (cuotas que suman el total, saldos, contadores, quién compró, recuentos ocultos mientras la votación está abierta, anonimato). Antes de migrar, se ejecutó contra la implementación anterior en Next.js: pasó todo salvo los casos que dependen del contrato nuevo (campos opcionales y documentación OpenAPI). Eso comprobó que NestJS conserva el comportamiento que ya usaban las pantallas.
 
-Antes de migrar, esta colección se ejecutó contra la implementación anterior en Next.js: pasó todo salvo los casos que dependen del contrato nuevo (campos opcionales y documentación OpenAPI). Eso comprobó que NestJS conserva el comportamiento que ya usaban las pantallas.
+La colección de Tomás revisa tareas, recursos, reservas, reglamento, reportes, el estado y las validaciones del asistente, permisos de integrantes y visitantes, origen de las escrituras, Inicio y Swagger. No envía consultas al modelo de IA. El camino con IA real se probó con un simulador local de la API de Anthropic; falta probarlo con una clave real.
 
 ## Navegador
 
 `npm run test:e2e` revisa las pantallas con Playwright. Inicia la aplicación si no está abierta y necesita Google Chrome. El informe se abre con `npx playwright show-report`.
 
-Pasaron los 8 recorridos contra la versión compilada para producción. Las 98 pruebas de integración, las dos colecciones de Postman (68 y 217 solicitudes) y los 8 recorridos también pasaron con Docker. Incluyen cuentas, hogar, perfil, preferencias, invitaciones, roles, avisos, acuerdos, reservas, filtros, español/inglés, teclado y pantallas de 1280, 768 y 320 px. También se comprueba accesibilidad en las pantallas recorridas.
+Con los tres módulos integrados pasaron los 8 recorridos, la integración y las tres colecciones contra la versión compilada para producción, con una base de pruebas aparte. Con Docker se comprobaron las partes de Juan y de Miguel antes de unir la de Tomás; falta repetirlo con todo junto. Los recorridos incluyen cuentas, hogar, perfil, preferencias, invitaciones, roles, avisos, acuerdos, reservas, filtros, español/inglés, teclado y pantallas de 1280, 768 y 320 px. También se comprueba accesibilidad en las pantallas recorridas.
 
 Integración y E2E crean datos temporales y los borran al terminar. Postman archiva su hogar y cierra sus cuentas de prueba, conservando ese historial. No se deben ejecutar contra una base de datos de uso real. Correo y push se prueban con simulaciones; falta verificarlos con un proveedor configurado.
 
