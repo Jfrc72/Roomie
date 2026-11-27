@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsUUID, MaxLength, MinLength, ValidateIf } from 'class-validator';
-import { IsDateTime, Trim } from '../common/validation';
+import { IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { IsOffsetDateTime, OmitOnly, Trim } from '../common/validators';
 
 export class ResourceDto {
   @ApiProperty({ example: 'Lavadora', minLength: 2, maxLength: 80, description: 'No se repite entre los recursos activos del hogar' })
@@ -12,7 +12,7 @@ export class ResourceDto {
 
   @ApiPropertyOptional({ example: 'En el patio', maxLength: 300, default: '' })
   @Trim()
-  @ValidateIf((_object, value) => value !== undefined)
+  @OmitOnly()
   @IsString()
   @MaxLength(300)
   description = '';
@@ -24,10 +24,10 @@ export class ReservationDto {
   resource_id: string;
 
   @ApiProperty({ example: '2026-12-01T15:00:00.000Z', description: 'Fecha ISO con zona horaria; debe estar en el futuro' })
-  @IsDateTime()
+  @IsOffsetDateTime()
   starts_at: string;
 
   @ApiProperty({ example: '2026-12-01T16:00:00.000Z', description: 'Posterior al inicio; como máximo 7 días después' })
-  @IsDateTime()
+  @IsOffsetDateTime()
   ends_at: string;
 }

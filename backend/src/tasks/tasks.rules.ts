@@ -1,4 +1,6 @@
-// Reglas sin dependencias: las usan NestJS y también la interfaz (src/lib/tasks.ts).
+// Reglas sin dependencias de NestJS: las usan el servidor y también la interfaz (src/lib/tasks.ts).
+import { canManageRecord } from '../common/permissions.rules';
+
 export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 export type TaskPriority = 'low' | 'medium' | 'high';
 export const taskStatuses: TaskStatus[] = ['pending', 'in_progress', 'completed'];
@@ -6,7 +8,7 @@ export const taskPriorities: TaskPriority[] = ['low', 'medium', 'high'];
 
 // Solo quien creó la tarea o un administrador la editan, cambian de estado o eliminan.
 export function canEditTask(task: { created_by: string }, userId: string, role: 'admin' | 'member') {
-  return role === 'admin' || task.created_by === userId;
+  return canManageRecord(role, task.created_by, userId);
 }
 
 // Sin responsable, cualquier integrante puede empezarla o completarla, pero no retroceder su estado.

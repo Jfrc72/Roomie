@@ -28,7 +28,7 @@ El registro crea la cuenta y la sesión en una transacción. Las contraseñas us
 - Reservas: recursos, reservas sin cruces, calendario por rango y cancelación.
 - Acuerdos: versiones del reglamento, aceptaciones, reportes de incumplimiento y asistente con IA.
 
-Están en `backend/src/tasks/`, `backend/src/reservations/` y `backend/src/rules/`, con la misma separación que `homes/`. Las rutas y respuestas no cambiaron, así que las pantallas siguen igual. El proxy de Next ya envía `tasks`, `resources`, `reservations` y `rules` a NestJS y se retiraron sus manejadores anteriores.
+Están en `backend/src/tasks/`, `backend/src/reservations/` y `backend/src/rules/`, con la misma separación que `homes/`, y usan los pipes y validadores comunes de `backend/src/common/`. Las rutas y respuestas no cambiaron, así que las pantallas siguen igual. El proxy de Next ya envía `tasks`, `resources`, `reservations` y `rules` a NestJS y se retiraron sus manejadores anteriores.
 
 Las reglas que no dependen de la base están en archivos `*.rules.ts`. La interfaz usa la misma regla `canAdvance` que el servidor para mostrar los botones de estado. Inicio usa `TasksService.assignedSummary` y `ReservationsService.next` en lugar de consultar esas tablas.
 

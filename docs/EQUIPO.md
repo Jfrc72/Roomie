@@ -23,7 +23,7 @@ Cada parte incluye sus pantallas, módulo de NestJS, Swagger y pruebas. Juan tam
 - `backend/src/dashboard/`: resumen que se muestra en Inicio.
 - `backend/src/notifications/`: avisos y recordatorios de NestJS.
 - `backend/src/access/`: comprobación de integrantes y administradores.
-- `backend/src/common/validation.ts`: `HomeIdPipe`, `idPipe`, `Trim` e `IsDateTime`, con los mismos mensajes y formatos de la API anterior.
+- `backend/src/common/`: `params.ts` (`uuidPipe`, `requireHomeId`), `validators.ts` (`Trim`, `OmitOnly`, `Nullable`, `IsOffsetDateTime` e importes), `swagger.ts` y reglas compartidas de dinero y permisos. Conservan los mensajes y formatos de la API anterior.
 - `backend/src/database/`: consultas y transacciones de PostgreSQL.
 - `src/server/notifications.ts`: compatibilidad temporal para los módulos que siguen en la API anterior.
 

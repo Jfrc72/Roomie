@@ -1,9 +1,10 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/current-user';
 import { SessionUser } from '../auth/auth.entity';
 import { SessionGuard } from '../auth/session.guard';
-import { HomeIdPipe, idPipe } from '../common/validation';
+import { requireHomeId, uuidPipe } from '../common/params';
+import { ApiHomeQuery } from '../common/swagger';
 import { CreateTaskDto, UpdateTaskDto } from './tasks.dto';
 import { TasksService } from './tasks.service';
 
@@ -26,29 +27,29 @@ export class TasksController {
 
   @Get()
   @ApiOperation({ summary: 'Listar tareas abiertas y completadas en los últimos 30 días; can_edit indica si la persona puede editarlas' })
-  @ApiQuery({ name: 'homeId', format: 'uuid' })
+  @ApiHomeQuery()
   @ApiResponse({ status: 200, schema: { example: { data: [task] } } })
-  list(@CurrentUser() user: SessionUser, @Query('homeId', HomeIdPipe) homeId: string) { return this.tasks.list(user.id, homeId); }
+  list(@CurrentUser() user: SessionUser, @Query('homeId') homeId: string | undefined) { return this.tasks.list(user.id, requireHomeId(homeId)); }
 
   @Post()
   @HttpCode(200)
   @ApiOperation({ summary: 'Crear una tarea en estado pendiente; avisa al responsable y programa su recordatorio' })
-  @ApiQuery({ name: 'homeId', format: 'uuid' })
+  @ApiHomeQuery()
   @ApiResponse({ status: 200, schema: { example: { data: { id: 'UUID', message: 'Tarea creada.' } } } })
-  create(@CurrentUser() user: SessionUser, @Query('homeId', HomeIdPipe) homeId: string, @Body() data: CreateTaskDto) { return this.tasks.create(user, homeId, data); }
+  create(@CurrentUser() user: SessionUser, @Query('homeId') homeId: string | undefined, @Body() data: CreateTaskDto) { return this.tasks.create(user, requireHomeId(homeId), data); }
 
   @Get(':id')
   @ApiOperation({ summary: 'Consultar una tarea con su historial de estados' })
   @ApiResponse({ status: 200, schema: { example: { data: { ...task, history: [{ id: 'UUID', previous_status: null, new_status: 'pending', created_at: '2026-11-22T15:00:00.000Z', actor: 'Tomás' }] } } } })
-  detail(@CurrentUser() user: SessionUser, @Param('id', idPipe) id: string) { return this.tasks.detail(user.id, id); }
+  detail(@CurrentUser() user: SessionUser, @Param('id', uuidPipe) id: string) { return this.tasks.detail(user.id, id); }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Editar campos o cambiar el estado. Creador o administrador; sin responsable, cualquier integrante puede empezarla o completarla' })
   @ApiResponse({ status: 200, schema: { example: { data: { message: 'Tarea actualizada.' } } } })
-  update(@CurrentUser() user: SessionUser, @Param('id', idPipe) id: string, @Body() data: UpdateTaskDto) { return this.tasks.update(user, id, data); }
+  update(@CurrentUser() user: SessionUser, @Param('id', uuidPipe) id: string, @Body() data: UpdateTaskDto) { return this.tasks.update(user, id, data); }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar la tarea con su historial y su recordatorio; creador o administrador' })
   @ApiResponse({ status: 200, schema: { example: { data: { message: 'Tarea eliminada.' } } } })
-  remove(@CurrentUser() user: SessionUser, @Param('id', idPipe) id: string) { return this.tasks.remove(user.id, id); }
+  remove(@CurrentUser() user: SessionUser, @Param('id', uuidPipe) id: string) { return this.tasks.remove(user.id, id); }
 }

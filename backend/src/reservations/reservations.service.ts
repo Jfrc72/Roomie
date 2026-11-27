@@ -4,7 +4,7 @@ import { HomeAccessService } from '../access/home-access.service';
 import { ActivitiesService } from '../activities/activities.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SessionUser } from '../auth/auth.entity';
-import { isDateTime } from '../common/validation';
+import { isOffsetDateTime } from '../common/validators';
 import { ReservationDto } from './reservations.dto';
 import { ReservationsRepository } from './reservations.repository';
 import { ResourcesRepository } from './resources.repository';
@@ -25,7 +25,7 @@ export class ReservationsService {
     const role = await this.access.requireHome(userId, homeId);
     let range: { from: string; to: string } | undefined;
     if (from !== undefined || to !== undefined) {
-      if (!isDateTime(from) || !isDateTime(to)) throw new BadRequestException('Revisa los campos: los datos no son válidos.');
+      if (!from || !to || !isOffsetDateTime(from) || !isOffsetDateTime(to)) throw new BadRequestException('Revisa los campos: los datos no son válidos.');
       const problem = rangeProblem(new Date(from), new Date(to));
       if (problem) throw new BadRequestException(problem);
       range = { from, to };
