@@ -12,6 +12,14 @@ Se comprobó el arranque completo con Docker y Node.js 22. Las migraciones termi
 
 Para usar una base externa con `npm run dev`, cambiar `LOCAL_DATABASE=false` y poner su dirección en `DATABASE_URL`. Para publicar la aplicación también hace falta configurar HTTPS y poner la dirección final en `APP_URL`.
 
+## Asistente con IA
+
+1. Crear una clave en la consola de Anthropic (platform.claude.com) y guardarla en `ANTHROPIC_API_KEY` dentro de `.env`.
+2. Opcional: cambiar el modelo con `ANTHROPIC_MODEL`. Por defecto es `claude-opus-5-5`.
+3. Reiniciar la aplicación. Con Docker basta `docker compose up -d`, porque `api` lee `.env` al iniciar.
+
+En Acuerdos, la etiqueta del asistente pasa de «IA simulada» a «IA con Claude». Para volver al asistente simulado, dejar la variable vacía y reiniciar. Cada consulta tiene costo; la API limita a 10 consultas cada 10 minutos por persona y solo permite consultar a los administradores.
+
 ## Correo
 
 Completar las variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` y `SMTP_FROM` en `.env`, y reiniciar la aplicación y el worker.

@@ -2,7 +2,7 @@
 
 Todas empiezan por `/api`. La respuesta tiene `{data: ...}` o `{error: "mensaje"}`. Las escrituras envían JSON y usan la sesión del usuario. En scripts de prueba, enviar también `Origin` igual a `APP_URL`.
 
-Las rutas de cuentas, sesión, apartamentos, integrantes, invitaciones, inicio, notificaciones, gastos, pagos, compras, mantenimiento y votaciones ya están en NestJS. Swagger se consulta en `/api/docs/` y su esquema en `/api/docs-json`. Las demás rutas (tareas, reservas y acuerdos) siguen en Next.js hasta que se migren. Las colecciones de `postman/` prueban la parte de Juan (`Roomie-Juan`) y la de Miguel (`Roomie-Miguel`: gastos, pagos, compras, mantenimiento y votaciones).
+Todas las rutas ya están en NestJS: cuentas, sesión, apartamentos, integrantes, invitaciones, inicio, notificaciones, gastos, pagos, compras, mantenimiento, votaciones, tareas, recursos, reservas y acuerdos. Swagger se consulta en `/api/docs/` y su esquema en `/api/docs-json`. Las colecciones de `postman/` prueban la parte de Juan (`Roomie-Juan`), la de Miguel (`Roomie-Miguel`: gastos, pagos, compras, mantenimiento y votaciones) y la de Tomás (`Roomie-Tomas`: tareas, reservas, acuerdos y asistente).
 
 La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tareas y reservas con horario usan fechas ISO con zona horaria.
 
@@ -52,6 +52,8 @@ La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tarea
 | POST   | `/rules/:id/accept`                                            | `{}`; acepta la versión vigente (409 si hay una más reciente)                                                                                     |
 | POST   | `/rules/reports?homeId=...`                                    | `{clause, description, reported_membership_id}`; reporta un acuerdo incumplido.                                                                   |
 | POST   | `/rules/reports/:id/resolve`                                   | `{}`; marca el reporte como resuelto y avisa a quien lo hizo; solo administrador                                                                  |
+| GET    | `/rules/assistant?homeId=...`                                  | `{mode: "ai" \| "simulated", model}`; indica si el asistente usa Claude o respuestas simuladas                                                  |
+| POST   | `/rules/assistant?homeId=...`                                  | `{prompt, draft, language}`; devuelve `{text, clauses}`. Solo administrador; 503 sin `ANTHROPIC_API_KEY`, 429 tras 10 consultas en 10 minutos     |
 | GET    | `/expenses?homeId=...`                                         | Gastos, cuotas, resumen mensual, saldos entre integrantes y pagos recientes                                                                       |
 | POST   | `/expenses?homeId=...`                                         | `{title, category, paid_by_id, total_amount, expense_date, participant_ids}`; divide exactamente hasta centavos                                   |
 | PATCH  | `/expenses/:id`                                                | Actualiza el gasto y regenera su división                                                                                                         |
@@ -72,7 +74,7 @@ La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tarea
 | DELETE | `/homes/:id`                                                   | Archiva el hogar; solo administrador.                                                                                                             |
 | DELETE | `/notifications/:id`                                           | Elimina un aviso propio de la bandeja.                                                                                                            |
 
-Los permisos y criterios de cada operación están en [HISTORIAS.md](HISTORIAS.md). El código de NestJS está en `backend/src/`; las rutas que ya migraron se reenvían desde `src/server/nest-proxy.ts` y las de tareas, reservas, votaciones y acuerdos siguen en `src/server/`, conectadas en `src/app/api/[...path]/route.ts`.
+Los permisos y criterios de cada operación están en [HISTORIAS.md](HISTORIAS.md). El código de NestJS está en `backend/src/`. `src/app/api/[...path]/route.ts` revisa el origen y `src/server/nest-proxy.ts` reenvía a NestJS los prefijos de `nestRoutes`.
 
 ## Gastos, pagos, compras, mantenimiento y votaciones
 
@@ -85,4 +87,4 @@ Estas rutas exigen sesión y que la persona pertenezca al apartamento de `homeId
 - **Votaciones:** llevan de 2 a 10 opciones distintas (sin distinguir mayúsculas) y `rule` `simple` o `unanimous`; `closes_at`, si se envía, lleva zona horaria y debe estar en el futuro. Se vota, y se puede cambiar el voto, mientras esté abierta (409 si ya cerró o venció). Abierta, solo se informa cuántas personas votaron y el voto propio; cerrada, se publican los recuentos y, si es pública, quién eligió cada opción. Cierra quien la creó o un administrador; también se cierra sola al llegar su fecha (el worker lo hace cada 15 segundos y el listado cierra las vencidas antes de responder) y avisa el resultado a los integrantes.
 - **Errores:** 400 con `{error}` ante datos inválidos (`Revisa los campos: los datos no son válidos.`) o integrantes ajenos al apartamento; los filtros inválidos de mantenimiento responden `Filtro de estado no válido.` o `Filtro de prioridad no válido.`.
 
-Errores comunes: 400 (datos inválidos), 401 (sin sesión), 403 (sin permiso), 404 (no encontrado), 409 (conflicto) y 429 (demasiados intentos de ingreso).
+Errores comunes: 400 (datos inválidos), 401 (sin sesión), 403 (sin permiso), 404 (no encontrado), 409 (conflicto) y 429 (demasiados intentos de ingreso o de consultas al asistente). El asistente también puede responder 422 (el modelo no ayuda con esa petición), 502 (respuesta incompleta) o 503 (IA no configurada o no disponible).

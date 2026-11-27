@@ -1,0 +1,2377 @@
+{
+  "info": {
+    "name": "Roomie ciclo 2 - Parte de Tomás",
+    "description": "Ejecutar completa y en orden con la aplicación iniciada. Comprueba tareas, reservas, acuerdos, el asistente, permisos y Swagger. Crea cuentas de prueba con correos únicos y al final archiva el hogar y cierra esas cuentas. No envía consultas al modelo de IA: solo revisa su estado y sus validaciones.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Estado de NestJS y PostgreSQL",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);",
+              "for (const name of [\"owner\", \"member\", \"outsider\"]) pm.collectionVariables.set(name + \"Email\", \"postman-tomas-\" + suffix + \"-\" + name + \"@roomie.test\");",
+              "// Horarios en el futuro para que las reservas sean válidas cada vez que se ejecute.",
+              "const base = new Date(Date.now() + 2 * 86400000); base.setUTCHours(15, 0, 0, 0);",
+              "const at = hours => new Date(base.getTime() + hours * 3600000).toISOString();",
+              "for (const [name, hours] of [[\"startA\", 0], [\"endA\", 1], [\"overlapStart\", 0.5], [\"overlapEnd\", 1.5], [\"nextEnd\", 2], [\"from\", -24], [\"to\", 24], [\"farTo\", 24 * 40]]) pm.collectionVariables.set(name, at(hours));",
+              "pm.collectionVariables.set(\"due\", at(48));",
+              "pm.collectionVariables.set(\"pastDue\", new Date(Date.now() - 86400000).toISOString());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"PostgreSQL responde\", () => pm.expect(json.data.status).to.eql(\"ok\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Registrar administrador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Prueba administrador\",\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Crear apartamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Apartamento Postman Tomás\",\n  \"address\": \"\",\n  \"description\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"homeId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Las tareas exigen elegir un apartamento",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));",
+              "pm.test(\"Error esperado\", () => pm.expect(json.error).to.eql(\"Selecciona un apartamento.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Rechazar una tarea sin título",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \" \",\n  \"description\": \"\",\n  \"assigned_membership_id\": null,\n  \"due_at\": null,\n  \"priority\": \"medium\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Rechazar una fecha límite pasada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Sacar la basura\",\n  \"due_at\": \"{{pastDue}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));",
+              "pm.test(\"Error esperado\", () => pm.expect(json.error).to.eql(\"La fecha límite no puede estar en el pasado.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Crear tarea",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Sacar la basura\",\n  \"description\": \"Bolsas negras\",\n  \"assigned_membership_id\": null,\n  \"due_at\": \"{{due}}\",\n  \"priority\": \"high\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Tarea creada.\"));",
+              "pm.collectionVariables.set(\"taskId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 La tarea empieza pendiente con su historial",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Pendiente\", () => pm.expect(json.data.status).to.eql(\"pending\"));",
+              "pm.test(\"Historial inicial\", () => pm.expect(json.data.history).to.have.length(1));",
+              "pm.test(\"El autor puede editarla\", () => pm.expect(json.data.can_edit).to.eql(true));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Listar tareas del hogar",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Incluye la tarea\", () => pm.expect(json.data.map(t => t.id)).to.include(pm.collectionVariables.get(\"taskId\")));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Empezar la tarea",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"in_progress\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Tarea actualizada.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Rechazar un estado desconocido",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"terminada\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Rechazar campos no permitidos",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Otra\",\n  \"created_by\": \"alguien\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Rechazar un identificador inválido",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/no-es-un-id"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));",
+              "pm.test(\"Error esperado\", () => pm.expect(json.error).to.eql(\"Identificador inválido.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Agregar un recurso",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/resources?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Lavadora\",\n  \"description\": \"En el patio\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"resourceId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 No repetir el nombre de un recurso activo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/resources?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"lavadora\",\n  \"description\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Reservar el recurso",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resource_id\": \"{{resourceId}}\",\n  \"starts_at\": \"{{startA}}\",\n  \"ends_at\": \"{{endA}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Reserva creada.\"));",
+              "pm.collectionVariables.set(\"reservationId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 Impedir una reserva que se cruza",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resource_id\": \"{{resourceId}}\",\n  \"starts_at\": \"{{overlapStart}}\",\n  \"ends_at\": \"{{overlapEnd}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 Permitir una reserva consecutiva",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resource_id\": \"{{resourceId}}\",\n  \"starts_at\": \"{{endA}}\",\n  \"ends_at\": \"{{nextEnd}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"nextReservationId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 Rechazar un horario invertido",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resource_id\": \"{{resourceId}}\",\n  \"starts_at\": \"{{endA}}\",\n  \"ends_at\": \"{{startA}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 Calendario con las reservas del rango",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations?homeId={{homeId}}&from={{from}}&to={{to}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Trae las dos reservas\", () => pm.expect(json.data).to.have.length(2));",
+              "pm.test(\"Quien reservó puede cancelar\", () => pm.expect(json.data.every(r => r.can_cancel)).to.eql(true));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 Rechazar un rango de más de 31 días",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations?homeId={{homeId}}&from={{from}}&to={{farTo}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 Publicar la primera versión del reglamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Cada persona lava lo que usa en la cocina el mismo día.\\n\\nSilencio desde las 10 p. m. hasta las 7 a. m.\",\n  \"notes\": \"Primera versión\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Versión 1\", () => pm.expect(json.data.version).to.eql(1));",
+              "pm.collectionVariables.set(\"versionId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 No publicar el mismo texto dos veces",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Cada persona lava lo que usa en la cocina el mismo día.\\n\\nSilencio desde las 10 p. m. hasta las 7 a. m.\",\n  \"notes\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "24 Quien publica acepta la versión",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Versión vigente\", () => pm.expect(json.data.current.version).to.eql(1));",
+              "pm.test(\"Aceptada por quien publica\", () => pm.expect(json.data.accepted_by_me).to.eql(true));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "25 Consultar el modo del asistente",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/assistant?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"IA real o simulada\", () => pm.expect([\"ai\", \"simulated\"]).to.include(json.data.mode));",
+              "pm.collectionVariables.set(\"assistantMode\", json.data.mode);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "26 El asistente exige una petición",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/assistant?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"\",\n  \"draft\": \"\",\n  \"language\": \"es\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "27 Invitar a un integrante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{memberEmail}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.collectionVariables.set(\"inviteToken\", json.data.url.split(\"token=\")[1]);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "28 Cerrar sesión del administrador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "29 Registrar integrante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Prueba integrante\",\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "30 Aceptar la invitación",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/invitations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{inviteToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "31 Un integrante no agrega recursos",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/resources?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sala\",\n  \"description\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "32 Un integrante no publica el reglamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Texto de un integrante.\",\n  \"notes\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "33 Un integrante no consulta al asistente",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/assistant?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"Reglas para las visitas\",\n  \"draft\": \"\",\n  \"language\": \"es\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "34 Un integrante no cancela una reserva ajena",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations/{{reservationId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "35 Un integrante no edita una tarea ajena",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Cambio no permitido\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "36 Aceptar el reglamento vigente",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/{{versionId}}/accept",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Aceptaste el reglamento.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "37 Aceptar otra vez no duplica el registro",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/{{versionId}}/accept",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Ya habías aceptado esta versión.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "38 No reportar un acuerdo que no está en el reglamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/reports?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clause\": \"Nadie paga el arriendo\",\n  \"description\": \"\",\n  \"reported_membership_id\": null\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 400\", () => pm.response.to.have.status(400));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "39 Reportar un incumplimiento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/reports?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clause\": \"Cada persona lava lo que usa en la cocina el mismo día.\",\n  \"description\": \"La loza quedó sucia\",\n  \"reported_membership_id\": null\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Reporte enviado.\"));",
+              "pm.collectionVariables.set(\"reportId\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "40 Un integrante no resuelve reportes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/reports/{{reportId}}/resolve",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "41 Cerrar la cuenta del integrante",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/account",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "42 Registrar una persona ajena al hogar",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Prueba visitante\",\n  \"email\": \"{{outsiderEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "43 Un visitante no ve las tareas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "44 Un visitante no consulta una tarea por id",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "45 Un visitante no ve las reservas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "46 Un visitante no ve los recursos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/resources?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "47 Un visitante no ve el reglamento",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules?homeId={{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "48 Rechazar escrituras desde otro origen",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "https://otro-sitio.example"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks?homeId={{homeId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Ataque\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 403\", () => pm.response.to.have.status(403));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "49 Cerrar la cuenta visitante",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/account",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "50 Volver a entrar como administrador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "51 Resolver el reporte",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/reports/{{reportId}}/resolve",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Reporte resuelto.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "52 Un reporte resuelto no se resuelve otra vez",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/rules/reports/{{reportId}}/resolve",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "53 Cancelar la primera reserva",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations/{{reservationId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Reserva cancelada.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "54 No cancelar dos veces la misma reserva",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations/{{reservationId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "55 No retirar un recurso con reservas próximas",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/resources/{{resourceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "56 Cancelar la reserva consecutiva",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/reservations/{{nextReservationId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "57 Retirar el recurso sin reservas próximas",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/resources/{{resourceId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Recurso retirado.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "58 Completar la tarea",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"completed\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "59 El historial guarda cada cambio de estado",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Tres registros\", () => pm.expect(json.data.history).to.have.length(3));",
+              "pm.test(\"Fecha de cumplimiento\", () => pm.expect(json.data.completed_at).to.be.a(\"string\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "60 Eliminar la tarea",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Mensaje esperado\", () => pm.expect(json.data.message).to.eql(\"Tarea eliminada.\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "61 La tarea eliminada ya no existe",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 404\", () => pm.response.to.have.status(404));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"error\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "62 Inicio usa los resúmenes de tareas y reservas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}/dashboard"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));",
+              "pm.test(\"Sin tareas abiertas\", () => pm.expect(json.data.summary.pendingTasks).to.eql(0));",
+              "pm.test(\"Sin próximas reservas\", () => pm.expect(json.data.summary.nextReservation).to.eql(null));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "63 Swagger documenta las rutas migradas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/docs-json"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Rutas de tareas, reservas y acuerdos\", () => [\"/api/tasks\", \"/api/resources\", \"/api/reservations\", \"/api/rules\", \"/api/rules/assistant\"].forEach(path => pm.expect(json.paths).to.have.property(path)));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "64 Archivar el apartamento de prueba",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/homes/{{homeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "65 Cerrar la cuenta administradora de prueba",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{origin}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/account",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Código HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Formato de respuesta\", () => pm.expect(json).to.have.property(\"data\"));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "origin",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "password",
+      "value": "RoomiePrueba2026!"
+    }
+  ]
+}

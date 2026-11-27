@@ -13,6 +13,9 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { ShoppingModule } from './shopping/shopping.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { PollsModule } from './polls/polls.module';
+import { TasksModule } from './tasks/tasks.module';
+import { ReservationsModule } from './reservations/reservations.module';
+import { RulesModule } from './rules/rules.module';
 import { OriginGuard } from './common/origin.guard';
 
 @ApiTags('Estado del servidor')
@@ -31,7 +34,10 @@ class HealthController {
 }
 
 @Module({
-  imports: [DatabaseModule, AuthModule, AccessModule, ActivitiesModule, HomesModule, NotificationsModule, DashboardModule, ExpensesModule, ShoppingModule, MaintenanceModule, PollsModule],
+  imports: [
+    DatabaseModule, AuthModule, AccessModule, ActivitiesModule, HomesModule, NotificationsModule, DashboardModule,
+    ExpensesModule, ShoppingModule, MaintenanceModule, PollsModule, TasksModule, ReservationsModule, RulesModule,
+  ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: OriginGuard }],
 })

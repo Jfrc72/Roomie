@@ -4,7 +4,7 @@ Proyecto para organizar la convivencia en un apartamento: gastos, tareas, compra
 
 Usamos Next.js y React para las pantallas, NestJS para el backend del ciclo 2, TypeScript y PostgreSQL.
 
-Las partes de Juan (cuentas, apartamentos, integrantes y avisos) y de Miguel (gastos y pagos, compras, mantenimiento y votaciones) ya usan NestJS. Los módulos de Tomás conservan su API anterior mientras él hace la migración. [Estado y pasos para continuar](docs/CICLO-2.md).
+Todos los módulos ya usan NestJS: Juan (cuentas, apartamentos, integrantes y avisos), Miguel (gastos y pagos, compras, mantenimiento y votaciones) y Tomás (tareas, reservas, acuerdos y asistente con IA). [Estado y pasos para continuar](docs/CICLO-2.md).
 
 Con las notas de la clase del 9 de noviembre queda pendiente adaptar la autenticación a JWT. La versión actual usa sesiones en PostgreSQL y cookies HttpOnly.
 
@@ -63,6 +63,16 @@ Para crear las cuentas de ejemplo en Docker, completar `DEMO_PASSWORD` y ejecuta
 
 Si el puerto 3000 está ocupado, cambiar `APP_PORT=3018` y `APP_URL=http://localhost:3018` en `.env` antes de iniciar Docker.
 
+## Asistente de acuerdos con IA
+
+Sin configuración, el asistente de Acuerdos responde con ejemplos simulados y lo indica con la etiqueta «IA simulada». Para usar Claude, poner una clave de la API de Anthropic en `.env` y reiniciar (en Docker, `docker compose up -d`):
+
+```dotenv
+ANTHROPIC_API_KEY=clave-propia
+```
+
+La clave solo la lee NestJS; el navegador nunca la recibe. La etiqueta cambia a «IA con Claude». Por defecto se usa `claude-opus-5-5`; `ANTHROPIC_MODEL` permite cambiarlo. Cada consulta envía a Anthropic la petición, el borrador y los nombres de los integrantes del hogar, y tiene costo: solo los administradores pueden consultar y cada persona tiene un límite de 10 consultas cada 10 minutos.
+
 ## Pruebas
 
 ```bash
@@ -73,11 +83,11 @@ npm run test:hu
 npm run test:coverage
 ```
 
-`test:hu` ejecuta las 137 unitarias de Vitest y las 490 de Jest (NestJS) y revisa que cada una de las 39 historias tenga al menos tres aprobadas. `test:coverage` ejecuta las 490 unitarias del backend y exige mínimo 65% de cobertura (hoy 99,9%). Ninguna necesita servidor ni base de datos.
+`test:hu` ejecuta las 100 unitarias de Vitest y las 574 de Jest (NestJS) y revisa que cada una de las 39 historias tenga al menos tres aprobadas. `test:coverage` ejecuta las 574 unitarias del backend y exige mínimo 65% de cobertura (hoy 99,7%). Ninguna necesita servidor, base de datos ni clave de IA.
 
 Para las pruebas de la API, dejar `npm run dev` abierto y ejecutar `npm run test:integration` en otra terminal.
 
-Hay dos colecciones de Postman en `postman/`: `Roomie-Juan.postman_collection.json` (cuentas, apartamentos, integrantes y avisos) y `Roomie-Miguel.postman_collection.json` (gastos y pagos, compras, mantenimiento y votaciones). Se pueden importar en Postman o ejecutar con `npm run test:postman` y `npm run test:postman:miguel`; prueban las rutas migradas, sus permisos y sus validaciones. Como la sesión va en una cookie `HttpOnly`, no hay variable `token`: el almacén de cookies de Postman/Newman hace ese papel, y `apartmentId` guarda el apartamento de prueba.
+Hay tres colecciones de Postman en `postman/`: `Roomie-Juan.postman_collection.json` (cuentas, apartamentos, integrantes y avisos), `Roomie-Miguel.postman_collection.json` (gastos y pagos, compras, mantenimiento y votaciones) y `Roomie-Tomas.postman_collection.json` (tareas, reservas, acuerdos y asistente). Se pueden importar en Postman o ejecutar con `npm run test:postman`, `npm run test:postman:miguel` y `npm run test:postman:tomas`; prueban las rutas migradas, sus permisos y sus validaciones. Como la sesión va en una cookie `HttpOnly`, no hay variable `token`: el almacén de cookies de Postman/Newman hace ese papel.
 
 Para los recorridos de navegador:
 
@@ -105,7 +115,7 @@ Al subir cambios o abrir un pull request, GitHub Actions revisa lint, tipos, uni
 - **Diseño:** CSS compartido, selector español/inglés, campos con etiquetas y navegación con teclado.
 - **Worker:** proceso aparte para recordatorios, entregas y cierre automático de votaciones vencidas; es el `JobsService` de NestJS ejecutado cada 15 segundos. Docker inicia la base, las migraciones, la API NestJS, las pantallas y este proceso.
 - **Pruebas:** Jest para los servicios de NestJS, Vitest para la parte anterior, Postman y `node:test` para la API, y Playwright para el navegador.
-- **Asistente de acuerdos:** por ahora responde con ejemplos simulados. Tomás tiene pendiente la conexión con una IA real para el bono.
+- **Asistente de acuerdos:** NestJS consulta a Claude con el SDK oficial de Anthropic y pide la respuesta como JSON con un esquema fijo, para mostrar cada acuerdo con su botón. Sin `ANTHROPIC_API_KEY` responde el asistente simulado, así la aplicación y las pruebas funcionan sin clave.
 
 ## Documentación
 

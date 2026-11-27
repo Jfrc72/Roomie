@@ -6,31 +6,40 @@ import { assistantExamples } from "@/lib/assistant";
 import RuleText from "@/components/rules/RuleText";
 
 export default function RuleAssistant({
+  homeId,
   draft,
   members,
   onAdd,
 }: {
+  homeId: string;
   draft: string;
   members: string[];
   onAdd: (clause: string) => void;
 }) {
   const { t } = useLanguage();
-  const { prompt, setPrompt, turns, loading, ask } = useRuleAssistant(
-    draft,
-    members,
-  );
+  const { prompt, setPrompt, turns, loading, ask, mode, model } =
+    useRuleAssistant(homeId, draft, members);
+  const busy = loading || !mode;
   return (
     <section className="panel">
       <div className="section-title">
         <h2>
           <Sparkles size={20} /> {t("Asistente de acuerdos")}
         </h2>
-        <span className="badge">{t("IA simulada")}</span>
+        {mode && (
+          <span className="badge" title={model ?? undefined}>
+            {mode === "ai" ? t("IA con Claude") : t("IA simulada")}
+          </span>
+        )}
       </div>
       <p>
-        {t(
-          "Pídele ideas para el reglamento o que revise tu borrador. Las respuestas son de demostración y no provienen de un modelo real.",
-        )}
+        {mode === "ai"
+          ? t(
+              "Pídele ideas para el reglamento o que revise tu borrador. Tu petición, el borrador y los nombres de los integrantes se envían a Claude, de Anthropic, para generar la respuesta. Revisa las sugerencias antes de publicarlas.",
+            )
+          : t(
+              "Pídele ideas para el reglamento o que revise tu borrador. Las respuestas son de demostración y no provienen de un modelo real.",
+            )}
       </p>
       <div aria-live="polite" aria-busy={loading}>
         {turns.map((turn, i) => (
@@ -61,6 +70,20 @@ export default function RuleAssistant({
                   </div>
                 ))}
               </div>
+            ) : turn.error ? (
+              <div className="invite-result">
+                <p className="error" role="alert">
+                  {t(turn.error)}
+                </p>
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={busy}
+                  onClick={() => ask(turn.prompt)}
+                >
+                  {t("Reintentar")}
+                </button>
+              </div>
             ) : (
               <div className="invite-result" role="status">
                 <span className="assistant-thinking">
@@ -89,7 +112,7 @@ export default function RuleAssistant({
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={t("Ej. Necesitamos reglas para las visitas")}
             maxLength={300}
-            disabled={loading}
+            disabled={busy}
           />
         </label>
         <div className="actions">
@@ -98,14 +121,14 @@ export default function RuleAssistant({
               key={example}
               type="button"
               className="text-button"
-              disabled={loading}
+              disabled={busy}
               onClick={() => ask(t(example))}
             >
               {t(example)}
             </button>
           ))}
         </div>
-        <button type="submit" disabled={loading || !prompt.trim()}>
+        <button type="submit" disabled={busy || !prompt.trim()}>
           {loading ? t("Generando…") : t("Pedir sugerencias")}
         </button>
       </form>
