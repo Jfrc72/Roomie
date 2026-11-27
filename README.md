@@ -4,7 +4,7 @@ Proyecto para organizar la convivencia en un apartamento: gastos, tareas, compra
 
 Usamos Next.js y React para las pantallas, NestJS para el backend del ciclo 2, TypeScript y PostgreSQL.
 
-Las partes de Juan y Tomás ya usan NestJS. Los módulos de Miguel conservan su API anterior mientras se migran. [Estado y pasos para continuar](docs/CICLO-2.md).
+Todos los módulos ya usan NestJS: Juan (cuentas, apartamentos, integrantes y avisos), Miguel (gastos y pagos, compras, mantenimiento y votaciones) y Tomás (tareas, reservas, acuerdos y asistente con IA). [Estado y pasos para continuar](docs/CICLO-2.md).
 
 Con las notas de la clase del 9 de noviembre queda pendiente adaptar la autenticación a JWT. La versión actual usa sesiones en PostgreSQL y cookies HttpOnly.
 
@@ -83,11 +83,11 @@ npm run test:hu
 npm run test:coverage
 ```
 
-`test:hu` ejecuta las 139 unitarias de Vitest y las 245 de Jest del backend, y revisa que cada una de las 39 historias tenga al menos tres aprobadas. `test:coverage` ejecuta las 245 unitarias del backend y exige mínimo 65% de cobertura. Ninguna necesita servidor, base de datos ni clave de IA.
+`test:hu` ejecuta las 100 unitarias de Vitest y las 574 de Jest (NestJS) y revisa que cada una de las 39 historias tenga al menos tres aprobadas. `test:coverage` ejecuta las 574 unitarias del backend y exige mínimo 65% de cobertura (hoy 99,7%). Ninguna necesita servidor, base de datos ni clave de IA.
 
 Para las pruebas de la API, dejar `npm run dev` abierto y ejecutar `npm run test:integration` en otra terminal.
 
-Las colecciones de Postman están en `postman/`. Se pueden importar en Postman o ejecutar con `npm run test:postman` (cuentas, apartamentos y avisos) y `npm run test:postman:tomas` (tareas, reservas, acuerdos y asistente); prueban las rutas migradas y sus permisos.
+Hay tres colecciones de Postman en `postman/`: `Roomie-Juan.postman_collection.json` (cuentas, apartamentos, integrantes y avisos), `Roomie-Miguel.postman_collection.json` (gastos y pagos, compras, mantenimiento y votaciones) y `Roomie-Tomas.postman_collection.json` (tareas, reservas, acuerdos y asistente). Se pueden importar en Postman o ejecutar con `npm run test:postman`, `npm run test:postman:miguel` y `npm run test:postman:tomas`; prueban las rutas migradas, sus permisos y sus validaciones. Como la sesión va en una cookie `HttpOnly`, no hay variable `token`: el almacén de cookies de Postman/Newman hace ese papel.
 
 Para los recorridos de navegador:
 
@@ -105,10 +105,15 @@ Al subir cambios o abrir un pull request, GitHub Actions revisa lint, tipos, uni
 
 - **Next.js, React y NestJS:** las pantallas siguen en Next.js. En NestJS separamos rutas, validaciones, lógica y consultas en módulos pequeños.
 - **PostgreSQL:** para guardar la relación entre apartamentos, integrantes y sus registros. Las consultas usan parámetros y las migraciones están en `db/`.
-- **Sesiones y permisos:** usamos cookies y contraseñas guardadas con hash. El servidor comprueba quién puede ver o modificar cada registro.
+- **`pg` y repositories, sin ORM:** NestJS consulta PostgreSQL con `pg`, consultas parametrizadas y una clase de entidad por tabla (`*.entity.ts`). No usamos TypeORM ni Prisma porque las tablas y migraciones de `db/` ya existían y el resto del backend usa este mismo estilo: así hay una sola forma de acceder a los datos, cada consulta se ve completa (`FOR UPDATE`, `unnest`, agregaciones) y las transacciones son explícitas con `DatabaseService.transaction`.
+- **Gastos, compras, mantenimiento y votaciones:** cada módulo separa controlador (rutas y Swagger), DTO (validación con `class-validator`), servicio (reglas), repository (SQL) y reglas puras (`*.rules.ts`, sin dependencias, fáciles de probar). Los controladores no calculan ni consultan.
+- **Dinero en centavos:** los importes se guardan como `numeric(12,2)` y se calculan en centavos enteros, nunca con decimales de coma flotante. Un gasto se reparte en cuotas que suman exactamente su total; los centavos sobrantes los asume quien pagó. Los montos con más de dos decimales se rechazan.
+- **Concurrencia:** las operaciones que cambian saldos o cupos bloquean el apartamento y la fila afectada (`FOR UPDATE`, siempre en el mismo orden). Así dos pagos, ediciones o cierres simultáneos no se pisan, y ningún voto entra después del recuento.
+- **Borrado lógico y deshacer:** gastos, productos y reportes se eliminan con `deleted_at` y se restauran con `POST /.../restore`, que es lo que usa el botón "Deshacer" de la interfaz.
+- **Sesiones y permisos:** usamos cookies y contraseñas guardadas con hash. El servidor comprueba quién puede ver o modificar cada registro: `SessionGuard` identifica a la persona y `HomeAccessService` comprueba su pertenencia y su rol en el apartamento del registro.
 - **Hooks y componentes compartidos:** para reutilizar formularios, carga de datos, filtros y navegación.
 - **Diseño:** CSS compartido, selector español/inglés, campos con etiquetas y navegación con teclado.
-- **Worker:** proceso aparte para recordatorios y cierre de votaciones. Docker inicia la base, las migraciones, la API NestJS, las pantallas y este proceso.
+- **Worker:** proceso aparte para recordatorios, entregas y cierre automático de votaciones vencidas; es el `JobsService` de NestJS ejecutado cada 15 segundos. Docker inicia la base, las migraciones, la API NestJS, las pantallas y este proceso.
 - **Pruebas:** Jest para los servicios de NestJS, Vitest para la parte anterior, Postman y `node:test` para la API, y Playwright para el navegador.
 - **Asistente de acuerdos:** NestJS consulta a Claude con el SDK oficial de Anthropic y pide la respuesta como JSON con un esquema fijo, para mostrar cada acuerdo con su botón. Sin `ANTHROPIC_API_KEY` responde el asistente simulado, así la aplicación y las pruebas funcionan sin clave.
 

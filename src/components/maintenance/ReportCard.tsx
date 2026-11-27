@@ -66,6 +66,7 @@ export default function ReportCard({
           <select
             aria-label={t("Estado de {value1}", { value1: report.title })}
             value={report.status}
+            disabled={!report.can_manage}
             onChange={(event) =>
               void onStatusChange(
                 event.target.value as MaintenanceStatus,

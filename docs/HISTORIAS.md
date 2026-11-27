@@ -13,7 +13,7 @@ Cada historia incluye responsable, prioridad, estimación, estado, criterios, mo
 | Reservas | 4 | Tomás |
 | Mantenimiento | 3 | Miguel |
 | Notificaciones | 3 | Juan |
-| Votaciones | 5 | Tomás |
+| Votaciones | 5 | Miguel |
 | Acuerdos | 5 | Tomás |
 | Cuentas y perfil | 3 | Juan |
 | **Total** | **39** | **3 integrantes** |
@@ -97,11 +97,13 @@ Como administrador quiero cambiar el rol de los integrantes para compartir la ad
 
 ### HU2.1 Registrar un gasto con división exacta
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-138) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-670).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 7 unitarias en [expenses.service.spec.ts](../backend/test/expenses.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [expenses.rules.spec.ts](../backend/test/expenses.rules.spec.ts), [expenses.dto.spec.ts](../backend/test/expenses.dto.spec.ts), [expenses.http.spec.ts](../backend/test/expenses.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero registrar un gasto y dividirlo entre los participantes para saber cuánto le corresponde a cada uno.
 
@@ -113,11 +115,13 @@ Como integrante quiero registrar un gasto y dividirlo entre los participantes pa
 
 ### HU2.2 Ver el resumen y los saldos
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 5 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-166) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-698).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 10 unitarias en [expenses.service.spec.ts](../backend/test/expenses.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [expenses.rules.spec.ts](../backend/test/expenses.rules.spec.ts), [expenses.dto.spec.ts](../backend/test/expenses.dto.spec.ts), [expenses.http.spec.ts](../backend/test/expenses.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero ver cuánto se gastó, cuánto debo y cuánto me deben para saber quién debe dinero.
 
@@ -129,11 +133,13 @@ Como integrante quiero ver cuánto se gastó, cuánto debo y cuánto me deben pa
 
 ### HU2.3 Editar y eliminar gastos
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-121) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-653).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 10 unitarias en [expenses.service.spec.ts](../backend/test/expenses.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [expenses.rules.spec.ts](../backend/test/expenses.rules.spec.ts), [expenses.dto.spec.ts](../backend/test/expenses.dto.spec.ts), [expenses.http.spec.ts](../backend/test/expenses.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero corregir o eliminar un gasto para mantener el historial correcto.
 
@@ -245,11 +251,13 @@ Como integrante quiero editar, eliminar y filtrar tareas para mantener el tabler
 
 ### HU4.1 Agregar productos
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-422) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-846).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 7 unitarias en [shopping.service.spec.ts](../backend/test/shopping.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [shopping.rules.spec.ts](../backend/test/shopping.rules.spec.ts), [shopping.http.spec.ts](../backend/test/shopping.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero agregar productos a la lista para organizar las compras comunes.
 
@@ -261,11 +269,13 @@ Como integrante quiero agregar productos a la lista para organizar las compras c
 
 ### HU4.2 Marcar productos comprados
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-406) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-830).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 5 unitarias en [shopping.service.spec.ts](../backend/test/shopping.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [shopping.rules.spec.ts](../backend/test/shopping.rules.spec.ts), [shopping.http.spec.ts](../backend/test/shopping.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero marcar un producto como comprado para que nadie lo compre dos veces.
 
@@ -277,11 +287,13 @@ Como integrante quiero marcar un producto como comprado para que nadie lo compre
 
 ### HU4.3 Editar y eliminar productos
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-406) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-830).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 9 unitarias en [shopping.service.spec.ts](../backend/test/shopping.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [shopping.rules.spec.ts](../backend/test/shopping.rules.spec.ts), [shopping.http.spec.ts](../backend/test/shopping.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero corregir o quitar productos para mantener la lista al día.
 
@@ -361,11 +373,13 @@ Como integrante quiero cancelar una reserva para liberar el horario.
 
 ### HU6.1 Crear reportes
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-651) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1003).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 5 unitarias en [maintenance.service.spec.ts](../backend/test/maintenance.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [maintenance.rules.spec.ts](../backend/test/maintenance.rules.spec.ts), [maintenance.http.spec.ts](../backend/test/maintenance.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero reportar un daño para que se gestione su reparación.
 
@@ -377,11 +391,13 @@ Como integrante quiero reportar un daño para que se gestione su reparación.
 
 ### HU6.2 Filtrar y contar reportes
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-628) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-980).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 7 unitarias en [maintenance.service.spec.ts](../backend/test/maintenance.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [maintenance.rules.spec.ts](../backend/test/maintenance.rules.spec.ts), [maintenance.http.spec.ts](../backend/test/maintenance.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como integrante quiero filtrar los reportes para encontrar rápido lo que falta por resolver.
 
@@ -393,11 +409,13 @@ Como integrante quiero filtrar los reportes para encontrar rápido lo que falta 
 
 ### HU6.3 Gestionar el estado y el responsable
 
-**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-628) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-980).
 
-**Pruebas:** 3 unitarias en [gastos-compras-mantenimiento.test.ts](../tests/unit/gastos-compras-mantenimiento.test.ts).
+**Pruebas:** 8 unitarias en [maintenance.service.spec.ts](../backend/test/maintenance.service.spec.ts).
+
+**Pruebas de la API:** Reglas, validación y rutas HTTP: [maintenance.rules.spec.ts](../backend/test/maintenance.rules.spec.ts), [maintenance.http.spec.ts](../backend/test/maintenance.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [shared-modules.test.ts](../tests/shared-modules.test.ts).
 
 Como responsable o administrador quiero actualizar el estado de un reporte para seguir la reparación de principio a fin.
 
@@ -468,11 +486,13 @@ Como integrante quiero que Roomie me recuerde lo que está por vencer para cumpl
 
 ### HU8.1 Crear votación
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel (en el ciclo 1, Tomás) · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-826) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1106).
 
-**Pruebas:** 3 unitarias en [votaciones-api.test.ts](../tests/unit/votaciones-api.test.ts).
+**Pruebas:** 6 unitarias en [polls.service.spec.ts](../backend/test/polls.service.spec.ts).
+
+**Pruebas de la API:** Validación y rutas HTTP: [polls.http.spec.ts](../backend/test/polls.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [polls.test.ts](../tests/polls.test.ts).
 
 Como integrante quiero abrir una votación con varias opciones para decidir en grupo.
 
@@ -484,11 +504,13 @@ Como integrante quiero abrir una votación con varias opciones para decidir en g
 
 ### HU8.2 Tipo de decisión
 
-**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel (en el ciclo 1, Tomás) · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-836) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1116).
 
-**Pruebas:** 3 unitarias en [votaciones.test.ts](../tests/unit/votaciones.test.ts).
+**Pruebas:** 8 unitarias en [votaciones.test.ts](../tests/unit/votaciones.test.ts), [polls.rules.spec.ts](../backend/test/polls.rules.spec.ts).
+
+**Pruebas de la API:** Validación y rutas HTTP: [polls.http.spec.ts](../backend/test/polls.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [polls.test.ts](../tests/polls.test.ts).
 
 Como integrante quiero elegir si se decide por mayoría simple o por unanimidad para adaptar la votación a la importancia del tema.
 
@@ -500,11 +522,13 @@ Como integrante quiero elegir si se decide por mayoría simple o por unanimidad 
 
 ### HU8.3 Votar
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel (en el ciclo 1, Tomás) · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-813) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1093).
 
-**Pruebas:** 3 unitarias en [votaciones-api.test.ts](../tests/unit/votaciones-api.test.ts).
+**Pruebas:** 7 unitarias en [polls.service.spec.ts](../backend/test/polls.service.spec.ts), [polls.rules.spec.ts](../backend/test/polls.rules.spec.ts).
+
+**Pruebas de la API:** Validación y rutas HTTP: [polls.http.spec.ts](../backend/test/polls.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [polls.test.ts](../tests/polls.test.ts).
 
 Como integrante quiero votar, de forma anónima o pública, para expresar mi opinión.
 
@@ -516,11 +540,13 @@ Como integrante quiero votar, de forma anónima o pública, para expresar mi opi
 
 ### HU8.4 Cerrar y ver resultados
 
-**Responsable:** Tomás · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel (en el ciclo 1, Tomás) · **Prioridad:** Alta · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-813) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1093).
 
-**Pruebas:** 3 unitarias en [votaciones-api.test.ts](../tests/unit/votaciones-api.test.ts).
+**Pruebas:** 11 unitarias en [polls.service.spec.ts](../backend/test/polls.service.spec.ts), [polls.rules.spec.ts](../backend/test/polls.rules.spec.ts), [jobs.service.spec.ts](../backend/test/jobs.service.spec.ts).
+
+**Pruebas de la API:** Validación y rutas HTTP: [polls.http.spec.ts](../backend/test/polls.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [polls.test.ts](../tests/polls.test.ts).
 
 Como creador o administrador quiero cerrar la votación para publicar el resultado.
 
@@ -532,11 +558,13 @@ Como creador o administrador quiero cerrar la votación para publicar el resulta
 
 ### HU8.5 Historial de decisiones
 
-**Responsable:** Tomás · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1.
+**Responsable:** Miguel (en el ciclo 1, Tomás) · **Prioridad:** Media · **Estimación:** 3 puntos · **Estado:** Implementada en ciclo 1 y migrada a NestJS en ciclo 2.
 
 **Mockups:** [Escritorio](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=46-850) · [Móvil](https://www.figma.com/design/GpdXoSW60Fl4XQiXOhsmvz/Roomie?node-id=47-1130).
 
-**Pruebas:** 3 unitarias en [votaciones-api.test.ts](../tests/unit/votaciones-api.test.ts).
+**Pruebas:** 5 unitarias en [polls.service.spec.ts](../backend/test/polls.service.spec.ts), [polls.rules.spec.ts](../backend/test/polls.rules.spec.ts).
+
+**Pruebas de la API:** Validación y rutas HTTP: [polls.http.spec.ts](../backend/test/polls.http.spec.ts). Recorrido completo: [Roomie-Miguel.postman_collection.json](../postman/Roomie-Miguel.postman_collection.json) y [polls.test.ts](../tests/polls.test.ts).
 
 Como integrante quiero consultar las votaciones cerradas para recordar qué se decidió.
 
@@ -685,49 +713,49 @@ Como persona quiero editar mi nombre y cambiar mi contraseña para mantener mi c
 - Al cambiar la contraseña se cierran las demás sesiones abiertas.
 - Cerrar la cuenta exige contraseña y confirmación. Si la persona es el único administrador de un hogar disponible, debe asignar otro o archivar ese hogar. La cuenta se desactiva, su nombre y correo se sustituyen y el historial compartido conserva sus referencias.
 
-En el ciclo 2, votaciones pasa a Miguel para equilibrar el trabajo. La tabla anterior conserva los responsables del ciclo 1.
+En el ciclo 2, votaciones pasó de Tomás a Miguel para equilibrar el trabajo; cada historia de Votaciones indica entre paréntesis quién la hizo en el ciclo 1.
 
 ## Pruebas por historia
 
-`npm run test:hu` ejecuta las unitarias de Vitest y de Jest y comprueba que cada historia tenga al menos tres aprobadas. El comando muestra los casos asociados a cada historia y las pruebas adicionales de hooks, formatos, idiomas y accesibilidad.
+`npm run test:hu` ejecuta las unitarias de Vitest (pantallas, hooks, formatos e idiomas) y las de Jest (módulos de NestJS) y comprueba que cada historia tenga al menos tres aprobadas. Cada prueba cuenta para la historia cuyo código `HU#.#` aparece en su nombre. El comando muestra los casos asociados a cada historia y las pruebas adicionales de hooks, formatos, idiomas y accesibilidad.
 
-Los archivos `.test.ts` y `.test.tsx` están en `tests/unit/` (pantallas y API que sigue en Next.js) y los `.spec.ts` en `backend/test/` (servicios de NestJS). Las pruebas de servidor usan repositorios, consultas y sesiones simuladas, pero ejecutan las reglas reales. No necesitan una base de datos, la aplicación abierta ni una clave de IA.
+Los archivos de Vitest están en `tests/unit/` y los de Jest en `backend/test/`. Las pruebas de servidor usan repositorios y sesiones simulados, pero ejecutan las reglas reales. No necesitan una base de datos, la aplicación abierta ni una clave de IA.
 
 Las pruebas de integración necesitan la aplicación abierta. Las E2E la inician si hace falta. Se cuentan aparte de las unitarias. GitHub Actions también ejecuta ambas contra la aplicación en Docker.
 
 | HU     | Casos aprobados | Archivos unitarios                                                                                         |
 | ------ | --------------: | ---------------------------------------------------------------------------------------------------------- |
-| HU1.1  |              14 | `funcionalidades.test.tsx`, `home-access.service.spec.ts`, `homes.service.spec.ts`                         |
+| HU1.1  |              14 | `funcionalidades.test.tsx`, `homes.service.spec.ts`, `home-access.service.spec.ts`                         |
 | HU1.2  |              25 | `funcionalidades.test.tsx`, `reglas.test.ts`, `invitations.service.spec.ts`                                |
 | HU1.3  |               9 | `funcionalidades.test.tsx`, `reglas.test.ts`, `memberships.service.spec.ts`                                |
 | HU1.4  |              11 | `funcionalidades.test.tsx`, `reglas.test.ts`, `memberships.service.spec.ts`, `home-access.service.spec.ts` |
-| HU2.1  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
-| HU2.2  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
-| HU2.3  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU2.1  |               7 | `expenses.service.spec.ts`                                                                                 |
+| HU2.2  |              10 | `expenses.service.spec.ts`                                                                                 |
+| HU2.3  |              10 | `expenses.service.spec.ts`                                                                                 |
 | HU3.1  |               3 | `tasks.service.spec.ts`                                                                                    |
 | HU3.2  |               4 | `tasks.service.spec.ts`                                                                                    |
 | HU3.3  |               6 | `tareas.test.ts`, `tasks.service.spec.ts`, `tasks.rules.spec.ts`                                           |
 | HU3.4  |               7 | `tareas.test.ts`, `tasks.service.spec.ts`, `tasks.rules.spec.ts`                                           |
 | HU3.5  |               6 | `tasks.service.spec.ts`, `dashboard.service.spec.ts`                                                       |
 | HU3.6  |               5 | `tasks.service.spec.ts`                                                                                    |
-| HU4.1  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
-| HU4.2  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
-| HU4.3  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU4.1  |               7 | `shopping.service.spec.ts`                                                                                 |
+| HU4.2  |               5 | `shopping.service.spec.ts`                                                                                 |
+| HU4.3  |               9 | `shopping.service.spec.ts`                                                                                 |
 | HU5.1  |               8 | `resources.service.spec.ts`, `reservations.rules.spec.ts`                                                  |
 | HU5.2  |               8 | `reservations.service.spec.ts`, `reservations.rules.spec.ts`                                               |
 | HU5.3  |               8 | `reservas.test.ts`, `reservations.service.spec.ts`, `reservations.rules.spec.ts`                           |
 | HU5.4  |               5 | `reservations.service.spec.ts`                                                                             |
-| HU6.1  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
-| HU6.2  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
-| HU6.3  |               3 | `gastos-compras-mantenimiento.test.ts`                                                                     |
+| HU6.1  |               5 | `maintenance.service.spec.ts`                                                                              |
+| HU6.2  |               7 | `maintenance.service.spec.ts`                                                                              |
+| HU6.3  |               8 | `maintenance.service.spec.ts`                                                                              |
 | HU7.1  |              13 | `funcionalidades.test.tsx`, `notifications.service.spec.ts`                                                |
 | HU7.2  |              12 | `funcionalidades.test.tsx`, `notifications.service.spec.ts`                                                |
 | HU7.3  |              29 | `reglas.test.ts`, `jobs.service.spec.ts`, `notifications.service.spec.ts`                                  |
-| HU8.1  |               3 | `votaciones-api.test.ts`                                                                                   |
-| HU8.2  |               3 | `votaciones.test.ts`                                                                                       |
-| HU8.3  |               3 | `votaciones-api.test.ts`                                                                                   |
-| HU8.4  |               3 | `votaciones-api.test.ts`                                                                                   |
-| HU8.5  |               3 | `votaciones-api.test.ts`                                                                                   |
+| HU8.1  |               6 | `polls.service.spec.ts`                                                                                    |
+| HU8.2  |               8 | `votaciones.test.ts`, `polls.rules.spec.ts`                                                                |
+| HU8.3  |               7 | `polls.service.spec.ts`, `polls.rules.spec.ts`                                                             |
+| HU8.4  |              11 | `jobs.service.spec.ts`, `polls.service.spec.ts`, `polls.rules.spec.ts`                                     |
+| HU8.5  |               5 | `polls.service.spec.ts`, `polls.rules.spec.ts`                                                             |
 | HU9.1  |               4 | `rules.service.spec.ts`                                                                                    |
 | HU9.2  |               5 | `rules.service.spec.ts`                                                                                    |
 | HU9.3  |               4 | `rules.service.spec.ts`                                                                                    |

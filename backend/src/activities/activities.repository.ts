@@ -5,7 +5,7 @@ import { DatabaseService } from '../database/database.service';
 @Injectable()
 export class ActivitiesRepository {
   constructor(private readonly db: DatabaseService) {}
-  async add(homeId: string, userId: string, message: string, client: PoolClient) {
+  async add(homeId: string, userId: string | null, message: string, client: PoolClient) {
     await this.db.query('INSERT INTO activities(home_id,actor_id,message) VALUES($1,$2,$3)', [homeId, userId, message], client);
   }
   list(homeId: string) {

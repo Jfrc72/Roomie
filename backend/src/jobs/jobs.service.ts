@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PollsService } from '../polls/polls.service';
 import { JobsRepository } from './jobs.repository';
 import { NotificationDeliveryService } from './notification-delivery.service';
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly db: DatabaseService, private readonly repository: JobsRepository, private readonly notifications: NotificationsService, private readonly delivery: NotificationDeliveryService) {}
+  constructor(private readonly db: DatabaseService, private readonly repository: JobsRepository, private readonly notifications: NotificationsService, private readonly delivery: NotificationDeliveryService, private readonly polls: PollsService) {}
 
   async tick() {
     await this.db.transaction(async client => {
@@ -41,5 +42,7 @@ export class JobsService {
         }
       }
     });
+    // Las votaciones con fecha de cierre vencida se cierran solas, sin atribuirlas a ninguna persona.
+    await this.polls.closeExpired();
   }
 }

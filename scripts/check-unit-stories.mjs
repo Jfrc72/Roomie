@@ -3,65 +3,80 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
 
-// Cuenta casos aprobados por historia, no pruebas de integración ni asserts. Suma las
-// unitarias de Vitest (pantallas y API anterior) y las de Jest (servicios de NestJS).
+// Cuenta casos aprobados por historia, no pruebas de integración ni asserts.
+// Las historias se reparten entre Vitest (pantallas y módulos anteriores) y Jest (módulos de NestJS):
+// cada prueba cuenta para la historia cuyo código HU#.# aparece en su nombre.
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const backend = join(root, "backend");
-const jest = createRequire(join(backend, "package.json")).resolve("jest/bin/jest");
 const stories = [
   ...readFileSync(join(root, "docs/HISTORIAS.md"), "utf8").matchAll(
     /^### (HU\d+\.\d+)\s+(.+)$/gm,
   ),
 ].map(([, id, title]) => ({ id, title, count: 0 }));
 const directory = mkdtempSync(join(tmpdir(), "roomie-unitarias-"));
+
+// Ambos ejecutores producen el mismo formato JSON (testResults[].assertionResults[]).
+const runners = [
+  {
+    name: "Vitest",
+    file: join(directory, "vitest.json"),
+    command: (file) => [
+      join(root, "node_modules/vitest/vitest.mjs"),
+      "run",
+      "--reporter=default",
+      "--reporter=json",
+      `--outputFile.json=${file}`,
+    ],
+    cwd: root,
+  },
+  {
+    name: "Jest (NestJS)",
+    file: join(directory, "jest.json"),
+    command: (file) => [
+      join(root, "node_modules/jest/bin/jest.js"),
+      "--runInBand",
+      "--json",
+      `--outputFile=${file}`,
+    ],
+    cwd: join(root, "backend"),
+  },
+];
+
 try {
-  const resultFile = join(directory, "results.json");
-  const backendFile = join(directory, "backend.json");
-  const runs = [
-    spawnSync(
-      process.execPath,
-      [
-        join(root, "node_modules/vitest/vitest.mjs"),
-        "run",
-        "--reporter=default",
-        "--reporter=json",
-        `--outputFile.json=${resultFile}`,
-      ],
-      { cwd: root, stdio: "inherit" },
-    ),
-    spawnSync(
-      process.execPath,
-      [jest, "--runInBand", "--json", `--outputFile=${backendFile}`],
-      { cwd: backend, stdio: "inherit" },
-    ),
-  ];
-  for (const run of runs) if (run.error) throw run.error;
-  if (runs.some((run) => run.status !== 0)) {
-    process.exitCode = 1;
-  } else {
-    // Vitest y Jest escriben el mismo formato de resultados.
-    const suites = [resultFile, backendFile].flatMap(
-      (file) => JSON.parse(readFileSync(file, "utf8")).testResults,
-    );
+  const reports = [];
+  for (const runner of runners) {
+    console.log(`\n== ${runner.name} ==`);
+    const run = spawnSync(process.execPath, runner.command(runner.file), {
+      cwd: runner.cwd,
+      stdio: "inherit",
+    });
+    if (run.error) throw run.error;
+    if (run.status !== 0) {
+      process.exitCode = 1;
+      break;
+    }
+    reports.push(JSON.parse(readFileSync(runner.file, "utf8")));
+  }
+  if (!process.exitCode) {
     const problems = [];
     let extra = 0;
-    for (const suite of suites) {
-      for (const test of suite.assertionResults) {
-        if (test.status !== "passed") continue;
-        const ids = [...new Set(test.fullName.match(/\bHU\d+\.\d+/g) ?? [])];
-        if (ids.length === 0) {
-          extra++;
-          continue;
+    for (const report of reports) {
+      for (const suite of report.testResults) {
+        for (const test of suite.assertionResults) {
+          if (test.status !== "passed") continue;
+          const ids = [...new Set(test.fullName.match(/\bHU\d+\.\d+/g) ?? [])];
+          if (ids.length === 0) {
+            extra++;
+            continue;
+          }
+          if (ids.length > 1) {
+            problems.push(`Asigna una sola HU a la prueba: ${test.fullName}`);
+            continue;
+          }
+          const story = stories.find(({ id }) => id === ids[0]);
+          if (!story) problems.push(`Historia desconocida: ${ids[0]}`);
+          else story.count++;
         }
-        if (ids.length > 1) {
-          problems.push(`Asigna una sola HU a la prueba: ${test.fullName}`);
-          continue;
-        }
-        const story = stories.find(({ id }) => id === ids[0]);
-        if (!story) problems.push(`Historia desconocida: ${ids[0]}`);
-        else story.count++;
       }
     }
     console.log("\nPruebas unitarias aprobadas por historia:");
@@ -77,7 +92,7 @@ try {
     if (stories.length === 0)
       problems.push("No se encontraron historias en docs/HISTORIAS.md.");
     console.log(
-      `\n${extra} pruebas adicionales de hooks, accesibilidad y compatibilidad.`,
+      `\n${extra} pruebas adicionales de hooks, accesibilidad, compatibilidad y reglas de NestJS.`,
     );
     if (problems.length) {
       console.error(problems.join("\n"));

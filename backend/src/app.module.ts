@@ -9,6 +9,10 @@ import { ActivitiesModule } from './activities/activities.module';
 import { HomesModule } from './homes/homes.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ExpensesModule } from './expenses/expenses.module';
+import { ShoppingModule } from './shopping/shopping.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
+import { PollsModule } from './polls/polls.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { RulesModule } from './rules/rules.module';
@@ -30,7 +34,10 @@ class HealthController {
 }
 
 @Module({
-  imports: [DatabaseModule, AuthModule, AccessModule, ActivitiesModule, HomesModule, NotificationsModule, DashboardModule, TasksModule, ReservationsModule, RulesModule],
+  imports: [
+    DatabaseModule, AuthModule, AccessModule, ActivitiesModule, HomesModule, NotificationsModule, DashboardModule,
+    ExpensesModule, ShoppingModule, MaintenanceModule, PollsModule, TasksModule, ReservationsModule, RulesModule,
+  ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: OriginGuard }],
 })

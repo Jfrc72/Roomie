@@ -1,7 +1,7 @@
 import { getLanguage, translate } from '@/lib/i18n';
 
-// Se migra por rutas para que las funcionalidades de los compañeros sigan disponibles.
-export const nestRoutes = new Set(['auth', 'session', 'homes', 'invitations', 'notifications', 'health', 'docs', 'docs-json', 'tasks', 'resources', 'reservations', 'rules']);
+// Ya se migraron todos los módulos; Next.js solo revisa el origen y reenvía la solicitud.
+export const nestRoutes = new Set(['auth', 'session', 'homes', 'invitations', 'notifications', 'expenses', 'payments', 'shopping', 'maintenance', 'polls', 'tasks', 'resources', 'reservations', 'rules', 'health', 'docs', 'docs-json']);
 // El asistente espera la respuesta de un modelo; NestJS corta cada intento a los 25 s y reintenta una vez.
 const timeoutFor = (path: string[], method: string) => method === 'POST' && path.join('/') === 'rules/assistant' ? 60000 : 15000;
 
