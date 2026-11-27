@@ -52,6 +52,8 @@ jobs:
         run: |
           mkdir -p .test-output
           npm run test:postman -- --reporters cli,json --reporter-json-export .test-output/postman-juan.json
+      - name: Probar Gastos, Compras y Mantenimiento con Postman
+        run: npm run test:postman:miguel -- --reporters cli,json --reporter-json-export .test-output/postman-miguel.json
       - run: npm run test:e2e
       - name: Guardar los registros de Docker
         if: always()
@@ -66,6 +68,7 @@ jobs:
             test-results/
             docker-pruebas.log
             .test-output/postman-juan.json
+            .test-output/postman-miguel.json
           retention-days: 7
       - name: Detener el entorno de pruebas
         if: always()

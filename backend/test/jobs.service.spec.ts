@@ -2,6 +2,7 @@ import { JobsService } from '../src/jobs/jobs.service';
 import { JobsRepository } from '../src/jobs/jobs.repository';
 import { NotificationDeliveryService } from '../src/jobs/notification-delivery.service';
 import { NotificationsService } from '../src/notifications/notifications.service';
+import { PollsService } from '../src/polls/polls.service';
 import { DatabaseService } from '../src/database/database.service';
 import { client, database, homeId, service, user } from './helpers';
 
@@ -11,12 +12,20 @@ describe('Procesamiento de recordatorios y entregas', () => {
   const repo = { reminders: jest.fn(), processed: jest.fn(), deliveries: jest.fn(), authorized: jest.fn(), discard: jest.fn(), subscriptions: jest.fn(), removeSubscription: jest.fn(), sent: jest.fn(), retry: jest.fn() };
   const notifications = { notify: jest.fn() };
   const delivery = { email: jest.fn(), push: jest.fn() };
+  const polls = { closeExpired: jest.fn() };
   beforeEach(async () => {
     jest.resetAllMocks(); repo.reminders.mockResolvedValue([]); repo.deliveries.mockResolvedValue([]); repo.authorized.mockResolvedValue(true); repo.subscriptions.mockResolvedValue([{ id: 'dispositivo' }]);
     jobs = await service(JobsService, [
       { provide: DatabaseService, useValue: database() }, { provide: JobsRepository, useValue: repo },
       { provide: NotificationsService, useValue: notifications }, { provide: NotificationDeliveryService, useValue: delivery },
+      { provide: PollsService, useValue: polls },
     ]);
+  });
+  it('HU8.4 el worker cierra las votaciones vencidas en cada ciclo, de todos los apartamentos', async () => {
+    await jobs.tick(); expect(polls.closeExpired).toHaveBeenCalledTimes(1); expect(polls.closeExpired).toHaveBeenCalledWith();
+  });
+  it('HU8.4 si falla el cierre de votaciones el error llega al worker para registrarlo', async () => {
+    polls.closeExpired.mockRejectedValue(new Error('Sin base')); await expect(jobs.tick()).rejects.toThrow('Sin base');
   });
   it('HU7.3 no inventa avisos si no hay recordatorios pendientes', async () => {
     await jobs.tick(); expect(notifications.notify).not.toHaveBeenCalled(); expect(delivery.email).not.toHaveBeenCalled();

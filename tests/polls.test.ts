@@ -3,7 +3,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { pool } from "../src/server/db";
-import { closeExpiredPolls } from "../src/server/polls";
 import {
   cleanup,
   createHome,
@@ -250,7 +249,14 @@ test("Votaciones: historias HU8.1 a HU8.5", async (t) => {
           (await vote(owner, id, (await find(owner, id)).options[0])).status,
           409,
         );
-        await closeExpiredPolls(homeId);
+        // El worker (JobsService → PollsService) cierra las votaciones vencidas, sin esperar a que alguien las liste.
+        process.env.WORKER_TEST = "1";
+        const { tick } = await import("../scripts/worker");
+        await tick();
+        assert.equal(
+          (await pool.query("SELECT status FROM polls WHERE id=$1", [id])).rows[0].status,
+          "closed",
+        );
         assert.equal((await find(owner, id)).status, "closed");
         const activity = await pool.query(
           "SELECT actor_id FROM activities WHERE home_id=$1 AND message=$2",

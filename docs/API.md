@@ -2,7 +2,7 @@
 
 Todas empiezan por `/api`. La respuesta tiene `{data: ...}` o `{error: "mensaje"}`. Las escrituras envían JSON y usan la sesión del usuario. En scripts de prueba, enviar también `Origin` igual a `APP_URL`.
 
-Las rutas de cuentas, sesión, apartamentos, integrantes, invitaciones, inicio y notificaciones ya están en NestJS. Swagger se consulta en `/api/docs/` y su esquema en `/api/docs-json`. Las demás rutas siguen en Next.js hasta que se migren. La colección de `postman/` prueba la parte de Juan.
+Las rutas de cuentas, sesión, apartamentos, integrantes, invitaciones, inicio, notificaciones, gastos, pagos, compras, mantenimiento y votaciones ya están en NestJS. Swagger se consulta en `/api/docs/` y su esquema en `/api/docs-json`. Las demás rutas (tareas, reservas y acuerdos) siguen en Next.js hasta que se migren. Las colecciones de `postman/` prueban la parte de Juan (`Roomie-Juan`) y la de Miguel (`Roomie-Miguel`: gastos, pagos, compras, mantenimiento y votaciones).
 
 La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tareas y reservas con horario usan fechas ISO con zona horaria.
 
@@ -59,12 +59,12 @@ La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tarea
 | POST   | `/expenses/:id/restore`                                        | Restaura un gasto eliminado                                                                                                                       |
 | POST   | `/payments?homeId=...`                                         | `{receiver_id, amount}`; el pago propio no puede superar el saldo entre las dos personas                                                          |
 | GET    | `/shopping?homeId=...`                                         | Lista de compras pendientes y compradas                                                                                                           |
-| POST   | `/shopping?homeId=...`                                         | `{title, category, quantity, estimated_price, assigned_membership_id}`                                                                            |
+| POST   | `/shopping?homeId=...`                                         | `{title, category, quantity, estimated_price?, assigned_membership_id?}`; el precio vale 0 si se omite y el comprador es opcional                 |
 | PATCH  | `/shopping/:id`                                                | Edita el producto o actualiza `{status}`; al comprar registra quién lo hizo                                                                       |
 | DELETE | `/shopping/:id`                                                | Eliminación reversible por quien lo agregó o administrador                                                                                        |
 | POST   | `/shopping/:id/restore`                                        | Restaura un producto eliminado                                                                                                                    |
-| GET    | `/maintenance?homeId=...&status=...&priority=...&category=...` | Reportes filtrables y contadores por estado                                                                                                       |
-| POST   | `/maintenance?homeId=...`                                      | `{title, description, category, estimated_cost, priority, assigned_membership_id}`                                                                |
+| GET    | `/maintenance?homeId=...&status=...&priority=...&category=...` | Reportes filtrables y contadores por estado; cada reporte trae `can_edit` y `can_manage`                                                          |
+| POST   | `/maintenance?homeId=...`                                      | `{title, category, description?, estimated_cost?, priority?, assigned_membership_id?}`; prioridad `MEDIA` y descripción vacía por defecto         |
 | PATCH  | `/maintenance/:id`                                             | Edita reporte, estado o asignación; creador, responsable o administrador                                                                          |
 | DELETE | `/maintenance/:id`                                             | Eliminación reversible por quien reportó o administrador                                                                                          |
 | POST   | `/maintenance/:id/restore`                                     | Restaura un reporte eliminado                                                                                                                     |
@@ -72,6 +72,17 @@ La fecha de un gasto se envía y devuelve como `YYYY-MM-DD`, sin hora. Las tarea
 | DELETE | `/homes/:id`                                                   | Archiva el hogar; solo administrador.                                                                                                             |
 | DELETE | `/notifications/:id`                                           | Elimina un aviso propio de la bandeja.                                                                                                            |
 
-Los permisos y criterios de cada operación están en [HISTORIAS.md](HISTORIAS.md). El código está en `src/server/` y las rutas se conectan en `src/app/api/[...path]/route.ts`.
+Los permisos y criterios de cada operación están en [HISTORIAS.md](HISTORIAS.md). El código de NestJS está en `backend/src/`; las rutas que ya migraron se reenvían desde `src/server/nest-proxy.ts` y las de tareas, reservas, votaciones y acuerdos siguen en `src/server/`, conectadas en `src/app/api/[...path]/route.ts`.
+
+## Gastos, pagos, compras, mantenimiento y votaciones
+
+Estas rutas exigen sesión y que la persona pertenezca al apartamento de `homeId`; sin sesión responden 401 y de otro apartamento, 403. Los identificadores de la ruta deben ser UUID (400 si no lo son).
+
+- **Dinero:** los importes son números en pesos con máximo dos decimales (`1.005` se rechaza) y tope de 9.999.999.999,99. Las cuotas de un gasto se calculan en centavos y suman exactamente el total; el pagador siempre participa y asume los centavos sobrantes. La fecha del gasto es `YYYY-MM-DD`, sin hora.
+- **Abonos (`/payments`):** no se puede abonar a uno mismo, a quien no es integrante activo, ni más de lo que se debe; los abonos se descuentan de los saldos de `/expenses`. Editar un gasto vuelve a calcular sus cuotas y conserva los abonos.
+- **Permisos de edición:** editar, eliminar y restaurar un gasto, un producto o un reporte lo hace quien lo creó o un administrador. Excepciones: cualquier integrante puede marcar un producto como comprado o reactivarlo, y en mantenimiento también actualiza el reporte su responsable.
+- **Deshacer:** `DELETE` es un borrado lógico; `POST /.../restore` lo revierte (404 si el registro no está eliminado).
+- **Votaciones:** llevan de 2 a 10 opciones distintas (sin distinguir mayúsculas) y `rule` `simple` o `unanimous`; `closes_at`, si se envía, lleva zona horaria y debe estar en el futuro. Se vota, y se puede cambiar el voto, mientras esté abierta (409 si ya cerró o venció). Abierta, solo se informa cuántas personas votaron y el voto propio; cerrada, se publican los recuentos y, si es pública, quién eligió cada opción. Cierra quien la creó o un administrador; también se cierra sola al llegar su fecha (el worker lo hace cada 15 segundos y el listado cierra las vencidas antes de responder) y avisa el resultado a los integrantes.
+- **Errores:** 400 con `{error}` ante datos inválidos (`Revisa los campos: los datos no son válidos.`) o integrantes ajenos al apartamento; los filtros inválidos de mantenimiento responden `Filtro de estado no válido.` o `Filtro de prioridad no válido.`.
 
 Errores comunes: 400 (datos inválidos), 401 (sin sesión), 403 (sin permiso), 404 (no encontrado), 409 (conflicto) y 429 (demasiados intentos de ingreso).

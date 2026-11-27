@@ -2,17 +2,27 @@ import { DashboardService } from '../src/dashboard/dashboard.service';
 import { DashboardRepository } from '../src/dashboard/dashboard.repository';
 import { HomeAccessService } from '../src/access/home-access.service';
 import { ActivitiesService } from '../src/activities/activities.service';
+import { ExpensesService } from '../src/expenses/expenses.service';
+import { MaintenanceService } from '../src/maintenance/maintenance.service';
+import { ShoppingService } from '../src/shopping/shopping.service';
 import { homeId, service, user } from './helpers';
 
 describe('Resumen del inicio', () => {
   let dashboard: DashboardService;
-  const repo = { tasks: jest.fn(), taskCount: jest.fn(), reservation: jest.fn(), balance: jest.fn(), shopping: jest.fn(), maintenance: jest.fn(), expenses: jest.fn() };
+  const repo = { tasks: jest.fn(), taskCount: jest.fn(), reservation: jest.fn() };
   const access = { requireHome: jest.fn() };
   const activities = { list: jest.fn() };
+  const expenses = { summary: jest.fn() };
+  const shopping = { summary: jest.fn() };
+  const maintenance = { summary: jest.fn() };
   beforeEach(async () => {
     jest.resetAllMocks(); repo.tasks.mockResolvedValue([]); repo.taskCount.mockResolvedValue(0); repo.reservation.mockResolvedValue(null);
-    repo.balance.mockResolvedValue(0); repo.shopping.mockResolvedValue(0); repo.maintenance.mockResolvedValue(0); repo.expenses.mockResolvedValue([]); activities.list.mockResolvedValue([]);
-    dashboard = await service(DashboardService, [{ provide: DashboardRepository, useValue: repo }, { provide: HomeAccessService, useValue: access }, { provide: ActivitiesService, useValue: activities }]);
+    expenses.summary.mockResolvedValue({ balance: 0, recent: [] }); shopping.summary.mockResolvedValue({ pending: 0 }); maintenance.summary.mockResolvedValue({ urgent: 0 });
+    activities.list.mockResolvedValue([]);
+    dashboard = await service(DashboardService, [
+      { provide: DashboardRepository, useValue: repo }, { provide: HomeAccessService, useValue: access }, { provide: ActivitiesService, useValue: activities },
+      { provide: ExpensesService, useValue: expenses }, { provide: ShoppingService, useValue: shopping }, { provide: MaintenanceService, useValue: maintenance },
+    ]);
   });
   it('un apartamento nuevo tiene contadores vacíos sin datos inventados', async () => {
     expect(await dashboard.get(user.id, homeId)).toEqual({ summary: { balance: 0, pendingTasks: 0, shoppingItems: 0, urgentMaintenance: 0, nextReservation: null, tasks: [], expenses: [] }, activities: [] });
@@ -20,11 +30,15 @@ describe('Resumen del inicio', () => {
   it('solo consulta el resumen después de revisar acceso', async () => {
     access.requireHome.mockRejectedValue(new Error('Sin acceso'));
     await expect(dashboard.get(user.id, homeId)).rejects.toThrow('Sin acceso');
-    expect(repo.balance).not.toHaveBeenCalled();
+    expect(expenses.summary).not.toHaveBeenCalled(); expect(shopping.summary).not.toHaveBeenCalled(); expect(maintenance.summary).not.toHaveBeenCalled();
   });
-  it('convierte los montos de PostgreSQL a números y conserva los títulos del usuario', async () => {
-    repo.expenses.mockResolvedValue([{ id: 'gasto', title: 'Mercado compartido', amount: '15000.50' }]);
-    expect((await dashboard.get(user.id, homeId)).summary.expenses).toEqual([{ id: 'gasto', title: 'Mercado compartido', amount: 15000.5, href: '/gastos' }]);
+  it('pide a gastos, compras y mantenimiento su propio resumen en vez de consultar sus tablas', async () => {
+    expenses.summary.mockResolvedValue({ balance: -9.25, recent: [{ id: 'gasto', title: 'Mercado compartido', amount: 15000.5 }] });
+    shopping.summary.mockResolvedValue({ pending: 4 }); maintenance.summary.mockResolvedValue({ urgent: 2 });
+    const { summary } = await dashboard.get(user.id, homeId);
+    expect(expenses.summary).toHaveBeenCalledWith(homeId, user.id); expect(shopping.summary).toHaveBeenCalledWith(homeId); expect(maintenance.summary).toHaveBeenCalledWith(homeId);
+    expect(summary).toMatchObject({ balance: -9.25, shoppingItems: 4, urgentMaintenance: 2 });
+    expect(summary.expenses).toEqual([{ id: 'gasto', title: 'Mercado compartido', amount: 15000.5, href: '/gastos' }]);
   });
   it('distingue tareas sin fecha, vencidas y próximas', async () => {
     repo.tasks.mockResolvedValue([{ id: '1', title: 'Sin fecha', due_at: null }, { id: '2', title: 'Anterior', due_at: new Date('2000-01-01') }, { id: '3', title: 'Próxima', due_at: new Date('2099-01-01') }]);
@@ -37,7 +51,7 @@ describe('Resumen del inicio', () => {
     expect((await dashboard.get(user.id, homeId)).summary.nextReservation).toContain('Sala · 31');
   });
   it('propaga un error real en vez de mostrar contadores falsos', async () => {
-    repo.shopping.mockRejectedValue(new Error('Sin conexión'));
+    shopping.summary.mockRejectedValue(new Error('Sin conexión'));
     await expect(dashboard.get(user.id, homeId)).rejects.toThrow('Sin conexión');
   });
 });
