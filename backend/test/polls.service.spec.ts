@@ -24,7 +24,7 @@ describe('Votaciones', () => {
     lockForVote: jest.fn(), lockForClose: jest.fn(), lockExpired: jest.fn(), activeMembershipId: jest.fn(), optionBelongsToPoll: jest.fn(), saveVote: jest.fn(),
     discardInactiveVotes: jest.fn(), activeMemberIds: jest.fn(), markClosed: jest.fn(), tally: jest.fn(),
   };
-  const access = { requireHome: jest.fn() };
+  const access = { requireHome: jest.fn(), lockHome: jest.fn() };
   const activities = { add: jest.fn() };
   const notifications = { notify: jest.fn() };
   let db: ReturnType<typeof database>;
@@ -32,6 +32,7 @@ describe('Votaciones', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     access.requireHome.mockResolvedValue('member');
+    access.lockHome.mockResolvedValue('member');
     repo.insert.mockResolvedValue(pollId);
     repo.otherMemberIds.mockResolvedValue([]);
     repo.lockExpired.mockResolvedValue([]);
@@ -54,6 +55,7 @@ describe('Votaciones', () => {
     it('HU8.1 crea las opciones en orden, registra la actividad y avisa a los otros integrantes', async () => {
       repo.otherMemberIds.mockResolvedValue([other]);
       await expect(polls.create(user, homeId, dto() as never)).resolves.toEqual({ id: pollId, message: 'Votación abierta.' });
+      expect(access.lockHome).toHaveBeenCalledWith(user.id, homeId, client, false);
       expect(repo.insert).toHaveBeenCalledWith(homeId, user.id, expect.objectContaining({ title: '¿Pintamos la sala?' }), client);
       expect(repo.insertOptions).toHaveBeenCalledWith(pollId, ['Verde', 'Blanco'], client);
       expect(activities.add).toHaveBeenCalledWith(homeId, user.id, 'abrió la votación "¿Pintamos la sala?"', client);
@@ -68,7 +70,6 @@ describe('Votaciones', () => {
     });
     it('HU8.1 rechaza un cierre en el pasado sin guardar nada', async () => {
       await expect(polls.create(user, homeId, dto({ closes_at: '2000-01-01T00:00:00Z' }) as never)).rejects.toMatchObject({ status: 400, message: 'La fecha de cierre debe estar en el futuro.' });
-      expect(db.transaction).not.toHaveBeenCalled();
       expect(repo.insert).not.toHaveBeenCalled();
     });
     it('HU8.1 acepta una fecha de cierre en el futuro', async () => {
@@ -77,10 +78,12 @@ describe('Votaciones', () => {
       expect(repo.insert).toHaveBeenCalledWith(homeId, user.id, expect.objectContaining({ closes_at }), client);
     });
     it('HU8.1 una persona de fuera no abre votaciones y se exige indicar el apartamento', async () => {
-      access.requireHome.mockRejectedValue(new ForbiddenException('No tienes acceso a este apartamento.'));
+      access.lockHome.mockRejectedValue(new ForbiddenException('No tienes acceso a este apartamento.'));
       await expect(polls.create(user, homeId, dto() as never)).rejects.toMatchObject({ status: 403 });
-      expect(db.transaction).not.toHaveBeenCalled();
+      expect(repo.insert).not.toHaveBeenCalled();
+      expect(notifications.notify).not.toHaveBeenCalled();
       await expect(polls.create(user, undefined, dto() as never)).rejects.toMatchObject({ status: 400, message: 'Selecciona un apartamento.' });
+      expect(db.transaction).toHaveBeenCalledTimes(1);
     });
     it('HU8.1 antes de listar cierra las votaciones vencidas del apartamento', async () => {
       await polls.list(user.id, homeId);

@@ -36,9 +36,9 @@ export class PollsService {
   /** Abre una votación y avisa a los demás integrantes del apartamento. */
   async create(user: SessionUser, homeIdParam: string | undefined, data: PollDto) {
     const homeId = requireHomeId(homeIdParam);
-    await this.access.requireHome(user.id, homeId);
-    if (data.closes_at && new Date(data.closes_at).getTime() <= Date.now()) throw new BadRequestException('La fecha de cierre debe estar en el futuro.');
     return this.db.transaction(async client => {
+      await this.access.lockHome(user.id, homeId, client, false);
+      if (data.closes_at && new Date(data.closes_at).getTime() <= Date.now()) throw new BadRequestException('La fecha de cierre debe estar en el futuro.');
       const id = await this.repository.insert(homeId, user.id, data, client);
       await this.repository.insertOptions(id, data.options, client);
       await this.activities.add(homeId, user.id, `abrió la votación "${data.title}"`, client);
